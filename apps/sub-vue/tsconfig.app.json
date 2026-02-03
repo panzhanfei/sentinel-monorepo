@@ -1,0 +1,31 @@
+{
+  "extends": "@vue/tsconfig/tsconfig.dom.json",
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+    "types": ["vite/client"],
+
+    /* ========== 新增/修改的关键配置区域 ========== */
+    // 1. 路径别名配置 (解决 @/ 报错的核心)
+    "baseUrl": ".", // 基准路径设为项目根目录
+    "paths": {
+      "@/*": ["src/*"] // 定义别名：@/ -> ./src/
+    },
+    // 2. 模块解析策略 (必须为node，才能正确解析别名和node_modules)
+    "moduleResolution": "node",
+    // 3. 如果使用TSX，确保以下两项存在 (Vue官方配置可能已包含，但明确写出更安全)
+    "jsx": "preserve",
+    "jsxImportSource": "vue",
+    /* =========================================== */
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true
+  },
+  // 建议加上 .d.ts 文件，确保类型声明被识别
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue", "src/**/*.d.ts"],
+  "exclude": ["node_modules", "dist"]
+}

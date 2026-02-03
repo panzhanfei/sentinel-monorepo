@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  # PostgreSQL: 核心业务数据库 (Prisma 强力搭档)
+  postgres:
+    image: postgres:15-alpine
+    container_name: sentinel-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - '${DB_PORT}:5432'
+    volumes:
+      - sentinel_pg_data:/var/lib/postgresql/data
+    networks:
+      - sentinel-network
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${DB_USER} -d ${DB_NAME}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis: Nonce 存储与 JWT 黑名单
+  redis:
+    image: redis:7-alpine
+    container_name: sentinel-redis
+    restart: always
+    command: redis-server --requirepass ${REDIS_PASSWORD} --appendonly yes
+    ports:
+      - '${REDIS_PORT}:6379'
+    volumes:
+      - sentinel_redis_data:/data
+    networks:
+      - sentinel-network
+
+  # RedisInsight: 可视化调试
+  redis-insight:
+    image: redislabs/redisinsight:latest
+    container_name: sentinel-redis-insight
+    ports:
+      - '8001:5540'
+    networks:
+      - sentinel-network
+
+networks:
+  sentinel-network:
+    driver: bridge
+
+volumes:
+  sentinel_pg_data:
+  sentinel_redis_data:

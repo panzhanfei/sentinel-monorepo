@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "CommonJS",
+    "moduleResolution": "node", // 确保能按 Node 逻辑找包
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      // 关键点：直接指向生成的入口文件
+      "@prisma/client": ["generated/prisma/client"]
+    },
+    "types": ["node"],
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "allowSyntheticDefaultImports": true
+  },
+  "include": [
+    "src/**/*",
+    "prisma.config.ts", // 显式包含配置文件
+    "generated/prisma/**/*" // 显式包含生成的代码
+  ]
+}

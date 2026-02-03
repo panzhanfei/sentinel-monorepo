@@ -1,0 +1,23 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" }
+  ],
+  "compilerOptions": {
+    // 必须设置！告诉 TypeScript 如何转换 JSX
+    "jsx": "preserve",
+    // 必须设置！告诉编译器从 'vue' 导入 JSX 函数，而不是 'react'
+    "jsxImportSource": "vue",
+    // 其他重要选项
+    "target": "ES2020",
+    "module": "ESNext",
+    "strict": true,
+    "skipLibCheck": true,
+    // 1. 核心：路径别名配置，解决 @/ 报错
+    "baseUrl": ".", // 定义解析非相对模块的基准目录
+    "paths": {
+      "@/*": ["./src/*"] // 将 @/ 映射到 ./src/ 目录
+    }
+  }
+}

@@ -2,6 +2,9 @@
   "name": "sentinel-monorepo",
   "private": true,
   "scripts": {
+    "infra:up": "docker-compose up -d",
+    "infra:down": "docker-compose down",
+    "infra:logs": "docker-compose logs -f",
     "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
@@ -9,6 +12,8 @@
     "check-types": "turbo run check-types"
   },
   "devDependencies": {
+    "eslint-config-prettier": "^10.1.1",
+    "eslint-plugin-prettier": "^5.5.5",
     "prettier": "^3.7.4",
     "turbo": "^2.8.0",
     "typescript": "5.9.2"
@@ -16,5 +21,20 @@
   "packageManager": "pnpm@9.0.0",
   "engines": {
     "node": ">=18"
+  },
+  "pnpm": {
+    "overrides": {
+      "react": "19.2.3",
+      "react-dom": "19.2.3",
+      "wagmi": "3.4.1",
+      "viem": "2.22.14",
+      "zod": "^3.23.8",
+      "ox": "0.11.1",
+      "prisma": "6.2.1",
+      "@prisma/client": "6.2.1"
+    }
+  },
+  "dependencies": {
+    "cross-env": "^10.1.0"
   }
 }

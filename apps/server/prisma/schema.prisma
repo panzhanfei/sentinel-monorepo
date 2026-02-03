@@ -1,0 +1,37 @@
+
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+  // 增加这一行，强制生成标准结构
+  previewFeatures = ["prismaSchemaFolder"]
+}
+
+datasource db {
+  provider = "postgresql"
+
+}
+
+// 用户表：核心登录模块
+model User {
+  id            String           @id @default(uuid())
+  address       String           @unique // 钱包地址作为唯一标识
+  nonce         String           // 用于防重放攻击的随机字符串（Web3 登录必备）
+  name          String?          // 昵称
+  avatar        String?          // 头像
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  
+  // 关联用户创建的监控任务
+  monitors      MonitorAddress[] 
+}
+
+// 监控地址表：业务关联模块
+model MonitorAddress {
+  id        String   @id @default(uuid())
+  address   String   // 要监控的链上地址
+  label     String?  // 用户给这个地址起的备注
+  userId    String   // 所属用户 ID
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+}
