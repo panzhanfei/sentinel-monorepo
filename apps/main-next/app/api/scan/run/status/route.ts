@@ -4,7 +4,7 @@ import { redis } from "@/lib/redis"; // 复用单例
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const address = searchParams.get("address");
-
+  console.log(req);
   if (!address)
     return NextResponse.json({ error: "Address required" }, { status: 400 });
 
