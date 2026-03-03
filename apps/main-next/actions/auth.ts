@@ -4,6 +4,7 @@ import { verifyMessage } from "viem";
 import { cookies } from "next/headers";
 import { redis } from "@/lib/redis";
 import { revalidatePath } from "next/cache";
+import { generateSecureNonce } from "@/app/src/utils";
 
 export async function getLoginNonce(address: string) {
   if (!address) throw new Error("Wallet address is required");
@@ -12,7 +13,6 @@ export async function getLoginNonce(address: string) {
   const now = Date.now();
 
   // 1. 调用 Lua 限流脚本 (1分钟内最多请求 5 次 Nonce)
-  // 注意：在 TS 中调用自定义命令可能需要 (redis as any) 或扩展接口
   const isAllowed = await redis.slidingWindowLimit(
     `rate_limit:nonce:${normalizedAddress}`,
     now,
@@ -25,7 +25,7 @@ export async function getLoginNonce(address: string) {
   }
 
   // 2. 生成随机 Nonce
-  const nonce = `Sentinel sign-in request: ${Math.floor(Math.random() * 1000000)}`;
+  const nonce = `Sentinel sign-in request: ${generateSecureNonce()}`;
 
   // 3. 存储 Nonce 到 Redis，有效期 5 分钟
   // Key 格式: nonce:0xabc...

@@ -26,7 +26,7 @@ export default function DashboardLayout({
         <header className="h-16 bg-white/80 backdrop-blur-md border-b border-gray-100 flex justify-end px-8 items-center z-10">
           <Web3ConnectKitButton />
         </header>
-        <div className="flex-1 overflow-auto bg-white/50 p-8">{children}</div>
+        <div className="flex-1 overflow-hidden bg-white/50 p-8">{children}</div>
       </main>
     </div>
   );

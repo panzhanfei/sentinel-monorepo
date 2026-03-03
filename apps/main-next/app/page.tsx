@@ -9,7 +9,6 @@ import { LoginSkeleton } from "@/app/src/components/LoginSkeleton";
 export default function IndexPage() {
   const router = useRouter();
   const { isConnected, address, status } = useAccount();
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const init = async () => {
@@ -24,7 +23,6 @@ export default function IndexPage() {
         router.replace("/login");
       }
       // 稍微延迟一点关闭，视觉更平滑
-      setTimeout(() => setLoading(false), 300);
     };
     init();
   }, [isConnected, address, status, router]);

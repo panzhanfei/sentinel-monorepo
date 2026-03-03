@@ -4,3 +4,4 @@ export * from "./Web3ConnectKitButton";
 export * from "./HomeNav";
 export * from "./AuthGuard";
 export * from "./LoginSkeleton";
+export * from "./dashboard/Skeleton";
