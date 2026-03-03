@@ -36,3 +36,6 @@ yarn-error.log*
 
 .pnpm-store
 .pnpm-lock.yaml
+
+
+**/generated/prisma/
