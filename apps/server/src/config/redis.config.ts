@@ -24,5 +24,6 @@ export const getRedisConfig = (): RedisConfig => {
     maxRetriesPerRequest: env.REDIS_MAX_RETRIES,
     connectTimeout: env.REDIS_CONNECT_TIMEOUT,
     commandTimeout: env.REDIS_COMMAND_TIMEOUT,
+    enableReadyCheck: env.REDIS_ENABLE_READY_CHECK,
   };
 };

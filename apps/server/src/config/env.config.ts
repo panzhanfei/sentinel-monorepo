@@ -93,6 +93,10 @@ const envSchema = z.object({
     .transform((val) => val.toLowerCase() === 'true'), // 转换为布尔值
   CACHE_DEFAULT_TTL: z.string().default('300').transform(Number), // 转换为数字
   CACHE_PREFIX: z.string().default('cache'),
+  REDIS_ENABLE_READY_CHECK: z
+    .string()
+    .default('true')
+    .transform((val) => val.toLowerCase() === 'true'), // 转换为布尔值
 });
 
 // 3. 创建配置对象，先合并默认值，再解析

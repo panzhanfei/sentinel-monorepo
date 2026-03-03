@@ -8,7 +8,7 @@ export async function startScannerWorker() {
     try {
       // 1. BRPOP (Blocking Right Pop)
       // 这里的 0 表示：如果没有任务，Worker 就挂起（不占CPU），直到有任务进来立即唤醒
-      const result = await redis.brpop('sentinel:queue', 0);
+      const result = await redis.brpop('sentinel:queue', 15);
       if (!result) continue;
 
       const address = result[1];
