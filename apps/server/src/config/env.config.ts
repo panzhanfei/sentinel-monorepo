@@ -66,7 +66,23 @@ const envSchema = z.object({
   REDIS_KEY_PREFIX: z.string().default('myapp:dev'),
 
   // 连接池配置
-  REDIS_MAX_RETRIES: z.string().default('3').transform(Number), // 转换为数字
+  // REDIS_MAX_RETRIES: z.string().default('3').transform(Number), // 转换为数字
+  REDIS_MAX_RETRIES: z.preprocess(
+    (val) => {
+      // 如果环境变量是空字符串或字符串 "null"，返回 null
+      if (val === '' || val === 'null') return null;
+      return val;
+    },
+    z
+      .string()
+      .nullable()
+      .default('3')
+      .transform((val) => {
+        // 如果 val 为 null，返回 null；否则转换为数字
+        return val === null ? null : Number(val);
+      })
+  ),
+
   REDIS_CONNECT_TIMEOUT: z.string().default('10000').transform(Number), // 转换为数字
   REDIS_COMMAND_TIMEOUT: z.string().default('5000').transform(Number), // 转换为数字
 

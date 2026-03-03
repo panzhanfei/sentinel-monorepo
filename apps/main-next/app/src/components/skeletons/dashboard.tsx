@@ -1,4 +1,4 @@
-export function Skeleton() {
+export function DashboardSkeleton() {
   return (
     <div className="max-w-6xl mx-auto space-y-12 p-6 animate-pulse">
       {/* 资产净值区骨架 */}

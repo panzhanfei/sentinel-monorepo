@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react"; // 增加 useRef 处理定时器
 import { useAccount, useBalance } from "wagmi";
 import { formatUnits } from "viem";
 import { formatCurrency, shortenAddress } from "@/app/src/utils/format";
@@ -12,30 +12,82 @@ export default function DashboardContent() {
   const { data: balanceData, isFetching } = useBalance({ address });
   const { assets, isLoading } = useAssetsData();
 
+  // --- 新增：Deep Scan 相关状态 ---
+  const [scanLoading, setScanLoading] = useState(false);
+  const [scanProgress, setScanProgress] = useState(0);
+  const [scanStatus, setScanStatus] = useState("Idle"); // Idle, pending, processing, completed
+  const pollTimer = useRef<NodeJS.Timeout | null>(null);
+
+  // 轮询函数：查询 Redis 里的进度
+  const checkScanStatus = async () => {
+    try {
+      const res = await fetch(
+        `/api/scan/status?address=${address?.toLowerCase()}`,
+      );
+      const data = await res.json();
+
+      if (data.status) {
+        setScanStatus(data.status);
+        setScanProgress(data.progress || 0);
+
+        if (data.status === "completed") {
+          setScanLoading(false);
+          if (pollTimer.current) clearInterval(pollTimer.current);
+        }
+      }
+    } catch (error) {
+      console.error("Polling error:", error);
+    }
+  };
+
+  // 启动扫描按钮点击事件
+  const handleRunDeepScan = async () => {
+    if (!address || scanLoading) return;
+
+    setScanLoading(true);
+    setScanProgress(0);
+    setScanStatus("pending");
+
+    try {
+      // 1. 调用生产者接口塞入队列
+      await fetch("/api/scan/run", {
+        method: "POST",
+        body: JSON.stringify({ address }),
+      });
+
+      // 2. 开启每秒轮询
+      pollTimer.current = setInterval(checkScanStatus, 1000);
+    } catch (error) {
+      setScanLoading(false);
+      alert("Failed to start scan");
+    }
+  };
+
+  // 组件卸载时清除定时器
+  useEffect(() => {
+    return () => {
+      if (pollTimer.current) clearInterval(pollTimer.current);
+    };
+  }, []);
+
   useEffect(() => {
     if (balanceData && address) {
-      // 1. 计算真数据
       const val = formatUnits(balanceData.value, balanceData.decimals);
       const displayVal = Number(val).toFixed(4);
-
-      // 2. 异步更新状态，避开同步级联渲染报错
       const timer = setTimeout(() => {
-        // 使用函数式更新，确保不依赖外部 balance 变量
         setBalance((prev) => {
           if (prev === displayVal) return prev;
-
-          // 同步到缓存
           sessionStorage.setItem(`sentinel_bal_${address}`, displayVal);
           return displayVal;
         });
       }, 0);
-
       return () => clearTimeout(timer);
     }
-  }, [balanceData, address]); // 去掉 balance 依赖，防止死循环
+  }, [balanceData, address]);
 
   return (
     <div className="max-w-6xl mx-auto space-y-12 p-1">
+      {/* Total Net Worth Section (保持不变) */}
       <section className="relative group">
         <div className="absolute -inset-1 bg-linear-to-r from-indigo-500 to-purple-600 rounded-3xl blur opacity-10 group-hover:opacity-20 transition duration-1000"></div>
         <div className="relative space-y-4">
@@ -57,27 +109,14 @@ export default function DashboardContent() {
               {formatCurrency(Number(balance) * 2341)}
             </h1>
             <div className="flex items-center gap-1 text-emerald-500 bg-emerald-50 px-3 py-1 rounded-full text-sm font-bold">
-              <svg
-                className="w-3 h-3"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={3}
-                  d="M5 10l7-7m0 0l7 7m-7-7v18"
-                />
-              </svg>
-              4.2%
+              ↑ 4.2%
             </div>
           </div>
         </div>
       </section>
 
-      {/* 核心网格布局 */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Main Assets Section (保持不变) */}
         <div className="lg:col-span-2 bg-white/70 backdrop-blur-xl p-8 rounded-4xl border border-white shadow-2xl shadow-slate-200/50 space-y-6">
           <div className="flex justify-between items-center">
             <h3 className="text-xl font-bold text-slate-800">Main Assets</h3>
@@ -119,25 +158,64 @@ export default function DashboardContent() {
           </div>
         </div>
 
+        {/* --- 深度优化的 Security Audit 模块 --- */}
         <div className="bg-slate-900 p-8 rounded-4xl text-white shadow-2xl space-y-8 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 blur-3xl rounded-full"></div>
-          <h3 className="text-xl font-bold relative z-10">Security Audit</h3>
+
+          <div className="flex justify-between items-center relative z-10">
+            <h3 className="text-xl font-bold">Security Audit</h3>
+            {scanLoading && (
+              <span className="text-[10px] bg-indigo-500/20 text-indigo-300 px-2 py-1 rounded-md animate-pulse">
+                AI SCANNING
+              </span>
+            )}
+          </div>
+
           <div className="space-y-6 relative z-10">
+            {/* 动态扫描状态展示 */}
             <div className="p-4 bg-white/5 rounded-2xl border border-white/10 hover:bg-white/10 transition">
               <div className="flex gap-4 items-start">
-                <div className="w-2 h-2 mt-2 rounded-full bg-emerald-400 shadow-[0_0_10px_#34d399]"></div>
-                <div>
+                <div
+                  className={`w-2 h-2 mt-2 rounded-full ${scanStatus === "completed" ? "bg-emerald-400 shadow-[0_0_10px_#34d399]" : "bg-indigo-400 animate-bounce"}`}
+                ></div>
+                <div className="flex-1">
                   <p className="text-sm font-bold text-slate-100">
-                    Address Risk Scan
+                    AI Deep Analysis
                   </p>
-                  <p className="text-xs text-slate-400 mt-1">
-                    {/* {scanTime || "正在计算..."} · Status:{" "} */}
-                    {"正在计算..."} · Status:{" "}
-                    <span className="text-emerald-400">Secure</span>
+
+                  {/* 进度条实现 */}
+                  {(scanLoading || scanProgress > 0) && (
+                    <div className="mt-3 space-y-2">
+                      <div className="flex justify-between text-[10px] font-mono text-indigo-300">
+                        <span>PROGRESS</span>
+                        <span>{scanProgress}%</span>
+                      </div>
+                      <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-indigo-500 transition-all duration-500 shadow-[0_0_8px_#6366f1]"
+                          style={{ width: `${scanProgress}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  )}
+
+                  <p className="text-xs text-slate-400 mt-2 capitalize">
+                    Status:{" "}
+                    <span
+                      className={
+                        scanStatus === "completed"
+                          ? "text-emerald-400"
+                          : "text-indigo-300"
+                      }
+                    >
+                      {scanStatus}
+                    </span>
                   </p>
                 </div>
               </div>
             </div>
+
+            {/* 原有的 Suspicious Contract 项 */}
             <div className="p-4 bg-white/5 rounded-2xl border border-white/10 hover:bg-white/10 transition">
               <div className="flex gap-4 items-start">
                 <div className="w-2 h-2 mt-2 rounded-full bg-amber-400 shadow-[0_0_10px_#fbbf24]"></div>
@@ -158,8 +236,17 @@ export default function DashboardContent() {
               </div>
             </div>
           </div>
-          <button className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 rounded-2xl font-bold transition-all shadow-lg shadow-indigo-600/20">
-            Run Deep Scan
+
+          <button
+            onClick={handleRunDeepScan}
+            disabled={scanLoading}
+            className={`w-full py-4 rounded-2xl font-bold transition-all shadow-lg ${
+              scanLoading
+                ? "bg-slate-800 text-slate-500 cursor-not-allowed"
+                : "bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/20 active:scale-95"
+            }`}
+          >
+            {scanLoading ? `Scanning ${scanProgress}%...` : "Run Deep Scan"}
           </button>
         </div>
       </div>
