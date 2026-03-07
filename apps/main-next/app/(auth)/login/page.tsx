@@ -6,7 +6,7 @@ import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { ShieldCheck, ShieldAlert, Loader2, LogOut } from "lucide-react";
 import { getLoginNonce, verifySignature } from "@/actions/auth";
 import { useRouter } from "next/navigation";
-import { LoginSkeleton } from "@/app/src/components/LoginSkeleton";
+import { LoginSkeleton } from "@/app/src/components";
 
 export default function LoginPage() {
   const router = useRouter();
