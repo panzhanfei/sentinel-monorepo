@@ -108,7 +108,7 @@ export default function DashboardContent() {
               <div className="flex gap-3 md:gap-4 items-start">
                 <div
                   className={`w-2 h-2 mt-2 rounded-full ${
-                    scanStatus === "completed"
+                    scanStatus === "COMPLETED"
                       ? "bg-emerald-400 shadow-[0_0_10px_#34d399]"
                       : "bg-indigo-400 animate-bounce"
                   }`}
@@ -137,7 +137,7 @@ export default function DashboardContent() {
                     Status:{" "}
                     <span
                       className={
-                        scanStatus === "completed"
+                        scanStatus === "COMPLETED"
                           ? "text-emerald-400"
                           : "text-indigo-300"
                       }

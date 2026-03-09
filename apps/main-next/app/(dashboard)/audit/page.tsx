@@ -1,17 +1,18 @@
-import { WujieClient } from "@/app/src/components";
+import { WujieClient, AuditSkeleton } from "@/app/src/components";
 
-const Web3React = () => {
+const Audit = () => {
   return (
-    <div>
+    <div className="relative w-full h-full">
       <WujieClient
         name="react19"
         url="http://localhost:3001"
         width="100%"
         height="100%"
         alive={true}
+        fallback={<AuditSkeleton />}
       />
     </div>
   );
 };
 
-export default Web3React;
+export default Audit;

@@ -1,0 +1,34 @@
+{
+  "compilerOptions": {
+    /* 基础目标 */
+    "target": "ES2022", // 生成现代 JS 代码
+    "module": "CommonJS", // 兼容 Node.js 和 Next.js
+    "lib": ["ES2022"],
+    "declaration": true, // 核心：生成 .d.ts 类型声明文件
+    "declarationMap": true, // 允许通过定义跳转到源码
+    "sourceMap": true, // 方便调试
+
+    /* 输出路径 */
+    "outDir": "./dist", // 编译后的 JS 存放在这里
+    "rootDir": "./src", // 源码位置
+    "composite": true, // 开启工程引用（Monorepo 推荐）
+
+    /* 严格性与兼容性 */
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "esModuleInterop": true, // 允许 import React from 'react'
+    "skipLibCheck": true, // 跳过库文件的类型检查，加快编译
+    "forceConsistentCasingInFileNames": true,
+
+    /* 模块解析 */
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    }
+  },
+  "include": ["src/**/*"], // 只编译 src 下的代码
+  "exclude": ["node_modules", "dist"] // 排除目录
+}

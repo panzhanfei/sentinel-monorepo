@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useWujieStore } from "@/stores";
 import { publicClient } from "@/utils";
 import { useQuery } from "@tanstack/react-query";
@@ -5,6 +6,7 @@ import { fetchTransactions } from "@/api/audit";
 
 const App = () => {
   const wujieWeb3Date = useWujieStore((state) => state.wujieWeb3Date);
+  const wujieAfterMount = useWujieStore((state) => state.wujieAfterMount);
   const { address } = wujieWeb3Date;
 
   const { data: txCount } = useQuery({
@@ -19,6 +21,10 @@ const App = () => {
     queryFn: () => fetchTransactions(address!),
     enabled: !!address,
   });
+
+  useEffect(() => {
+    wujieAfterMount?.();
+  }, [wujieAfterMount]);
 
   return (
     <div className="max-w-5xl mx-auto space-y-8">

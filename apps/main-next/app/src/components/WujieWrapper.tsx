@@ -1,12 +1,10 @@
-// components/WujieClient.tsx
 "use client";
 
 import dynamic from "next/dynamic";
-import { ComponentType } from "react";
+import { ComponentType, useState, ReactNode } from "react";
 import { useAccount } from "wagmi";
-import {useWeb3Sync} from "@/app/src/hooks";
+import { useWeb3Sync } from "@/app/src/hooks";
 
-// 定义严谨的类型接口
 export interface WujieProps {
   name: string;
   url: string;
@@ -15,6 +13,9 @@ export interface WujieProps {
   sync?: boolean;
   alive?: boolean;
   props?: Record<string, unknown>;
+  fallback?: ReactNode;
+  activated?: () => void;
+  afterMount?: () => void;
 }
 
 const WujieReact = dynamic(
@@ -24,7 +25,8 @@ const WujieReact = dynamic(
     ),
   {
     ssr: false,
-    loading: () => <p>加载中...</p>,
+    // 这里的 loading 仅用于 JS 资源下载期间，真正的骨架屏我们放在下方手动控制
+    loading: () => null,
   },
 );
 
@@ -36,25 +38,45 @@ export const WujieClient = ({
   sync = true,
   alive = true,
   props = {},
+  fallback,
+  afterMount,
 }: WujieProps) => {
   const { address, isConnected, chain } = useAccount();
+  const [isLoaded, setIsLoaded] = useState(false); // 手动控制状态
+
   useWeb3Sync();
+
+  const handleAfterMount = () => {
+    setTimeout(() => {
+      setIsLoaded(true);
+      afterMount?.();
+    }, 300);
+  };
+
   return (
-    <WujieReact
-      name={name}
-      url={url}
-      width={width}
-      height={height}
-      sync={sync}
-      alive={alive}
-      props={{
-        ...props,
-        web3Date: {
-          address,
-          chain,
-          isConnected,
-        },
-      }}
-    />
+    <div className="relative w-full h-full" style={{ width, height }}>
+      {!isLoaded && (
+        <div className="absolute inset-0 z-5 bg-white">
+          {fallback || <div className="p-4">加载中...</div>}
+        </div>
+      )}
+
+      <WujieReact
+        name={name}
+        url={url}
+        width="100%"
+        height="100%"
+        sync={sync}
+        alive={alive}
+        activated={() => {
+          handleAfterMount();
+        }}
+        props={{
+          ...props,
+          afterMount: handleAfterMount,
+          web3Data: { address, chain, isConnected },
+        }}
+      />
+    </div>
   );
 };

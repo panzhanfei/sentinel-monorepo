@@ -4,6 +4,7 @@ import { devtools } from "zustand/middleware"; // 可选：用于Redux DevTools
 // 1. 定义状态的类型
 interface WujieState {
   wujieWeb3Date: WujieWeb3Date;
+  wujieAfterMount?: () => void;
   updateWujieState: (newWeb3Date: Partial<WujieWeb3Date>) => void;
   reset: () => void;
 }
@@ -17,6 +18,7 @@ export type WujieWeb3Date = {
 export const useWujieStore = create<WujieState>()(
   devtools(
     (set) => ({
+      wujieAfterMount: window.$wujie?.props?.afterMount,
       wujieWeb3Date: window.$wujie?.props?.web3Date || {},
       updateWujieState: (newWeb3Date: WujieWeb3Date) =>
         set(

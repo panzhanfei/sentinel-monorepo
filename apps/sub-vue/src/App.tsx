@@ -3,12 +3,14 @@ import { viemManager } from "@/utils/viemClients";
 import { useScanner } from "@/composables";
 import { AssetCard } from "@/components";
 import { TokenManager } from "@/AssetDashboard/TokenManager";
+import { useWeb3Store } from "@/stores/";
 
 export default defineComponent({
   name: "App",
   setup() {
     const blockNumbers = ref<Record<string, string>>({});
     const { balances } = useScanner();
+    const web3Store = useWeb3Store();
 
     const fetchHeights = async () => {
       const clients = viemManager.getAllClients();
@@ -19,7 +21,10 @@ export default defineComponent({
       }
     };
 
-    onMounted(fetchHeights);
+    onMounted(() => {
+      fetchHeights();
+      web3Store.wujieAfterMount?.();
+    });
 
     return () => (
       <div class="max-w-5xl mx-auto h-screen flex flex-col pb-30">

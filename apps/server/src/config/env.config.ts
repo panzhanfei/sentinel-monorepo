@@ -19,8 +19,8 @@ const envSchema = z.object({
     .default('development'),
   PORT: z.preprocess((val) => val ?? '4000', z.string().transform(Number)),
 
-  // 数据库配置
-  DATABASE_URL: z.string().min(1, 'DATABASE_URL必须提供'),
+  // // 数据库配置
+  // DATABASE_URL: z.string().min(1, 'DATABASE_URL必须提供'),
 
   // JWT配置
   JWT_SECRET: z

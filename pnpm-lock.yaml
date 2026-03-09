@@ -122,9 +122,6 @@ importers:
 
   apps/server:
     dependencies:
-      '@prisma/client':
-        specifier: 6.2.1
-        version: 6.2.1(prisma@6.2.1)
       '@sentinel/database':
         specifier: workspace:^
         version: link:../../packages/database
@@ -167,6 +164,9 @@ importers:
       redis:
         specifier: ^5.10.0
         version: 5.10.0
+      viem:
+        specifier: 2.22.14
+        version: 2.22.14(typescript@5.9.3)(zod@3.25.76)
       zod:
         specifier: ^3.23.8
         version: 3.25.76
@@ -195,9 +195,6 @@ importers:
       '@types/node':
         specifier: ^25.1.0
         version: 25.1.0
-      prisma:
-        specifier: 6.2.1
-        version: 6.2.1
       ts-node-dev:
         specifier: ^2.0.0
         version: 2.0.0(@types/node@25.1.0)(typescript@5.9.3)
@@ -320,12 +317,21 @@ importers:
 
   packages/database:
     dependencies:
+      '@prisma/client':
+        specifier: 6.2.1
+        version: 6.2.1(prisma@6.2.1)
       ioredis:
         specifier: ^5.4.1
         version: 5.9.2
     devDependencies:
+      '@types/node':
+        specifier: ^25.3.5
+        version: 25.3.5
+      prisma:
+        specifier: 6.2.1
+        version: 6.2.1
       typescript:
-        specifier: ^5.0.0
+        specifier: ^5.9.3
         version: 5.9.3
 
   packages/eslint-config:
@@ -1505,6 +1511,9 @@ packages:
 
   '@types/node@25.1.0':
     resolution: {integrity: sha512-t7frlewr6+cbx+9Ohpl0NOTKXZNV9xHRmNOvql47BFJKcEG1CxtxlPEEe+gR9uhVWM4DwhnvTF110mIL4yP9RA==}
+
+  '@types/node@25.3.5':
+    resolution: {integrity: sha512-oX8xrhvpiyRCQkG1MFchB09f+cXftgIXb3a7UUa4Y3wpmZPw5tyZGTLWhlESOLq1Rq6oDlc8npVU2/9xiCuXMA==}
 
   '@types/qs@6.14.0':
     resolution: {integrity: sha512-eOunJqu0K1923aExK6y8p6fsihYEn/BYuQ4g0CxAAgFc4b/ZLN4CrsRZ55srTdqoiLzU2B2evC+apEIxprEzkQ==}
@@ -4041,6 +4050,9 @@ packages:
   undici-types@7.16.0:
     resolution: {integrity: sha512-Zz+aZWSj8LE6zoxD+xrjh4VfkIG8Ya6LvYkZqtUQGJPZjYl53ypCaUwWqo7eI0x66KBGeRo+mlBEkMSeSZ38Nw==}
 
+  undici-types@7.18.2:
+    resolution: {integrity: sha512-AsuCzffGHJybSaRrmr5eHr81mwJU3kjw6M+uprWvCXiNeN9SOGwQ3Jn8jb8m3Z6izVgknn1R0FTCEAP2QrLY/w==}
+
   undici@7.22.0:
     resolution: {integrity: sha512-RqslV2Us5BrllB+JeiZnK4peryVTndy9Dnqq62S3yYRRTj0tFQCwEniUy2167skdGOy3vqRzEvl1Dm4sV2ReDg==}
     engines: {node: '>=20.18.1'}
@@ -5257,6 +5269,10 @@ snapshots:
   '@types/node@25.1.0':
     dependencies:
       undici-types: 7.16.0
+
+  '@types/node@25.3.5':
+    dependencies:
+      undici-types: 7.18.2
 
   '@types/qs@6.14.0': {}
 
@@ -8067,6 +8083,8 @@ snapshots:
   undici-types@6.21.0: {}
 
   undici-types@7.16.0: {}
+
+  undici-types@7.18.2: {}
 
   undici@7.22.0: {}
 

@@ -20,7 +20,7 @@ export default function DocsPage() {
         <aside className="w-full md:w-72 p-8 md:sticky md:top-0 md:h-screen border-r border-slate-100 bg-slate-50/50">
           <Link
             href="/"
-            className="flex items-center gap-2 mb-10 text-indigo-600 font-bold hover:translate-x-[-4px] transition-transform"
+            className="flex items-center gap-2 mb-10 text-indigo-600 font-bold hover:-translate-x-1 transition-transform"
           >
             <ArrowLeft className="w-4 h-4" /> Back to Home
           </Link>
