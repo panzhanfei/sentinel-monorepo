@@ -19,13 +19,13 @@ export async function generateAIVerdict(
 
   // 2. 构造 Prompt
   const prompt = `你是一个 Web3 安全 AI 审计官。
-用户地址: ${address}
-资产风险: ${riskContext || "暂无活动风险，表现完美"}
+          用户地址: ${address}
+          资产风险: ${riskContext || "暂无活动风险，表现完美"}
 
-任务：
-1. 分析潜在风险。如果有高额授权，请用警告语气；如果没有，请夸奖用户。
-2. 语言风格：冷酷、精准、专业。
-3. 严格限制在 50 字以内。`;
+          任务：
+          1. 分析潜在风险。如果有高额授权，请用警告语气；如果没有，请夸奖用户。
+          2. 语言风格：冷酷、精准、专业。
+          3. 严格限制在 50 字以内。`;
 
   try {
     const response = await fetch(`${apiUrl}/chat/completions`, {

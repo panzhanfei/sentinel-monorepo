@@ -22,16 +22,6 @@ export function middleware(request: NextRequest) {
   if (session && isAuthRoute) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
-
-  // 4. 核心逻辑 C：根路径处理
-  if (isRoot) {
-    if (session) {
-      return NextResponse.redirect(new URL("/dashboard", request.url));
-    } else {
-      return NextResponse.next(); // 允许访问根页面，由 app/page.tsx 自行分发
-    }
-  }
-
   return NextResponse.next();
 }
 

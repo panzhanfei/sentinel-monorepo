@@ -19,5 +19,12 @@ export function AnimatedNumber({ value }: { value: number }) {
     count.set(value);
   }, [value, count]);
 
-  return <motion.span>{displayValue}</motion.span>;
+  return (
+    <motion.span
+      className="inline-block tabular-nums font-mono"
+      style={{ fontVariantNumeric: "tabular-nums" }}
+    >
+      {displayValue}
+    </motion.span>
+  );
 }

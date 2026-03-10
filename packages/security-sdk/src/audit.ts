@@ -17,7 +17,7 @@ export interface AllowanceResult {
   rawAllowance: string; // 原始 BigInt 字符串
 }
 
-const publicClient = createPublicClient({
+export const publicClient = createPublicClient({
   chain: mainnet,
   transport: http('http://127.0.0.1:8545'),
   // transport: http(process.env.RPC_URL || 'http://127.0.0.1:8545'), // 确保连上 Anvil

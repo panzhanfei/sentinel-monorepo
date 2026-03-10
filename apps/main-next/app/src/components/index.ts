@@ -5,3 +5,7 @@ export * from "./SidebarNav";
 export * from "./AuthGuard";
 export * from "./skeletons";
 export * from "./AnimatedNumber";
+export * from "./TOSModal";
+export * from "./NavBar";
+export * from "./HeroSection";
+export * from "./FeaturesSection";

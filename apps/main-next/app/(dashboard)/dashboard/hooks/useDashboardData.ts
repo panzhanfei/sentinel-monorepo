@@ -10,6 +10,7 @@ import {
 } from "wagmi";
 import { erc20Abi, formatUnits, Address } from "viem";
 import { chainToCoinGeckoId, TOKEN_WHITELIST } from "@/app/src/config";
+import { publicClient } from "@sentinel/security-sdk";
 
 // --- 类型定义 ---
 export type ScanStatus =
@@ -126,6 +127,22 @@ export function useDashboardData() {
     return () => clearInterval(timer);
   }, [currentChainId]);
 
+  useEffect(() => {
+    const initDashboard = async () => {
+      if (!userAddress) return;
+      const res = await fetch(`/api/scan/latest?address=${userAddress}`);
+      if (res.ok) {
+        const lastJob = await res.json();
+        if (lastJob?.result) {
+          setScanResult(lastJob.result);
+          setScanStatus("COMPLETED");
+          setScanProgress(100);
+        }
+      }
+    };
+    initDashboard();
+  }, [userAddress]);
+
   // 6. 核心修改：基于 Job ID 的状态轮询
   const checkJobStatus = useCallback(async () => {
     if (!currentJobId.current) return;
@@ -240,10 +257,6 @@ export function useDashboardData() {
     spenderAddress: Address,
   ) => {
     try {
-      console.log(
-        `正在撤销: Token[${tokenAddress}] Spender[${spenderAddress}]`,
-      );
-
       const hash = await writeContractAsync({
         address: tokenAddress,
         abi: erc20Abi,
@@ -251,8 +264,13 @@ export function useDashboardData() {
         args: [spenderAddress, BigInt(0)], // 💡 核心逻辑：将授权额度设为 0
       });
 
-      console.log("交易已提交，哈希:", hash);
-
+      const receipt = await publicClient.waitForTransactionReceipt({ hash });
+      if (receipt.status === "success") {
+        console.log("✅ 撤销成功，正在触发深度扫描同步状态...");
+        handleRunDeepScan();
+      } else {
+        console.error("❌ 交易被拒绝或执行失败（Reverted）");
+      }
       return hash;
     } catch (error) {
       console.error("撤销操作失败:", error);
