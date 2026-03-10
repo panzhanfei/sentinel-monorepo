@@ -13,6 +13,7 @@
   "license": "ISC",
   "dependencies": {
     "@sentinel/database": "workspace:^",
+    "@sentinel/security-sdk": "workspace:*",
     "add": "^2.0.6",
     "bcryptjs": "^3.0.3",
     "cookie-parser": "^1.4.7",

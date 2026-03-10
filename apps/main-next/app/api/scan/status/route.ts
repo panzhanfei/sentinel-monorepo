@@ -1,47 +1,48 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@sentinel/database";
-import { redis } from "@/lib/redis";
 
-export async function GET(req: Request) {
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(req.url);
+    const { searchParams } = new URL(request.url);
     const address = searchParams.get("address")?.toLowerCase();
-    if (!address)
-      return NextResponse.json({ error: "Address required" }, { status: 400 });
 
-    const taskKey = `sentinel:task:${address}`;
-
-    // 1. 尝试从缓存获取（应对前端 1s/次的轮询频率）
-    const cacheData = await redis.hgetall(taskKey);
-    if (cacheData && Object.keys(cacheData).length > 0) {
-      return NextResponse.json({
-        status: cacheData.status,
-        progress: parseInt(cacheData.progress || "0"),
-        source: "cache",
-      });
+    if (!address) {
+      return NextResponse.json(
+        { error: "Address is required" },
+        { status: 400 },
+      );
     }
 
-    // 2. 缓存失效时，从数据库获取最新一条记录
+    // 核心修复：通过关联的 user 模型来匹配 address
     const latestJob = await prisma.job.findFirst({
-      where: { user: { address } },
+      where: {
+        user: {
+          address: address, // 在 User 表里匹配 address
+        },
+      },
       orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        status: true,
+        progress: true,
+        result: true,
+        error: true,
+      },
     });
 
-    if (!latestJob) return NextResponse.json({ status: "not_found" });
+    if (!latestJob) {
+      return NextResponse.json({ status: "IDLE" });
+    }
 
-    // 3. 将数据库结果回填缓存（平滑过渡）
-    await redis.hset(taskKey, {
-      status: latestJob.status,
-      progress: latestJob.progress.toString(),
-    });
-
-    return NextResponse.json({
-      status: latestJob.status,
-      progress: latestJob.progress,
-      result: latestJob.result,
-      source: "database",
-    });
+    return NextResponse.json(latestJob);
   } catch (error) {
-    return NextResponse.json({ error: "Internal Error" }, { status: 500 });
+    console.error("Status check failed:", error);
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 },
+    );
   }
 }

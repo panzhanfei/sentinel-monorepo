@@ -1,9 +1,10 @@
 import { redis } from '@/client';
 import { prisma } from '@sentinel/database';
+import { batchAuditAllowances } from '@sentinel/security-sdk';
 import { createPublicClient, http, formatEther } from 'viem';
 import { mainnet } from 'viem/chains';
 
-// 初始化 viem 客户端 (建议使用你的 RPC 节点，如 Alchemy/Infura)
+// 初始化 viem 客户端
 const client = createPublicClient({
   chain: mainnet,
   transport: http(
@@ -16,24 +17,23 @@ export async function startWorker() {
 
   while (true) {
     try {
-      // 1. 获取任务 (Redis 依然是消息中心)
+      // 1. 获取任务 (从 Redis 阻塞式弹出)
       const task = await redis.brpop('sentinel:scan_queue', 0);
       if (!task) continue;
 
       const { jobId, address } = JSON.parse(task[1]);
       const cacheKey = `sentinel:task:${address.toLowerCase()}`;
-      console.log(`[${jobId}] 正在审计地址: ${address}`);
+      console.log(`[${jobId}] 正在深度审计地址: ${address}`);
 
       try {
-        // --- 阶段 1: 更新为运行中 ---
+        // --- 阶段 1: 标记启动 (15%) ---
         await prisma.job.update({
           where: { id: jobId },
           data: { status: 'RUNNING', progress: 15 },
         });
         await redis.hset(cacheKey, { status: 'RUNNING', progress: '15' });
 
-        // --- 阶段 2: 执行真实扫描 (接入 Viem) ---
-        // 并行查询余额和交易计数
+        // --- 阶段 2: 链上基础数据抓取 (40%) ---
         const [balance, txCount] = await Promise.all([
           client.getBalance({ address: address as `0x${string}` }),
           client.getTransactionCount({ address: address as `0x${string}` }),
@@ -41,37 +41,68 @@ export async function startWorker() {
 
         await prisma.job.update({
           where: { id: jobId },
-          data: { progress: 60 },
+          data: { progress: 40 },
         });
-        await redis.hset(cacheKey, { progress: '60' });
+        await redis.hset(cacheKey, { progress: '40' });
 
-        // 基础风险逻辑
+        // --- 阶段 3: 深度授权审计 (接入 Security SDK) (80%) ---
+        // 这是今天最硬核的任务：调用你刚刚写的 Multicall 逻辑
+        const allowanceAudit = await batchAuditAllowances(
+          address as `0x${string}`
+        );
+
+        await prisma.job.update({
+          where: { id: jobId },
+          data: { progress: 80 },
+        });
+        await redis.hset(cacheKey, { progress: '80' });
+
+        // --- 阶段 4: 风险引擎评估 ---
+        // 这里我们可以预留给明天的 AI，现在先做基础逻辑判定
+        const hasHighRiskAllowance = allowanceAudit.some(
+          (a) => parseFloat(a.allowance) > 1000000 // 假设大于 100w 的授权为高危
+        );
+
         const isNewWallet = txCount < 5;
+        let finalRisk = 'LOW';
+        if (isNewWallet) finalRisk = 'MEDIUM';
+        if (hasHighRiskAllowance) finalRisk = 'HIGH';
+
         const scanResult = {
           eth_balance: formatEther(balance),
           tx_count: txCount,
-          risk: isNewWallet ? 'MEDIUM' : 'LOW',
-          details: isNewWallet
-            ? '新地址交易较少，建议注意授权安全'
-            : '活跃地址，信用记录良好',
+          allowances: allowanceAudit, // 这里存入了所有代币的授权详情
+          risk: finalRisk,
+          details: {
+            isNewWallet,
+            riskCount: allowanceAudit.filter((a) => parseFloat(a.allowance) > 0)
+              .length,
+            message: hasHighRiskAllowance
+              ? '检测到无限授权，存在资产被盗风险！'
+              : '授权状态良好。',
+          },
           timestamp: Date.now(),
         };
 
-        // --- 阶段 3: 结算完成 (同步更新 DB 和 Redis) ---
+        // --- 阶段 5: 结算完成 (100%) ---
+        // 注意：Prisma 的 JSON 字段会自动处理 scanResult 对象
         await prisma.job.update({
           where: { id: jobId },
-          data: { status: 'COMPLETED', progress: 100, result: scanResult },
+          data: {
+            status: 'COMPLETED',
+            progress: 100,
+            result: scanResult as any, // 强制断言，Prisma 会处理 JSONB
+          },
         });
 
-        // 确保 Redis 状态与前端 scanStatus 枚举一致
         await redis.hset(cacheKey, {
           status: 'COMPLETED',
           progress: '100',
-          risk: scanResult.risk,
+          risk: finalRisk,
         });
-        await redis.expire(cacheKey, 3600); // 1小时后自动清理缓存
+        await redis.expire(cacheKey, 3600);
 
-        console.log(`[${jobId}] 链上数据抓取成功`);
+        console.log(`[${jobId}] 深度审计成功 - 风险等级: ${finalRisk}`);
       } catch (innerError) {
         console.error(`[${jobId}] 扫描任务执行失败:`, innerError);
         await prisma.job.update({
@@ -82,7 +113,7 @@ export async function startWorker() {
       }
     } catch (outerError) {
       console.error('Redis 队列监听异常:', outerError);
-      await new Promise((res) => setTimeout(res, 1000)); // 避免重试过快
+      await new Promise((res) => setTimeout(res, 2000)); // 延长重试，保护 RPC
     }
   }
 }

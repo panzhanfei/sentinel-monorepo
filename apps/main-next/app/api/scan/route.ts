@@ -1,66 +1,146 @@
-import { NextResponse } from "next/server";
-import { prisma } from "@sentinel/database";
-import { redis } from "@/lib/redis";
+import { NextRequest, NextResponse } from "next/server";
+import { prisma, Prisma } from "@sentinel/database";
+import { batchAuditAllowances, AllowanceResult } from "@sentinel/security-sdk";
+import { Address } from "viem";
+import { generateAIVerdict } from "./ai-service";
 
-export async function POST(req: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const { address } = await req.json();
-    if (!address)
-      return NextResponse.json({ error: "Address required" }, { status: 400 });
+    const { address } = await request.json();
 
-    const cleanAddress = address.toLowerCase();
-    const taskKey = `sentinel:task:${cleanAddress}`;
-
-    // 1. 幂等性检查：如果该地址已有活跃任务，直接返回
-    const activeJob = await prisma.job.findFirst({
-      where: {
-        user: { address: cleanAddress },
-        status: { in: ["PENDING", "RUNNING"] },
-      },
-    });
-
-    if (activeJob) {
-      return NextResponse.json({
-        jobId: activeJob.id,
-        message: "Task already active",
-      });
+    if (!address) {
+      return NextResponse.json(
+        { error: "Address is required" },
+        { status: 400 },
+      );
     }
 
-    // 2. 确保用户存在 (Upsert)
     const user = await prisma.user.upsert({
-      where: { address: cleanAddress },
+      where: { address: address.toLowerCase() },
       update: {},
-      create: { address: cleanAddress },
+      create: { address: address.toLowerCase() },
     });
 
-    // 3. 创建持久化任务记录
     const job = await prisma.job.create({
       data: {
         userId: user.id,
-        type: "SECURITY_SCAN",
+        type: "SCAN_SECURITY",
         status: "PENDING",
         progress: 0,
       },
     });
 
-    // 4. 初始化 Redis 状态（供前端 GET 接口秒回，解决 0 进度闪烁）
-    await redis.hset(taskKey, {
-      jobId: job.id,
-      address: cleanAddress,
-      status: "PENDING",
-      progress: "0",
+    runSecurityScan(job.id, address.toLowerCase() as Address).catch((err) => {
+      console.error(`[Security Worker] Job ${job.id} failed:`, err);
     });
-    await redis.expire(taskKey, 3600); // 1小时缓存
 
-    // 5. 派发任务到队列
-    await redis.lpush(
-      "sentinel:scan_queue",
-      JSON.stringify({ jobId: job.id, address: cleanAddress }),
+    return NextResponse.json({ jobId: job.id });
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Failed to start scan" },
+      { status: 500 },
+    );
+  }
+}
+
+async function runSecurityScan(jobId: string, address: Address) {
+  try {
+    // --- 1. 初始化 & 开始链上扫描 ---
+    console.log(`[Security Worker] Starting scan for ${address}`);
+    await prisma.job.update({
+      where: { id: jobId },
+      data: { status: "RUNNING", progress: 10 },
+    });
+
+    // 💡 动态扫描：这一步现在会自动抓取你在 Remix/Anvil 里的所有授权记录
+    const allowances: AllowanceResult[] = await batchAuditAllowances(address);
+    console.log(
+      `🚀 [Security Worker] Job ${jobId} fetched ${allowances.length} allowances.`,
     );
 
-    return NextResponse.json({ success: true, jobId: job.id });
+    if (allowances.length === 0) {
+      // 没有任何授权，直接标记为完成
+      await prisma.job.update({
+        where: { id: jobId },
+        data: {
+          status: "COMPLETED",
+          progress: 100,
+          result: {
+            risk: "LOW",
+            allowances: [],
+            details: {
+              riskCount: 0,
+              message: "No active allowances found. Great job!",
+              timestamp: Date.now(),
+            },
+          } as unknown as Prisma.JsonObject,
+        },
+      });
+      return;
+    } else {
+      // 扫描完成，进度推到 40%
+      await prisma.job.update({
+        where: { id: jobId },
+        data: { progress: 40 },
+      });
+
+      // --- 2. AI 诊断阶段 ---
+      // 给用户一点“AI 正在思考”的反馈感，避免进度条闪现
+      await prisma.job.update({
+        where: { id: jobId },
+        data: { progress: 60 },
+      });
+
+      // 💡 传递扫描到的授权数据给 AI
+      const aiVerdict = await generateAIVerdict(address, allowances);
+
+      // AI 诊断结束，进度推到 85%
+      await prisma.job.update({
+        where: { id: jobId },
+        data: { progress: 85 },
+      });
+
+      // --- 3. 结果筛选与持久化 ---
+      // 过滤出真正有风险的（授权额度 > 0）
+      const activeRisks = allowances.filter(
+        (a) => BigInt(a.rawAllowance) > BigInt(0),
+      );
+
+      // 最后更新：状态改为 COMPLETED，进度 100%
+      await prisma.job.update({
+        where: { id: jobId },
+        data: {
+          status: "COMPLETED",
+          progress: 100,
+          result: {
+            risk:
+              activeRisks.length > 5
+                ? "HIGH"
+                : activeRisks.length > 0
+                  ? "MEDIUM"
+                  : "LOW",
+            allowances: allowances, // 保存全量数据，方便前端展示
+            details: {
+              riskCount: activeRisks.length,
+              message: aiVerdict,
+              timestamp: Date.now(),
+            },
+          } as unknown as Prisma.JsonObject,
+        },
+      });
+    }
   } catch (error) {
-    console.error("Scan API Error:", error);
-    return NextResponse.json({ error: "Internal Error" }, { status: 500 });
+    console.error(`[Security Worker] Job ${jobId} Error:`, error);
+    await prisma.job.update({
+      where: { id: jobId },
+      data: {
+        status: "FAILED",
+        progress: 0, // 失败后进度归零
+        error:
+          error instanceof Error
+            ? error.message
+            : "Blockchain connection failed",
+      },
+    });
   }
 }

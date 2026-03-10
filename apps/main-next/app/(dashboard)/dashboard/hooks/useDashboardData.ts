@@ -1,11 +1,17 @@
 "use client";
 
-import { useEffect, useState, useRef, useMemo, useCallback } from "react";
-import { useAccount, useBalance, useReadContracts, useChainId } from "wagmi";
-import { erc20Abi, formatUnits } from "viem";
+import { useState, useRef, useMemo, useCallback, useEffect } from "react";
+import {
+  useAccount,
+  useBalance,
+  useReadContracts,
+  useChainId,
+  useWriteContract,
+} from "wagmi";
+import { erc20Abi, formatUnits, Address } from "viem";
 import { chainToCoinGeckoId, TOKEN_WHITELIST } from "@/app/src/config";
 
-// 定义与后端严格一致的状态枚举
+// --- 类型定义 ---
 export type ScanStatus =
   | "IDLE"
   | "PENDING"
@@ -13,177 +19,266 @@ export type ScanStatus =
   | "COMPLETED"
   | "FAILED";
 
+export interface AllowanceAudit {
+  tokenSymbol: string;
+  tokenAddress: string;
+  spenderName: string;
+  spenderAddress: string;
+  allowance: string;
+  rawAllowance: string;
+}
+
+export interface ScanResultData {
+  eth_balance: string;
+  tx_count: number;
+  allowances: AllowanceAudit[];
+  risk: "LOW" | "MEDIUM" | "HIGH";
+  details: { isNewWallet: boolean; riskCount: number; message: string };
+  timestamp: number;
+}
+
 export function useDashboardData() {
-  const { address } = useAccount();
-  const chainId = useChainId();
+  // 1. 获取账户状态
+  const {
+    address: userAddress,
+    isConnected,
+    isReconnecting,
+    status: walletStatus,
+    connector: activeConnector,
+  } = useAccount();
+  const currentChainId = useChainId();
+  const { writeContractAsync } = useWriteContract();
+  // 🛡️ Aave Wallet 连接防护盾
+  const isAccountReady = useMemo(() => {
+    return (
+      isConnected &&
+      !isReconnecting &&
+      walletStatus === "connected" &&
+      !!activeConnector
+    );
+  }, [isConnected, isReconnecting, walletStatus, activeConnector]);
 
-  // 根据当前链获取配置
   const config = useMemo(() => {
-    return TOKEN_WHITELIST[chainId] || TOKEN_WHITELIST[1];
-  }, [chainId]);
+    return TOKEN_WHITELIST[currentChainId] || TOKEN_WHITELIST[1];
+  }, [currentChainId]);
 
-  // 1. 获取原生 ETH 余额
+  // 2. 原生余额查询
   const { data: ethBalanceData, isFetching: isEthFetching } = useBalance({
-    address,
+    address: isAccountReady ? userAddress : undefined,
+    query: {
+      enabled: isAccountReady && !!userAddress,
+      retry: 0,
+    },
   });
 
-  // 2. 批量获取 ERC-20 余额
-  const { data: tokenData, isFetching: isTokenFetching } = useReadContracts({
-    contracts: [
-      {
-        address: config.USDC,
-        abi: erc20Abi,
-        functionName: "balanceOf",
-        args: [address as `0x${string}`],
+  // 3. 代币余额查询
+  const { data: erc20BatchData, isFetching: isTokenFetching } =
+    useReadContracts({
+      contracts: [
+        {
+          address: config.USDC,
+          abi: erc20Abi,
+          functionName: "balanceOf",
+          args: [userAddress as `0x${string}`],
+        },
+      ],
+      query: {
+        enabled: isAccountReady && !!userAddress,
+        retry: 0,
       },
-    ],
-    query: { enabled: !!address },
-  });
+    });
 
-  // 3. 价格与扫描状态
+  // 4. 业务状态管理
   const [ethPrice, setEthPrice] = useState(0);
   const [priceChange, setPriceChange] = useState(0);
   const [scanProgress, setScanProgress] = useState(0);
   const [scanStatus, setScanStatus] = useState<ScanStatus>("IDLE");
+  const [scanResult, setScanResult] = useState<ScanResultData | null>(null);
 
-  // 使用 useRef 管理定时器，确保清理彻底
-  const pollTimer = useRef<NodeJS.Timeout | null>(null);
+  // 关键：使用 Ref 记录当前扫描的 Job ID 和定时器
+  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const currentJobId = useRef<string | null>(null);
 
-  // 4. 资产解析与汇总
-  const portfolio = useMemo(() => {
-    const ethVal = ethBalanceData
-      ? Number(formatUnits(ethBalanceData.value, ethBalanceData.decimals))
-      : 0;
-
-    const usdcRaw = (tokenData?.[0]?.result as bigint) || BigInt(0);
-    const usdcVal = Number(formatUnits(usdcRaw, 6));
-
-    const totalValue = ethVal * ethPrice + usdcVal * 1.0;
-
-    return {
-      totalValue,
-      assets: [
-        {
-          name: "Ethereum",
-          symbol: "ETH",
-          val: Number(ethVal.toFixed(4)),
-          price: `${ethPrice.toLocaleString()}`,
-          color: "bg-indigo-500",
-        },
-        {
-          name: "USD Coin",
-          symbol: "USDC",
-          val: Number(usdcVal.toFixed(2)),
-          price: "$1.00",
-          color: "bg-blue-400",
-        },
-      ],
-    };
-  }, [ethBalanceData, tokenData, ethPrice]);
-
-  // 5. 价格轮询
-  useEffect(() => {
-    const fetchPrice = async () => {
-      const cgId = chainToCoinGeckoId[chainId] || "ethereum";
-      try {
-        const res = await fetch(`/api/price?ids=${cgId}`);
-        const data = await res.json();
-        if (data[cgId]) {
-          setEthPrice(data[cgId].usd);
-          setPriceChange(data[cgId].usd_24h_change);
-        }
-      } catch (e) {
-        console.error("Price fetch failed");
-      }
-    };
-    fetchPrice();
-    const interval = setInterval(fetchPrice, 60000);
-    return () => clearInterval(interval);
-  }, [chainId]);
-
-  // 6. 停止轮询的函数
   const stopPolling = useCallback(() => {
-    if (pollTimer.current) {
-      clearInterval(pollTimer.current);
-      pollTimer.current = null;
+    if (pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current);
+      pollIntervalRef.current = null;
     }
   }, []);
 
-  // 7. 检查状态的函数 (对接你重构的 /api/status)
-  const checkScanStatus = useCallback(async () => {
-    if (!address) return;
-    try {
-      // 路由务必与你刚才写的 status/route.ts 保持一致
-      const res = await fetch(
-        `/api/scan/status?address=${address.toLowerCase()}`,
-      );
-      const data = await res.json();
+  // 5. 价格轮询 (保持不变)
+  useEffect(() => {
+    const fetchMarketData = async () => {
+      const cgId = chainToCoinGeckoId[currentChainId] || "ethereum";
+      try {
+        const pRes = await fetch(`/api/price?ids=${cgId}`);
+        const pData = await pRes.json();
+        if (pData[cgId]) {
+          setEthPrice(pData[cgId].usd);
+          setPriceChange(pData[cgId].usd_24h_change);
+        }
+      } catch (err) {
+        console.warn("Market sync deferred");
+      }
+    };
+    fetchMarketData();
+    const timer = setInterval(fetchMarketData, 60000);
+    return () => clearInterval(timer);
+  }, [currentChainId]);
 
+  // 6. 核心修改：基于 Job ID 的状态轮询
+  const checkJobStatus = useCallback(async () => {
+    if (!currentJobId.current) return;
+
+    try {
+      // 增加时间戳防止任何形式的缓存
+      const response = await fetch(
+        `/api/scan/${currentJobId.current}?t=${Date.now()}`,
+        {
+          cache: "no-store",
+          headers: {
+            "Cache-Control": "no-cache",
+            Pragma: "no-cache",
+          },
+        },
+      );
+
+      if (!response.ok) throw new Error("Fetch failed");
+      const data = await response.json();
+
+      // 根据 [jobId]/route.ts 返回的结构更新
       if (data.status) {
-        setScanStatus(data.status as ScanStatus);
+        setScanStatus(data.status);
         setScanProgress(data.progress || 0);
 
-        // 如果后端返回完成或失败，停止请求
-        if (data.status === "COMPLETED" || data.status === "FAILED") {
+        if (data.status === "COMPLETED") {
+          // 因为后端直接返回了 job 对象，所以这里直接取 data.result
+          setScanResult(data.result);
+          stopPolling();
+        } else if (data.status === "FAILED") {
           stopPolling();
         }
       }
-    } catch (error) {
-      console.error("Polling error:", error);
+    } catch (e) {
+      console.error("Polling error:", e);
       setScanStatus("FAILED");
       stopPolling();
     }
-  }, [address, stopPolling]);
+  }, [stopPolling]);
 
-  // 8. 发起深度扫描
+  // 7. 发起深度扫描
   const handleRunDeepScan = async () => {
-    if (!address || scanStatus === "PENDING" || scanStatus === "RUNNING")
+    if (!userAddress || scanStatus === "PENDING" || scanStatus === "RUNNING")
       return;
 
-    // 立即进入等待状态，防止重复点击
+    // 重置状态
     setScanStatus("PENDING");
     setScanProgress(0);
+    setScanResult(null);
+    currentJobId.current = null;
 
     try {
-      const res = await fetch("/api/scan", {
+      const startRes = await fetch("/api/scan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ address }),
+        body: JSON.stringify({ address: userAddress }),
       });
 
-      if (res.ok) {
-        // 发起成功后，开始高频轮询
-        pollTimer.current = setInterval(checkScanStatus, 1500);
+      if (startRes.ok) {
+        const { jobId } = await startRes.json();
+        if (jobId) {
+          currentJobId.current = jobId; // 记录 ID
+          // 立即执行一次检查，然后开启轮询
+          checkJobStatus();
+          pollIntervalRef.current = setInterval(checkJobStatus, 1500);
+        } else {
+          throw new Error("No jobId returned");
+        }
       } else {
         setScanStatus("FAILED");
       }
-    } catch (error) {
-      console.error("Start scan failed:", error);
+    } catch (err) {
+      console.error("Scan start error:", err);
       setScanStatus("FAILED");
     }
   };
 
-  // 9. 监听地址变化：如果切换账号，重置状态
-  useEffect(() => {
-    stopPolling();
-    setScanStatus("IDLE");
-    setScanProgress(0);
-  }, [address, stopPolling]);
+  // 8. 衍生计算：资产组合
+  const portfolioSummary = useMemo(() => {
+    const ethValue = ethBalanceData
+      ? Number(formatUnits(ethBalanceData.value, ethBalanceData.decimals))
+      : 0;
+    const usdcRaw = (erc20BatchData?.[0]?.result as bigint) || BigInt(0);
+    const usdcValue = Number(formatUnits(usdcRaw, 6));
 
-  // 销毁组件时清理定时器
-  useEffect(() => {
-    return () => stopPolling();
-  }, [stopPolling]);
+    return {
+      totalUsd: ethValue * ethPrice + usdcValue * 1.0,
+      assets: [
+        {
+          name: "Ethereum",
+          symbol: "ETH",
+          val: Number(ethValue.toFixed(4)),
+          price: `${ethPrice.toLocaleString()}`,
+          color: "bg-indigo-500",
+          address: "0xE94FF2028d97Ff74A1930f7701a1bD84B22c6C7e",
+        },
+        {
+          name: "USD Coin",
+          symbol: "USDC",
+          val: Number(usdcValue.toFixed(2)),
+          price: "$1.00",
+          color: "bg-blue-400",
+          address: "0xE94FF2028d97Ff74A1930f7701a1bD84B22c6C7e",
+        },
+      ],
+    };
+  }, [ethBalanceData, erc20BatchData, ethPrice]);
 
+  // 撤销授权函数
+  const handleRevoke = async (
+    tokenAddress: Address,
+    spenderAddress: Address,
+  ) => {
+    try {
+      console.log(
+        `正在撤销: Token[${tokenAddress}] Spender[${spenderAddress}]`,
+      );
+
+      const hash = await writeContractAsync({
+        address: tokenAddress,
+        abi: erc20Abi,
+        functionName: "approve",
+        args: [spenderAddress, BigInt(0)], // 💡 核心逻辑：将授权额度设为 0
+      });
+
+      console.log("交易已提交，哈希:", hash);
+
+      return hash;
+    } catch (error) {
+      console.error("撤销操作失败:", error);
+      throw error;
+    }
+  };
+
+  const suspiciousTarget = scanResult?.allowances?.[0]?.spenderName || "None";
+  const suspiciousCount =
+    scanResult?.allowances?.filter((a) => parseFloat(a.allowance) > 0).length ||
+    0;
+  const scanLoading = scanStatus === "PENDING" || scanStatus === "RUNNING";
   return {
-    address,
+    address: userAddress,
+    isConnected: isAccountReady,
     isFetching: isEthFetching || isTokenFetching,
-    assets: portfolio.assets,
-    totalValue: portfolio.totalValue,
+    assets: portfolioSummary.assets,
+    totalValue: portfolioSummary.totalUsd,
     priceChange,
     scanProgress,
     scanStatus,
-    scanLoading: scanStatus === "PENDING" || scanStatus === "RUNNING",
+    scanResult,
+    suspiciousCount,
+    suspiciousTarget,
+    scanLoading,
     handleRunDeepScan,
+    handleRevoke,
   };
 }

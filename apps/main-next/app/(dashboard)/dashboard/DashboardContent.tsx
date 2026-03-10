@@ -1,185 +1,274 @@
 "use client";
 
-import { shortenAddress } from "@/app/src/utils/format";
+import { useAccount } from "wagmi";
 import { useDashboardData } from "./hooks/useDashboardData";
 import { AnimatedNumber } from "@/app/src/components/AnimatedNumber";
+import { AllowanceResult } from "@sentinel/security-sdk";
+import { Address } from "viem"; // 💡 引入 Address 类型确保安全
 
 export default function DashboardContent() {
+  const { status, address: accountAddress } = useAccount();
+
   const {
-    isFetching,
+    address,
+    isConnected,
     assets,
     priceChange,
     totalValue,
     scanLoading,
     scanProgress,
     scanStatus,
+    scanResult,
+    suspiciousCount,
     handleRunDeepScan,
+    handleRevoke,
   } = useDashboardData();
 
+  // --- 1. 状态拦截：连接中 ---
+  if (status === "connecting" || status === "reconnecting") {
+    return (
+      <div className="max-w-7xl mx-auto space-y-8 animate-pulse p-4 md:p-6">
+        <div className="h-48 bg-slate-50 rounded-[2.5rem] border border-slate-100" />
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+          <div className="lg:col-span-3 h-96 bg-slate-50 rounded-[2.5rem] border border-slate-100" />
+          <div className="lg:col-span-2 h-96 bg-slate-900/5 rounded-[2.5rem]" />
+        </div>
+      </div>
+    );
+  }
+
+  // --- 2. 状态拦截：未连接 ---
+  if (status === "disconnected" || !isConnected || !address) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-112.5 bg-white/50 backdrop-blur-xl rounded-[2.5rem] border border-dashed border-slate-300 mx-4">
+        <div className="p-4 bg-indigo-50 rounded-2xl mb-6 animate-bounce">
+          <span className="text-3xl">🛡️</span>
+        </div>
+        <h2 className="text-xl font-black text-slate-800 tracking-tight">
+          Sentinel Guard Locked
+        </h2>
+        <p className="text-slate-500 text-sm mt-2 font-medium px-8 text-center max-w-sm">
+          Authentication required. Please connect your wallet to synchronize
+          real-time chain data.
+        </p>
+      </div>
+    );
+  }
+
+  // --- 3. 正常业务逻辑 ---
+  const riskAllowances: AllowanceResult[] =
+    scanResult?.allowances?.filter(
+      (a: AllowanceResult) => BigInt(a.rawAllowance) > BigInt(0),
+    ) || [];
+
   return (
-    <div className="max-w-6xl mx-auto space-y-8 md:space-y-12 p-2 sm:p-4 md:p-1">
-      {/* 总资产卡片 */}
-      <section className="relative group">
-        <div className="absolute -inset-1 bg-linear-to-r from-indigo-500 to-purple-600 rounded-3xl blur opacity-10 group-hover:opacity-20 transition duration-1000"></div>
-        <div className="relative space-y-3 md:space-y-4">
-          <div className="flex items-center gap-2 md:gap-3">
-            <span className="text-xs md:text-sm font-semibold text-slate-500 uppercase tracking-wider">
-              Total Net Worth
-            </span>
-            {isFetching && (
-              <div className="flex items-center gap-1 md:gap-2 px-2 py-1 bg-indigo-50 rounded-full">
-                <div className="w-1.5 h-1.5 md:w-2 md:h-2 bg-indigo-500 rounded-full animate-pulse"></div>
-                <span className="text-[8px] md:text-[10px] text-indigo-600 font-bold uppercase">
-                  Syncing
-                </span>
-              </div>
-            )}
-          </div>
-          <div className="flex flex-wrap items-baseline gap-3 md:gap-4">
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-slate-900 tracking-tighter drop-shadow-sm ">
+    <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in zoom-in-95 duration-500 p-4 md:p-6">
+      {/* 顶部：总览仪表盘 */}
+      <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="md:col-span-2 bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col justify-center transition-all hover:shadow-md">
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">
+            Portfolio Balance
+          </p>
+          <div className="flex items-baseline gap-4">
+            <h1 className="text-5xl md:text-6xl font-black text-slate-900 tracking-tighter">
               <AnimatedNumber value={totalValue} />
             </h1>
-            <div className="flex items-center gap-1 text-emerald-500 bg-emerald-50 px-2 md:px-3 py-1 rounded-full text-xs md:text-sm font-bold">
-              {priceChange >= 0 ? "↑" : "↓"} {Math.abs(priceChange).toFixed(2)}%
+            <div
+              className={`px-3 py-1 rounded-full text-xs font-black ${priceChange >= 0 ? "text-emerald-600 bg-emerald-50" : "text-rose-600 bg-rose-50"}`}
+            >
+              {priceChange >= 0 ? "▲" : "▼"} {Math.abs(priceChange).toFixed(2)}%
             </div>
+          </div>
+        </div>
+
+        <div className="bg-indigo-600 p-8 rounded-[2.5rem] text-white shadow-xl shadow-indigo-200 flex flex-col justify-center relative overflow-hidden group">
+          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
+            <span className="text-6xl">📡</span>
+          </div>
+          <p className="text-[10px] font-black text-indigo-200 uppercase tracking-widest mb-2">
+            Risk Status
+          </p>
+          <div className="flex items-center gap-3">
+            <span className="text-4xl font-black">
+              {scanStatus === "COMPLETED" ? riskAllowances.length : "--"}
+            </span>
+            <span className="text-sm font-bold opacity-80 leading-tight">
+              Active Threat
+              <br />
+              Exposures
+            </span>
           </div>
         </div>
       </section>
 
-      {/* 主要内容网格 */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8">
-        {/* Main Assets Section */}
-        <div className="lg:col-span-2 bg-white/70 backdrop-blur-xl p-4 sm:p-6 md:p-8 rounded-3xl md:rounded-4xl border border-white shadow-xl md:shadow-2xl shadow-slate-200/50 space-y-4 md:space-y-6">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg md:text-xl font-bold text-slate-800">
-              Main Assets
-            </h3>
-          </div>
-          <div className="divide-y divide-slate-100">
-            {assets.map((token) => (
-              <div
-                key={token.symbol}
-                className="flex justify-between items-center py-3 md:py-5 group cursor-pointer"
-              >
-                <div className="flex items-center gap-3 md:gap-4">
-                  <div
-                    className={`w-8 h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 ${token.color} rounded-xl md:rounded-2xl rotate-3 group-hover:rotate-0 transition-transform duration-300 flex items-center justify-center text-white font-bold shadow-md md:shadow-lg text-sm md:text-base`}
-                  >
-                    {token.symbol[0]}
-                  </div>
-                  <div>
-                    <div className="text-sm md:text-base font-bold text-slate-900">
-                      {token.symbol}
-                    </div>
-                    <div className="text-xs text-slate-400 font-medium">
-                      {token.name}
-                    </div>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-sm md:text-base font-black text-slate-900">
-                    <AnimatedNumber value={token.val} />
-                  </div>
-                  <div className="text-xs text-slate-400 font-mono">
-                    {token.price}
-                  </div>
-                </div>
+      {/* 主展示区 */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start">
+        {/* 左侧：资产详情 */}
+        <div className="lg:col-span-3 space-y-6">
+          <div className="bg-white/70 backdrop-blur-md p-8 rounded-[2.5rem] border border-white shadow-sm">
+            <div className="flex justify-between items-center mb-8">
+              <h3 className="text-xl font-black text-slate-800 tracking-tight">
+                Verified Assets
+              </h3>
+              <div className="flex gap-2 items-center">
+                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
+                  Live Mainnet
+                </span>
               </div>
-            ))}
+            </div>
+
+            <div className="grid grid-cols-1 gap-3">
+              {assets.map((token) => (
+                <div
+                  key={token.symbol}
+                  className="flex justify-between items-center p-4 hover:bg-white rounded-2xl transition-all border border-transparent hover:border-slate-100 group shadow-sm hover:shadow"
+                >
+                  <div className="flex items-center gap-4">
+                    <div
+                      className={`w-12 h-12 ${token.color} rounded-xl flex items-center justify-center text-white text-lg font-black shadow-inner group-hover:scale-110 transition-transform`}
+                    >
+                      {token.symbol[0]}
+                    </div>
+                    <div>
+                      <div className="text-md font-bold text-slate-900 leading-none">
+                        {token.symbol}
+                      </div>
+                      <div className="text-[10px] text-slate-400 font-bold mt-1 uppercase tracking-tighter">
+                        {token.name}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-lg font-black text-slate-900 leading-none mb-1">
+                      <AnimatedNumber value={token.val} />
+                    </div>
+                    <div className="text-[10px] text-slate-400 font-mono font-bold">
+                      {token.price} USD
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
-        {/* Security Audit 模块 */}
-        <div className="bg-slate-900 p-4 sm:p-6 md:p-8 rounded-3xl md:rounded-4xl text-white shadow-xl md:shadow-2xl space-y-6 md:space-y-8 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-24 h-24 md:w-32 md:h-32 bg-indigo-500/10 blur-3xl rounded-full"></div>
-
-          <div className="flex justify-between items-center relative z-10">
-            <h3 className="text-lg md:text-xl font-bold">Security Audit</h3>
-            {scanLoading && (
-              <span className="text-[8px] md:text-[10px] bg-indigo-500/20 text-indigo-300 px-2 py-1 rounded-md animate-pulse">
-                AI SCANNING
-              </span>
-            )}
+        {/* 右侧：AI SENTINEL */}
+        <div className="lg:col-span-2 bg-slate-950 p-7 rounded-[2.5rem] text-white shadow-2xl flex flex-col sticky top-6 border border-white/5">
+          <div className="flex justify-between items-center mb-6">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-indigo-500 rounded-full animate-ping" />
+              <h3 className="text-lg font-black tracking-tighter italic text-indigo-400">
+                AI SENTINEL
+              </h3>
+            </div>
+            <span className="text-[9px] px-2 py-0.5 bg-white/10 rounded-full font-mono text-slate-400">
+              V3.1.0
+            </span>
           </div>
 
-          <div className="space-y-4 md:space-y-6 relative z-10">
-            {/* 动态扫描状态展示 */}
-            <div className="p-3 md:p-4 bg-white/5 rounded-xl md:rounded-2xl border border-white/10 hover:bg-white/10 transition">
-              <div className="flex gap-3 md:gap-4 items-start">
+          <div className="space-y-5 flex-1 flex flex-col min-h-0">
+            {/* 引擎进度 */}
+            <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
+              <div className="flex justify-between text-[10px] font-black text-slate-500 uppercase mb-2">
+                <span>{scanLoading ? "Analysing" : "Engine Status"}</span>
+                <span className="text-indigo-400">{scanProgress}%</span>
+              </div>
+              <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
                 <div
-                  className={`w-2 h-2 mt-2 rounded-full ${
-                    scanStatus === "COMPLETED"
-                      ? "bg-emerald-400 shadow-[0_0_10px_#34d399]"
-                      : "bg-indigo-400 animate-bounce"
-                  }`}
+                  className="h-full bg-indigo-500 transition-all duration-700 ease-out"
+                  style={{ width: `${scanProgress}%` }}
                 ></div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs md:text-sm font-bold text-slate-100">
-                    AI Deep Analysis
-                  </p>
+              </div>
+            </div>
 
-                  {(scanLoading || scanProgress > 0) && (
-                    <div className="mt-2 md:mt-3 space-y-1 md:space-y-2">
-                      <div className="flex justify-between text-[8px] md:text-[10px] font-mono text-indigo-300">
-                        <span>PROGRESS</span>
-                        <span>{scanProgress}%</span>
+            {/* 风险列表 */}
+            <div className="flex-1 flex flex-col min-h-0">
+              <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 opacity-60">
+                Threat Radar
+              </p>
+
+              <div className="max-h-72 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
+                {scanStatus === "COMPLETED" ? (
+                  riskAllowances.length > 0 ? (
+                    riskAllowances.map((item, idx: number) => (
+                      <div
+                        key={idx}
+                        className="p-3 bg-white/5 rounded-xl border border-white/5 hover:border-rose-500/20 transition-all group"
+                      >
+                        <div className="flex justify-between items-center">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2 mb-0.5">
+                              <span className="text-[9px] font-black text-rose-400 px-1.5 py-0.5 bg-rose-500/10 rounded tracking-tighter uppercase">
+                                {item.tokenSymbol}
+                              </span>
+                              <span className="text-[10px] text-slate-400 truncate font-bold">
+                                via {item.spenderName}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <p className="text-xs font-black text-slate-200">
+                              {parseFloat(item.allowance) > 1000000
+                                ? "∞"
+                                : parseFloat(item.allowance).toLocaleString()}
+                            </p>
+                            {/* 💡 这里是修改点：绑定 handleRevoke */}
+                            <button
+                              onClick={() =>
+                                handleRevoke(
+                                  item.tokenAddress as Address,
+                                  item.spenderAddress as Address,
+                                )
+                              }
+                              className="text-[9px] font-black text-indigo-400 opacity-0 group-hover:opacity-100 transition-all hover:text-indigo-300 hover:underline active:scale-90"
+                            >
+                              REVOKE
+                            </button>
+                          </div>
+                        </div>
                       </div>
-                      <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-indigo-500 transition-all duration-500 shadow-[0_0_8px_#6366f1]"
-                          style={{ width: `${scanProgress}%` }}
-                        ></div>
-                      </div>
+                    ))
+                  ) : (
+                    <div className="py-8 text-center bg-emerald-500/5 rounded-2xl border border-dashed border-emerald-500/20">
+                      <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">
+                        System Secured
+                      </p>
                     </div>
-                  )}
-
-                  <p className="text-xs text-slate-400 mt-2 capitalizewrap-break-word">
-                    Status:{" "}
-                    <span
-                      className={
-                        scanStatus === "COMPLETED"
-                          ? "text-emerald-400"
-                          : "text-indigo-300"
-                      }
-                    >
-                      {scanStatus}
-                    </span>
-                  </p>
-                </div>
+                  )
+                ) : (
+                  <div className="py-12 text-center opacity-10">
+                    <p className="text-[10px] font-black uppercase tracking-[0.3em]">
+                      Standby
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
 
-            <div className="p-3 md:p-4 bg-white/5 rounded-xl md:rounded-2xl border border-white/10 hover:bg-white/10 transition">
-              <div className="flex gap-3 md:gap-4 items-start">
-                <div className="w-2 h-2 mt-2 rounded-full bg-amber-400 shadow-[0_0_10px_#fbbf24]"></div>
-                <div className="min-w-0">
-                  <p className="text-xs md:text-sm font-bold text-slate-100">
-                    Suspicious Contract
-                  </p>
-                  <p className="text-xs text-slate-400 mt-1">
-                    Found 1 active allowance
-                  </p>
-                  <p className="text-[8px] md:text-[10px] font-mono text-indigo-300 mt-2 bg-indigo-500/10 p-1 rounded inline-block break-all">
-                    Target:{" "}
-                    {shortenAddress(
-                      "0x6B175474E89094C44Da98b954EedeAC495271d0F",
-                    )}
-                  </p>
-                </div>
+            {/* 底部 AI 结论 */}
+            {scanStatus === "COMPLETED" && (
+              <div className="p-4 bg-indigo-500/10 rounded-2xl border border-indigo-500/20 animate-in fade-in slide-in-from-bottom-2 duration-700">
+                <p className="text-[11px] text-slate-300 leading-relaxed italic">
+                  {scanResult?.details?.message ||
+                    (suspiciousCount > 0
+                      ? `Alert: ${suspiciousCount} threats detected. Risk of drain if exploited.`
+                      : "Status: Pristine. All monitored approvals are safe.")}
+                </p>
               </div>
-            </div>
+            )}
           </div>
 
           <button
             onClick={handleRunDeepScan}
             disabled={scanLoading}
-            className={`w-full py-3 md:py-4 rounded-xl md:rounded-2xl font-bold transition-all shadow-lg ${
+            className={`w-full py-4 mt-6 rounded-2xl font-black text-xs transition-all tracking-widest active:scale-[0.98] ${
               scanLoading
-                ? "bg-slate-800 text-slate-500 cursor-not-allowed"
-                : "bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/20 active:scale-95"
+                ? "bg-slate-900 text-slate-700 cursor-not-allowed"
+                : "bg-indigo-600 hover:bg-indigo-500 shadow-lg shadow-indigo-600/20"
             }`}
           >
-            {scanLoading ? `Scanning ${scanProgress}%...` : "Run Deep Scan"}
+            {scanLoading ? "ANALYZING..." : "DEEP INSPECTION"}
           </button>
         </div>
       </div>

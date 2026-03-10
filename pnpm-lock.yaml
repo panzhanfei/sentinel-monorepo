@@ -46,6 +46,9 @@ importers:
       '@sentinel/database':
         specifier: workspace:^
         version: link:../../packages/database
+      '@sentinel/security-sdk':
+        specifier: workspace:*
+        version: link:../../packages/security-sdk
       '@tanstack/react-query':
         specifier: ^5.90.20
         version: 5.90.20(react@19.2.3)
@@ -125,6 +128,9 @@ importers:
       '@sentinel/database':
         specifier: workspace:^
         version: link:../../packages/database
+      '@sentinel/security-sdk':
+        specifier: workspace:*
+        version: link:../../packages/security-sdk
       add:
         specifier: ^2.0.6
         version: 2.0.6
@@ -369,6 +375,19 @@ importers:
       typescript-eslint:
         specifier: ^8.50.0
         version: 8.54.0(eslint@9.39.2(jiti@2.6.1))(typescript@5.9.3)
+
+  packages/security-sdk:
+    dependencies:
+      viem:
+        specifier: 2.22.14
+        version: 2.22.14(typescript@5.9.3)(zod@3.25.76)
+    devDependencies:
+      '@types/node':
+        specifier: ^25.4.0
+        version: 25.4.0
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
 
   packages/typescript-config: {}
 
@@ -1514,6 +1533,9 @@ packages:
 
   '@types/node@25.3.5':
     resolution: {integrity: sha512-oX8xrhvpiyRCQkG1MFchB09f+cXftgIXb3a7UUa4Y3wpmZPw5tyZGTLWhlESOLq1Rq6oDlc8npVU2/9xiCuXMA==}
+
+  '@types/node@25.4.0':
+    resolution: {integrity: sha512-9wLpoeWuBlcbBpOY3XmzSTG3oscB6xjBEEtn+pYXTfhyXhIxC5FsBer2KTopBlvKEiW9l13po9fq+SJY/5lkhw==}
 
   '@types/qs@6.14.0':
     resolution: {integrity: sha512-eOunJqu0K1923aExK6y8p6fsihYEn/BYuQ4g0CxAAgFc4b/ZLN4CrsRZ55srTdqoiLzU2B2evC+apEIxprEzkQ==}
@@ -5199,11 +5221,11 @@ snapshots:
   '@types/body-parser@1.19.6':
     dependencies:
       '@types/connect': 3.4.38
-      '@types/node': 25.1.0
+      '@types/node': 25.4.0
 
   '@types/connect@3.4.38':
     dependencies:
-      '@types/node': 25.1.0
+      '@types/node': 25.4.0
 
   '@types/cookie-parser@1.4.10(@types/express@5.0.6)':
     dependencies:
@@ -5211,13 +5233,13 @@ snapshots:
 
   '@types/cors@2.8.19':
     dependencies:
-      '@types/node': 25.1.0
+      '@types/node': 25.4.0
 
   '@types/estree@1.0.8': {}
 
   '@types/express-serve-static-core@5.1.1':
     dependencies:
-      '@types/node': 25.1.0
+      '@types/node': 25.4.0
       '@types/qs': 6.14.0
       '@types/range-parser': 1.2.7
       '@types/send': 1.2.1
@@ -5243,7 +5265,7 @@ snapshots:
   '@types/jsonwebtoken@9.0.10':
     dependencies:
       '@types/ms': 2.1.0
-      '@types/node': 25.1.0
+      '@types/node': 25.4.0
 
   '@types/lodash@4.17.23': {}
 
@@ -5251,7 +5273,7 @@ snapshots:
 
   '@types/node-fetch@2.6.13':
     dependencies:
-      '@types/node': 25.1.0
+      '@types/node': 25.4.0
       form-data: 4.0.5
 
   '@types/node@20.19.30':
@@ -5271,6 +5293,10 @@ snapshots:
       undici-types: 7.16.0
 
   '@types/node@25.3.5':
+    dependencies:
+      undici-types: 7.18.2
+
+  '@types/node@25.4.0':
     dependencies:
       undici-types: 7.18.2
 
@@ -5296,12 +5322,12 @@ snapshots:
 
   '@types/send@1.2.1':
     dependencies:
-      '@types/node': 25.1.0
+      '@types/node': 25.4.0
 
   '@types/serve-static@2.2.0':
     dependencies:
       '@types/http-errors': 2.0.5
-      '@types/node': 25.1.0
+      '@types/node': 25.4.0
 
   '@types/strip-bom@3.0.0': {}
 

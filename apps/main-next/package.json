@@ -11,6 +11,7 @@
   "dependencies": {
     "@rainbow-me/rainbowkit": "^2.2.10",
     "@sentinel/database": "workspace:^",
+    "@sentinel/security-sdk": "workspace:*",
     "@tanstack/react-query": "^5.90.20",
     "@types/node-fetch": "^2.6.13",
     "@wagmi/core": "^3.3.1",
