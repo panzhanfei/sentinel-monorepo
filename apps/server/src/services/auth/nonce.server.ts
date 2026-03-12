@@ -6,7 +6,7 @@ const logger = new Logger('AuthService');
 
 export class AuthService {
   private readonly NONCE_PREFIX = 'auth:nonce:';
-  private readonly EXPIRE_TIME = 120; // 5分钟有效期
+  private readonly EXPIRE_TIME = 120;
 
   async generateNonce(address: string): Promise<string> {
     const nonce = crypto.randomBytes(16).toString('hex');

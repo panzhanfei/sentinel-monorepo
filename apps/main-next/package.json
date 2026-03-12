@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@rainbow-me/rainbowkit": "^2.2.10",
+    "@sentinel/auth": "workspace:^",
     "@sentinel/database": "workspace:^",
     "@sentinel/security-sdk": "workspace:*",
     "@tanstack/react-query": "^5.90.20",

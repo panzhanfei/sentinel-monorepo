@@ -1,54 +1,21 @@
 "use client";
 
-import { useState } from "react";
-import { useAccount, useSignMessage, useDisconnect } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { ShieldCheck, ShieldAlert, Loader2, LogOut } from "lucide-react";
-import { getLoginNonce, verifySignature } from "@/actions/auth";
-import { useRouter } from "next/navigation";
 import { LoginSkeleton } from "@/app/src/components";
+import { useLogin } from "./hooks/useLogin";
 
 export default function LoginPage() {
-  const router = useRouter();
-  const { address, isConnected, status } = useAccount();
-  const { signMessageAsync } = useSignMessage();
-  const { disconnect } = useDisconnect();
+  const {
+    accountStatus,
+    isConnected,
+    pageStatus,
+    error,
+    handleAuth,
+    handleDisconnect,
+  } = useLogin();
 
-  const [pageStatus, setPageStatus] = useState<
-    "idle" | "loading" | "signing" | "verifying"
-  >("idle");
-  const [error, setError] = useState<string | null>(null);
-
-  // 核心登录流程
-  const handleAuth = async () => {
-    if (!address || !isConnected) return;
-
-    try {
-      setError(null);
-      setPageStatus("loading");
-
-      // 1. 获取 Nonce (带限流保护)
-      const nonce = await getLoginNonce(address);
-
-      // 2. 请求钱包签名
-      setPageStatus("signing");
-      const signature = await signMessageAsync({ message: nonce });
-
-      // 3. 提交后端验证并设置 HttpOnly Cookie
-      setPageStatus("verifying");
-      const result = await verifySignature(address, signature);
-
-      if (result.success) {
-        router.push("/dashboard");
-      }
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "身份验证失败";
-      setError(message);
-      setPageStatus("idle");
-    }
-  };
-
-  if (status === "connecting" || status === "reconnecting") {
+  if (accountStatus === "connecting" || accountStatus === "reconnecting") {
     return <LoginSkeleton />;
   }
 
@@ -108,7 +75,7 @@ export default function LoginPage() {
             {/* 断开连接按钮 */}
             {isConnected && pageStatus === "idle" && (
               <button
-                onClick={() => disconnect()}
+                onClick={handleDisconnect}
                 className="w-full py-3 flex items-center justify-center gap-2 text-slate-500 hover:text-slate-300 text-sm transition-colors"
               >
                 <LogOut className="w-4 h-4" />

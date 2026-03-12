@@ -1,0 +1,29 @@
+{
+  "name": "@sentinel/auth",
+  "version": "1.0.0",
+  "description": "Authentication utilities including Nonce, Idempotency, and JWT",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "viem": "^2.0.0",
+    "jsonwebtoken": "^9.0.2"
+  },
+  "peerDependencies": {
+    "ioredis": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.2",
+    "@types/node": "^20.0.0",
+    "ioredis": "^5.4.1",
+    "typescript": "^5.0.0"
+  }
+}

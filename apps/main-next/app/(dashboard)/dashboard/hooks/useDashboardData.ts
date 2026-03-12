@@ -195,10 +195,11 @@ export function useDashboardData() {
     currentJobId.current = null;
 
     try {
+      const requestId = crypto.randomUUID();
       const startRes = await fetch("/api/scan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ address: userAddress }),
+        body: JSON.stringify({ address: userAddress, requestId }),
       });
 
       if (startRes.ok) {

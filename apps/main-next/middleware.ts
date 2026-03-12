@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 export function middleware(request: NextRequest) {
-  const session = request.cookies.get("sentinel_session")?.value;
+  const session = request.cookies.get("token")?.value;
   const { pathname } = request.nextUrl;
 
   // 1. 定义路由分类
@@ -9,7 +9,6 @@ export function middleware(request: NextRequest) {
     pathname.startsWith(route),
   );
   const isAuthRoute = pathname === "/login";
-  const isRoot = pathname === "/";
 
   // 2. 核心逻辑 A：未登录访问受保护页面 -> 踢到登录页
   if (!session && isProtectedRoute) {
