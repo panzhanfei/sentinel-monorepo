@@ -105,6 +105,37 @@ const envSchema = z.object({
     .string()
     .default('false')
     .transform((val) => val === 'true'),
+
+  // === AI Agent 1: DeepSeek (扫描器) ===
+  
+  DEEPSEEK_API_KEY: z.string().min(1, 'DeepSeek API Key 缺失'),
+  DEEPSEEK_API_URL: z.string().url().default('https://api.deepseek.com/v1'),
+
+  // === AI Agent 2: Gemini (审核员) ===
+  GEMINI_API_KEY: z.string().min(1, 'Gemini API Key 缺失'),
+  // 注意：如果你用官方 SDK，这个 URL 通常不需要直接传，但为了统一管理我们加上
+  GEMINI_API_URL: z
+    .string()
+    .url()
+    .default(
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent'
+    ),
+
+  // === AI Agent 3: Groq / Llama 3 (报告员) ===
+  GROQ_API_KEY: z.string().min(1, 'Groq API Key 缺失'),
+  GROQ_API_URL: z
+    .string()
+    .url()
+    .default('https://api.groq.com/openai/v1/chat/completions'),
+
+  // === Agent 4: Telegram 预警配置 (脚本/逻辑) ===
+  TELEGRAM_BOT_TOKEN: z.string().optional(), // 机器人 Token
+  TELEGRAM_CHAT_ID: z.string().optional(), // 你的频道或个人 ID
+
+  // === Agent 5: Watchdog (看门狗配置) ===
+  WATCHDOG_INTERVAL_MS: z
+    .preprocess((val) => val ?? '30000', z.string().transform(Number))
+    .default('30000'),
 });
 
 // 4. 解析并验证环境变量

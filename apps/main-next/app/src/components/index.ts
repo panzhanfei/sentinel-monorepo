@@ -9,3 +9,4 @@ export * from "./TOSModal";
 export * from "./NavBar";
 export * from "./HeroSection";
 export * from "./FeaturesSection";
+export * from "./AiAgentTerminal";

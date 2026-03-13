@@ -67,6 +67,6 @@ export async function verifySignature(address: string, signature: string) {
 
 export async function logout() {
   const cookieStore = await cookies();
-  cookieStore.delete("sentinel_token");
-  revalidatePath("/");
+  cookieStore.delete("token");
+  revalidatePath("/", "layout");
 }

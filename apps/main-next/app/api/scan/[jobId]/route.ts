@@ -1,49 +1,44 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@sentinel/database";
-
-// 强制动态，防止 Next.js 缓存结果
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+import { NODE_SERVICE } from "@/app/src/config/node_service";
 
 export async function GET(
   request: NextRequest,
-  // 核心修复：params 在 TS 类型定义中应当是异步的
   context: { params: Promise<{ jobId: string }> },
 ) {
   try {
-    // 1. 必须 await 才能拿到真实的 jobId
     const { jobId } = await context.params;
-
-    // 2. 防御性检查
-    if (!jobId || jobId === "undefined") {
-      return NextResponse.json(
-        { error: "Job ID is required" },
-        { status: 400 },
-      );
+    if (!jobId) {
+      return NextResponse.json({ error: "Job ID required" }, { status: 400 });
     }
 
-    // 3. 执行数据库查询
-    const job = await prisma.job.findUnique({
-      where: { id: jobId },
-      // 建议只查询必要的字段
-      select: {
-        id: true,
-        status: true,
-        progress: true,
-        result: true,
-        error: true,
+    // 从 cookie 获取 token
+    const token = request.cookies.get("token")?.value;
+    if (!token) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const res = await fetch(`${NODE_SERVICE}/scan/${jobId}`, {
+      cache: "no-store", // 必须禁用缓存，确保拿到真实进度
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
     });
 
-    if (!job) {
-      return NextResponse.json({ error: "Job not found" }, { status: 404 });
+    // 尝试解析响应 JSON
+    let data;
+    try {
+      data = await res.json();
+    } catch {
+      data = { error: "Upstream returned non-JSON response" };
     }
 
-    return NextResponse.json(job);
+    // 透传上游状态码
+    return NextResponse.json(data, { status: res.status });
   } catch (error) {
-    console.error("Critical API Error [jobId]:", error);
+    console.error("BFF Scan Status Error:", error);
     return NextResponse.json(
-      { error: "Internal Server Error" },
+      { error: "Node Service Unreachable" },
       { status: 500 },
     );
   }

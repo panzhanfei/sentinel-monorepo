@@ -8,9 +8,11 @@ import {
   useChainId,
   useWriteContract,
 } from "wagmi";
-import { erc20Abi, formatUnits, Address } from "viem";
+import { erc20Abi, formatUnits, type Address } from "viem";
 import { chainToCoinGeckoId, TOKEN_WHITELIST } from "@/app/src/config";
 import { publicClient } from "@sentinel/security-sdk";
+
+export type { Address };
 
 // --- 类型定义 ---
 export type ScanStatus =
@@ -30,16 +32,23 @@ export interface AllowanceAudit {
 }
 
 export interface ScanResultData {
-  eth_balance: string;
-  tx_count: number;
-  allowances: AllowanceAudit[];
   risk: "LOW" | "MEDIUM" | "HIGH";
-  details: { isNewWallet: boolean; riskCount: number; message: string };
-  timestamp: number;
+  allowances: AllowanceAudit[];
+  details: {
+    riskCount: number;
+    message: string;
+    timestamp: number;
+    isNewWallet?: boolean;
+  };
+}
+
+export interface AgentMessage {
+  agent: string;
+  status: "thinking" | "done" | "active" | "error";
+  content: string;
 }
 
 export function useDashboardData() {
-  // 1. 获取账户状态
   const {
     address: userAddress,
     isConnected,
@@ -49,7 +58,7 @@ export function useDashboardData() {
   } = useAccount();
   const currentChainId = useChainId();
   const { writeContractAsync } = useWriteContract();
-  // 🛡️ Aave Wallet 连接防护盾
+
   const isAccountReady = useMemo(() => {
     return (
       isConnected &&
@@ -63,7 +72,6 @@ export function useDashboardData() {
     return TOKEN_WHITELIST[currentChainId] || TOKEN_WHITELIST[1];
   }, [currentChainId]);
 
-  // 2. 原生余额查询
   const { data: ethBalanceData, isFetching: isEthFetching } = useBalance({
     address: isAccountReady ? userAddress : undefined,
     query: {
@@ -72,7 +80,6 @@ export function useDashboardData() {
     },
   });
 
-  // 3. 代币余额查询
   const { data: erc20BatchData, isFetching: isTokenFetching } =
     useReadContracts({
       contracts: [
@@ -89,16 +96,16 @@ export function useDashboardData() {
       },
     });
 
-  // 4. 业务状态管理
   const [ethPrice, setEthPrice] = useState(0);
   const [priceChange, setPriceChange] = useState(0);
   const [scanProgress, setScanProgress] = useState(0);
   const [scanStatus, setScanStatus] = useState<ScanStatus>("IDLE");
   const [scanResult, setScanResult] = useState<ScanResultData | null>(null);
+  const [agentLogs, setAgentLogs] = useState<AgentMessage[]>([]);
 
-  // 关键：使用 Ref 记录当前扫描的 Job ID 和定时器
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const currentJobId = useRef<string | null>(null);
+  const sseRef = useRef<EventSource | null>(null);
 
   const stopPolling = useCallback(() => {
     if (pollIntervalRef.current) {
@@ -107,7 +114,14 @@ export function useDashboardData() {
     }
   }, []);
 
-  // 5. 价格轮询 (保持不变)
+  const closeSSE = useCallback(() => {
+    if (sseRef.current) {
+      sseRef.current.close();
+      sseRef.current = null;
+    }
+  }, []);
+
+  // 1. 市场价格同步
   useEffect(() => {
     const fetchMarketData = async () => {
       const cgId = chainToCoinGeckoId[currentChainId] || "ethereum";
@@ -127,101 +141,165 @@ export function useDashboardData() {
     return () => clearInterval(timer);
   }, [currentChainId]);
 
+  // 2. 初始化：获取历史记录
   useEffect(() => {
     const initDashboard = async () => {
       if (!userAddress) return;
-      const res = await fetch(`/api/scan/latest?address=${userAddress}`);
-      if (res.ok) {
-        const lastJob = await res.json();
-        if (lastJob?.result) {
-          setScanResult(lastJob.result);
-          setScanStatus("COMPLETED");
-          setScanProgress(100);
+      try {
+        const res = await fetch(`/api/scan/latest?address=${userAddress}`);
+        if (res.ok) {
+          const lastJob = await res.json();
+          if (lastJob?.result) {
+            setScanResult(lastJob.result);
+            setScanStatus("COMPLETED");
+            setScanProgress(100);
+          }
         }
+      } catch (e) {
+        console.error("Init failed:", e);
       }
     };
     initDashboard();
   }, [userAddress]);
 
-  // 6. 核心修改：基于 Job ID 的状态轮询
+  // 3. 轮询 Node 端的 Job 状态
   const checkJobStatus = useCallback(async () => {
     if (!currentJobId.current) return;
-
     try {
-      // 增加时间戳防止任何形式的缓存
-      const response = await fetch(
-        `/api/scan/${currentJobId.current}?t=${Date.now()}`,
-        {
-          cache: "no-store",
-          headers: {
-            "Cache-Control": "no-cache",
-            Pragma: "no-cache",
-          },
-        },
-      );
+      const response = await fetch(`/api/scan/${currentJobId.current}`, {
+        cache: "no-store",
+      });
+      if (!response.ok) throw new Error("Fetch status failed");
 
-      if (!response.ok) throw new Error("Fetch failed");
       const data = await response.json();
 
-      // 根据 [jobId]/route.ts 返回的结构更新
       if (data.status) {
         setScanStatus(data.status);
         setScanProgress(data.progress || 0);
 
         if (data.status === "COMPLETED") {
-          // 因为后端直接返回了 job 对象，所以这里直接取 data.result
           setScanResult(data.result);
           stopPolling();
+          closeSSE();
         } else if (data.status === "FAILED") {
           stopPolling();
+          closeSSE();
         }
       }
     } catch (e) {
       console.error("Polling error:", e);
       setScanStatus("FAILED");
       stopPolling();
+      closeSSE();
     }
-  }, [stopPolling]);
+  }, [stopPolling, closeSSE]);
 
-  // 7. 发起深度扫描
+  // 4. 发起深度扫描（核心修改：SSE 消息合并）
   const handleRunDeepScan = async () => {
     if (!userAddress || scanStatus === "PENDING" || scanStatus === "RUNNING")
       return;
 
-    // 重置状态
+    // 清理之前的连接
+    closeSSE();
+    stopPolling();
+
+    // UI 预热状态
     setScanStatus("PENDING");
     setScanProgress(0);
     setScanResult(null);
+    setAgentLogs([]);
     currentJobId.current = null;
 
     try {
-      const requestId = crypto.randomUUID();
+      // Step A: 请求 BFF 发起扫描，由 Node 生成 jobId
       const startRes = await fetch("/api/scan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ address: userAddress, requestId }),
+        body: JSON.stringify({ address: userAddress }),
       });
 
-      if (startRes.ok) {
-        const { jobId } = await startRes.json();
-        if (jobId) {
-          currentJobId.current = jobId; // 记录 ID
-          // 立即执行一次检查，然后开启轮询
-          checkJobStatus();
-          pollIntervalRef.current = setInterval(checkJobStatus, 1500);
-        } else {
-          throw new Error("No jobId returned");
-        }
-      } else {
-        setScanStatus("FAILED");
+      if (!startRes.ok) throw new Error("Failed to start scan");
+
+      const { jobId } = await startRes.json();
+
+      if (jobId) {
+        currentJobId.current = jobId;
+
+        // Step B: 开启轮询进度条
+        pollIntervalRef.current = setInterval(checkJobStatus, 1500);
+
+        // Step C: 开启 SSE 流式终端 (通过 BFF 代理)
+        const sse = new EventSource(
+          `/api/scan/stream?address=${userAddress}&jobId=${jobId}`,
+        );
+        sseRef.current = sse;
+
+        sse.onmessage = (event) => {
+          try {
+            const data: AgentMessage = JSON.parse(event.data);
+            setAgentLogs((prev) => {
+              const lastIndex = prev.length - 1;
+              const last = lastIndex >= 0 ? prev[lastIndex] : null;
+
+              // 合并逻辑：如果最后一条日志与当前消息同 agent 且最后一条为 thinking
+              if (
+                last &&
+                last.agent === data.agent &&
+                last.status === "thinking"
+              ) {
+                if (data.status === "thinking") {
+                  // 追加内容（实现逐字输出）
+                  const updated = [...prev];
+                  updated[lastIndex] = {
+                    ...last,
+                    content: last.content + data.content,
+                  };
+                  return updated;
+                } else if (data.status === "done" || data.status === "error") {
+                  // 将最后一条 thinking 的状态改为 done/error，并更新内容
+                  const updated = [...prev];
+                  updated[lastIndex] = {
+                    ...last,
+                    status: data.status,
+                    content: data.content || last.content,
+                  };
+                  return updated;
+                }
+              }
+
+              // 其他情况（新 Agent、系统消息等）直接追加
+              return [...prev, data];
+            });
+          } catch (e) {
+            console.error("Parse SSE error:", e);
+          }
+        };
+
+        // 处理结束或错误
+        sse.addEventListener("end", () => {
+          sse.close();
+          sseRef.current = null;
+        });
+        sse.onerror = () => {
+          sse.close();
+          sseRef.current = null;
+        };
       }
     } catch (err) {
-      console.error("Scan start error:", err);
+      console.error("Scan flow error:", err);
       setScanStatus("FAILED");
     }
   };
 
-  // 8. 衍生计算：资产组合
+  // 组件卸载时清理资源
+  useEffect(() => {
+    return () => {
+      stopPolling();
+      closeSSE();
+    };
+  }, [stopPolling, closeSSE]);
+
+  // 5. 资产汇总计算
   const portfolioSummary = useMemo(() => {
     const ethValue = ethBalanceData
       ? Number(formatUnits(ethBalanceData.value, ethBalanceData.decimals))
@@ -238,7 +316,7 @@ export function useDashboardData() {
           val: Number(ethValue.toFixed(4)),
           price: `${ethPrice.toLocaleString()}`,
           color: "bg-indigo-500",
-          address: "0xE94FF2028d97Ff74A1930f7701a1bD84B22c6C7e",
+          address: config.WETH as Address,
         },
         {
           name: "USD Coin",
@@ -246,13 +324,13 @@ export function useDashboardData() {
           val: Number(usdcValue.toFixed(2)),
           price: "$1.00",
           color: "bg-blue-400",
-          address: "0xE94FF2028d97Ff74A1930f7701a1bD84B22c6C7e",
+          address: config.USDC as Address,
         },
       ],
     };
-  }, [ethBalanceData, erc20BatchData, ethPrice]);
+  }, [ethBalanceData, erc20BatchData, ethPrice, config]);
 
-  // 撤销授权函数
+  // 6. 撤销授权操作
   const handleRevoke = async (
     tokenAddress: Address,
     spenderAddress: Address,
@@ -262,29 +340,25 @@ export function useDashboardData() {
         address: tokenAddress,
         abi: erc20Abi,
         functionName: "approve",
-        args: [spenderAddress, BigInt(0)], // 💡 核心逻辑：将授权额度设为 0
+        args: [spenderAddress, BigInt(0)],
       });
-
       const receipt = await publicClient.waitForTransactionReceipt({ hash });
       if (receipt.status === "success") {
-        console.log("✅ 撤销成功，正在触发深度扫描同步状态...");
+        // 成功后重新触发扫描以更新 UI
         handleRunDeepScan();
-      } else {
-        console.error("❌ 交易被拒绝或执行失败（Reverted）");
       }
       return hash;
     } catch (error) {
-      console.error("撤销操作失败:", error);
+      console.error("Revoke failed:", error);
       throw error;
     }
   };
 
-  const suspiciousTarget = scanResult?.allowances?.[0]?.spenderName || "None";
-  const suspiciousCount =
-    scanResult?.allowances?.filter((a) => parseFloat(a.allowance) > 0).length ||
-    0;
+  const suspiciousCount = scanResult?.details?.riskCount || 0;
   const scanLoading = scanStatus === "PENDING" || scanStatus === "RUNNING";
+
   return {
+    walletStatus,
     address: userAddress,
     isConnected: isAccountReady,
     isFetching: isEthFetching || isTokenFetching,
@@ -294,8 +368,8 @@ export function useDashboardData() {
     scanProgress,
     scanStatus,
     scanResult,
+    agentLogs,
     suspiciousCount,
-    suspiciousTarget,
     scanLoading,
     handleRunDeepScan,
     handleRevoke,

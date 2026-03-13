@@ -1,15 +1,13 @@
 "use client";
 
-import { useAccount } from "wagmi";
-import { useDashboardData } from "./hooks/useDashboardData";
+import { useRef, useEffect } from "react"; // 💡 引入
+import { useDashboardData, Address } from "./hooks/useDashboardData";
 import { AnimatedNumber, DashboardSkeleton } from "@/app/src/components";
 import { AllowanceResult } from "@sentinel/security-sdk";
-import { Address } from "viem"; // 💡 引入 Address 类型确保安全
 
 export default function DashboardContent() {
-  const { status, address: accountAddress } = useAccount();
-
   const {
+    walletStatus,
     address,
     isConnected,
     assets,
@@ -19,18 +17,25 @@ export default function DashboardContent() {
     scanProgress,
     scanStatus,
     scanResult,
+    agentLogs, // 💡 从 Hook 获取
     suspiciousCount,
     handleRunDeepScan,
     handleRevoke,
   } = useDashboardData();
 
-  // --- 1. 状态拦截：连接中 ---
-  if (status === "connecting" || status === "reconnecting") {
+  // 💡 逻辑：扫描时自动滚动日志到底部
+  const logContainerRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (logContainerRef.current) {
+      logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
+    }
+  }, [agentLogs]);
+
+  if (walletStatus === "connecting" || walletStatus === "reconnecting") {
     return <DashboardSkeleton />;
   }
 
-  // --- 2. 状态拦截：未连接 ---
-  if (status === "disconnected" || !isConnected || !address) {
+  if (walletStatus === "disconnected" || !isConnected || !address) {
     return (
       <div className="flex flex-col items-center justify-center min-h-112.5 bg-white/50 backdrop-blur-xl rounded-[2.5rem] border border-dashed border-slate-300 mx-4">
         <div className="p-4 bg-indigo-50 rounded-2xl mb-6 animate-bounce">
@@ -47,7 +52,6 @@ export default function DashboardContent() {
     );
   }
 
-  // --- 3. 正常业务逻辑 ---
   const riskAllowances: AllowanceResult[] =
     scanResult?.allowances?.filter(
       (a: AllowanceResult) => BigInt(a.rawAllowance) > BigInt(0),
@@ -55,7 +59,7 @@ export default function DashboardContent() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in zoom-in-95 duration-500 p-4 md:p-6">
-      {/* 顶部：总览仪表盘 */}
+      {/* 顶部仪表盘 */}
       <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2 bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col justify-center transition-all hover:shadow-md">
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">
@@ -66,7 +70,11 @@ export default function DashboardContent() {
               <AnimatedNumber value={totalValue} />
             </h1>
             <div
-              className={`px-3 py-1 rounded-full text-xs font-black ${priceChange >= 0 ? "text-emerald-600 bg-emerald-50" : "text-rose-600 bg-rose-50"}`}
+              className={`px-3 py-1 rounded-full text-xs font-black ${
+                priceChange >= 0
+                  ? "text-emerald-600 bg-emerald-50"
+                  : "text-rose-600 bg-rose-50"
+              }`}
             >
               {priceChange >= 0 ? "▲" : "▼"} {Math.abs(priceChange).toFixed(2)}%
             </div>
@@ -95,7 +103,7 @@ export default function DashboardContent() {
 
       {/* 主展示区 */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start">
-        {/* 左侧：资产详情 */}
+        {/* 左侧：资产列表 */}
         <div className="lg:col-span-3 space-y-6">
           <div className="bg-white/70 backdrop-blur-md p-8 rounded-[2.5rem] border border-white shadow-sm">
             <div className="flex justify-between items-center mb-8">
@@ -145,17 +153,19 @@ export default function DashboardContent() {
           </div>
         </div>
 
-        {/* 右侧：AI SENTINEL */}
-        <div className="lg:col-span-2 bg-slate-950 p-7 rounded-[2.5rem] text-white shadow-2xl flex flex-col sticky top-6 border border-white/5">
+        {/* 右侧：AI SENTINEL (核心变动区) */}
+        <div className="lg:col-span-2 bg-slate-950 p-7 rounded-[2.5rem] text-white shadow-2xl flex flex-col sticky top-6 border border-white/5 h-[620px]">
           <div className="flex justify-between items-center mb-6">
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-indigo-500 rounded-full animate-ping" />
+              <div
+                className={`w-2 h-2 rounded-full ${scanLoading ? "bg-indigo-500 animate-ping" : "bg-slate-700"}`}
+              />
               <h3 className="text-lg font-black tracking-tighter italic text-indigo-400">
                 AI SENTINEL
               </h3>
             </div>
             <span className="text-[9px] px-2 py-0.5 bg-white/10 rounded-full font-mono text-slate-400">
-              V3.1.0
+              V3.2.0-STREAM
             </span>
           </div>
 
@@ -174,14 +184,42 @@ export default function DashboardContent() {
               </div>
             </div>
 
-            {/* 风险列表 */}
+            {/* 💡 动态切换：风险列表 vs Agent 日志 */}
             <div className="flex-1 flex flex-col min-h-0">
               <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 opacity-60">
-                Threat Radar
+                {scanLoading ? "Live Audit Stream" : "Threat Radar"}
               </p>
 
-              <div className="max-h-72 overflow-y-auto space-y-2 pr-2 custom-scrollbar">
-                {scanStatus === "COMPLETED" ? (
+              <div
+                ref={logContainerRef}
+                className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar scroll-smooth"
+              >
+                {scanLoading ? (
+                  // 🚀 流式日志展示 (扫描中)
+                  <div className="space-y-4 font-mono">
+                    {agentLogs.map((log, i) => (
+                      <div
+                        key={i}
+                        className="animate-in fade-in slide-in-from-bottom-1 duration-300"
+                      >
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-[9px] font-black text-indigo-400 px-1.5 py-0.5 bg-indigo-500/10 rounded border border-indigo-500/20 uppercase">
+                            {log.agent}
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-slate-300 leading-relaxed pl-3 border-l border-white/10">
+                          {log.content}
+                        </p>
+                      </div>
+                    ))}
+                    {agentLogs.length === 0 && (
+                      <div className="text-[10px] text-slate-600 animate-pulse italic">
+                        Initializing multi-agent consensus...
+                      </div>
+                    )}
+                  </div>
+                ) : scanStatus === "COMPLETED" ? (
+                  // ✅ 结果展示 (扫描完)
                   riskAllowances.length > 0 ? (
                     riskAllowances.map((item, idx: number) => (
                       <div
@@ -205,7 +243,6 @@ export default function DashboardContent() {
                                 ? "∞"
                                 : parseFloat(item.allowance).toLocaleString()}
                             </p>
-                            {/* 💡 这里是修改点：绑定 handleRevoke */}
                             <button
                               onClick={() =>
                                 handleRevoke(
@@ -213,8 +250,7 @@ export default function DashboardContent() {
                                   item.spenderAddress as Address,
                                 )
                               }
-                              className="text-[9px] font-black text-indigo-400 opacity-0 group-hover:opacity-100 transition-all hover:text-indigo-300 hover:underline active:scale-90
-                              cursor-pointer"
+                              className="text-[9px] font-black text-indigo-400 opacity-0 group-hover:opacity-100 transition-all hover:text-indigo-300 hover:underline cursor-pointer"
                             >
                               REVOKE
                             </button>
@@ -224,13 +260,15 @@ export default function DashboardContent() {
                     ))
                   ) : (
                     <div className="py-8 text-center bg-emerald-500/5 rounded-2xl border border-dashed border-emerald-500/20">
-                      <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">
+                      <p className="text-[10px] font-bold text-emerald-500 uppercase">
                         System Secured
                       </p>
                     </div>
                   )
                 ) : (
-                  <div className="py-12 text-center opacity-10">
+                  // 💤 待机状态
+                  <div className="h-full flex flex-col items-center justify-center opacity-10">
+                    <span className="text-4xl mb-2">📡</span>
                     <p className="text-[10px] font-black uppercase tracking-[0.3em]">
                       Standby
                     </p>
@@ -261,7 +299,7 @@ export default function DashboardContent() {
                 : "bg-indigo-600 hover:bg-indigo-500 shadow-lg shadow-indigo-600/20"
             }`}
           >
-            {scanLoading ? "ANALYZING..." : "DEEP INSPECTION"}
+            {scanLoading ? "DEBATING CONTEXT..." : "DEEP INSPECTION"}
           </button>
         </div>
       </div>
