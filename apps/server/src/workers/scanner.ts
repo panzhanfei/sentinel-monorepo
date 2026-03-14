@@ -1,119 +1,133 @@
-import { redis } from '@/client';
-import { prisma } from '@sentinel/database';
+import { Job } from 'bull';
 import { batchAuditAllowances } from '@sentinel/security-sdk';
-import { createPublicClient, http, formatEther } from 'viem';
-import { mainnet } from 'viem/chains';
+import {
+  JobService,
+  sendTelegramAlert,
+  auditQueue,
+  pub,
+  withHeartbeat,
+  scanWithDeepSeek,
+  auditWithDeepSeek,
+  generateFinalReport,
+} from '@/services';
 
-// 初始化 viem 客户端
-const client = createPublicClient({
-  chain: mainnet,
-  transport: http(
-    process.env.QUICKNODE_RPC_URL || 'https://cloudflare-eth.com'
-  ),
+// 创建带心跳监控的AI函数
+const heartbeatScan = withHeartbeat('Scanner', scanWithDeepSeek, {
+  timeoutMs: 45000, // 45秒无新chunk则重启
+  maxRetries: 2,
+  onRestart: (reason, attempt) => {
+    console.log(`[Heartbeat] Scanner 重启 #${attempt}，原因：${reason}`);
+  },
 });
 
-export async function startWorker() {
-  console.log('🚀 Sentinel Worker 已启动，正在通过 pnpm 环境监听任务...');
+const heartbeatAudit = withHeartbeat('Auditor', auditWithDeepSeek, {
+  timeoutMs: 45000,
+  maxRetries: 2,
+});
 
-  while (true) {
-    try {
-      // 1. 获取任务 (从 Redis 阻塞式弹出)
-      const task = await redis.brpop('sentinel:scan_queue', 0);
-      if (!task) continue;
+const heartbeatGenerate = withHeartbeat('Generator', generateFinalReport, {
+  timeoutMs: 45000,
+  maxRetries: 2,
+});
 
-      const { jobId, address } = JSON.parse(task[1]);
-      const cacheKey = `sentinel:task:${address.toLowerCase()}`;
-      console.log(`[${jobId}] 正在深度审计地址: ${address}`);
+export async function processJob(job: Job) {
+  const { address, jobId } = job.data;
+  console.log(`[Worker] 开始处理 jobId=${jobId}, address=${address}`);
 
-      try {
-        // --- 阶段 1: 标记启动 (15%) ---
-        await prisma.job.update({
-          where: { id: jobId },
-          data: { status: 'RUNNING', progress: 15 },
-        });
-        await redis.hset(cacheKey, { status: 'RUNNING', progress: '15' });
+  const publishLog = (agent: string, status: string, content?: string) => {
+    const msg = JSON.stringify({
+      agent,
+      status,
+      content,
+      timestamp: Date.now(),
+    });
+    pub.publish(`job:${jobId}:log`, msg);
+  };
 
-        // --- 阶段 2: 链上基础数据抓取 (40%) ---
-        const [balance, txCount] = await Promise.all([
-          client.getBalance({ address: address as `0x${string}` }),
-          client.getTransactionCount({ address: address as `0x${string}` }),
-        ]);
+  try {
+    await JobService.updateJob(jobId, { status: 'RUNNING', progress: 0 });
+    await job.progress(0);
 
-        await prisma.job.update({
-          where: { id: jobId },
-          data: { progress: 40 },
-        });
-        await redis.hset(cacheKey, { progress: '40' });
+    // 1. 获取链上数据
+    publishLog('System', 'thinking', '正在提取链上授权数据...');
+    const allowances = await batchAuditAllowances(address, undefined, 500n, 5n);
+    await JobService.updateJob(jobId, { progress: 20 });
+    await job.progress(20);
 
-        // --- 阶段 3: 深度授权审计 (接入 Security SDK) (80%) ---
-        // 这是今天最硬核的任务：调用你刚刚写的 Multicall 逻辑
-        const allowanceAudit = await batchAuditAllowances(
-          address as `0x${string}`
-        );
+    // 2. Agent 1: 初扫（带心跳）
+    publishLog('Scanner (DeepSeek)', 'thinking', '正在扫描合约授权模式...');
+    const report1 = await heartbeatScan(
+      (chunk) => {
+        publishLog('Scanner (DeepSeek)', 'thinking', chunk);
+      },
+      `Address: ${address}, Data: ${JSON.stringify(allowances)}`
+    );
+    await JobService.updateJob(jobId, { progress: 45 });
+    await job.progress(45);
 
-        await prisma.job.update({
-          where: { id: jobId },
-          data: { progress: 80 },
-        });
-        await redis.hset(cacheKey, { progress: '80' });
+    // 3. Agent 2: 复核（带心跳）
+    publishLog('Auditor (DeepSeek)', 'thinking', '正在复核扫描结果...');
+    const report2 = await heartbeatAudit((chunk) => {
+      publishLog('Auditor (DeepSeek)', 'thinking', chunk);
+    }, report1);
+    await JobService.updateJob(jobId, { progress: 70 });
+    await job.progress(70);
 
-        // --- 阶段 4: 风险引擎评估 ---
-        // 这里我们可以预留给明天的 AI，现在先做基础逻辑判定
-        const hasHighRiskAllowance = allowanceAudit.some(
-          (a) => parseFloat(a.allowance) > 1000000 // 假设大于 100w 的授权为高危
-        );
+    // 4. Agent 3: 最终报告（带心跳）
+    publishLog('Decision (DeepSeek)', 'thinking', '正在生成最终风险评级...');
+    const finalReport = await heartbeatGenerate((chunk) => {
+      publishLog('Decision (DeepSeek)', 'thinking', chunk);
+    }, report2);
 
-        const isNewWallet = txCount < 5;
-        let finalRisk = 'LOW';
-        if (isNewWallet) finalRisk = 'MEDIUM';
-        if (hasHighRiskAllowance) finalRisk = 'HIGH';
+    const riskLevel = finalReport.includes('HIGH') ? 'HIGH' : 'LOW';
+    await JobService.updateJob(jobId, {
+      progress: 100,
+      status: 'COMPLETED',
+      result: {
+        risk: riskLevel,
+        allowances,
+        details: { message: finalReport, timestamp: Date.now() },
+      },
+    });
+    await job.progress(100);
 
-        const scanResult = {
-          eth_balance: formatEther(balance),
-          tx_count: txCount,
-          allowances: allowanceAudit, // 这里存入了所有代币的授权详情
-          risk: finalRisk,
-          details: {
-            isNewWallet,
-            riskCount: allowanceAudit.filter((a) => parseFloat(a.allowance) > 0)
-              .length,
-            message: hasHighRiskAllowance
-              ? '检测到无限授权，存在资产被盗风险！'
-              : '授权状态良好。',
-          },
-          timestamp: Date.now(),
-        };
+    publishLog('Decision (DeepSeek)', 'done', finalReport);
 
-        // --- 阶段 5: 结算完成 (100%) ---
-        // 注意：Prisma 的 JSON 字段会自动处理 scanResult 对象
-        await prisma.job.update({
-          where: { id: jobId },
-          data: {
-            status: 'COMPLETED',
-            progress: 100,
-            result: scanResult as any, // 强制断言，Prisma 会处理 JSONB
-          },
-        });
-
-        await redis.hset(cacheKey, {
-          status: 'COMPLETED',
-          progress: '100',
-          risk: finalRisk,
-        });
-        await redis.expire(cacheKey, 3600);
-
-        console.log(`[${jobId}] 深度审计成功 - 风险等级: ${finalRisk}`);
-      } catch (innerError) {
-        console.error(`[${jobId}] 扫描任务执行失败:`, innerError);
-        await prisma.job.update({
-          where: { id: jobId },
-          data: { status: 'FAILED', error: (innerError as Error).message },
-        });
-        await redis.hset(cacheKey, { status: 'FAILED', progress: '0' });
-      }
-    } catch (outerError) {
-      console.error('Redis 队列监听异常:', outerError);
-      await new Promise((res) => setTimeout(res, 2000)); // 延长重试，保护 RPC
+    if (riskLevel === 'HIGH') {
+      publishLog(
+        'Alerter',
+        'active',
+        '检测到高危风险，正在推送 Telegram 预警...'
+      );
+      await sendTelegramAlert(`检测到高危地址: ${address}\n\n${finalReport}`);
     }
+
+    // 修改点：使用 publishLog 发送结束标记，而不是原始文本
+    publishLog('System', 'stream_end', '审计完成');
+
+    console.log(`[Worker] jobId=${jobId} 完成`);
+  } catch (error: any) {
+    console.error(`[Worker] jobId=${jobId} 失败:`, error);
+    await JobService.updateJob(jobId, {
+      status: 'FAILED',
+      error: error.message,
+    });
+    publishLog('Watchdog', 'error', `任务失败: ${error.message}`);
+    throw error; // 触发 Bull 重试
   }
+}
+
+// 启动 Worker
+export async function startScan() {
+  auditQueue.process(async (job) => await processJob(job));
+
+  auditQueue.on('failed', (job, err) => {
+    console.error(`[Queue] Job ${job?.id} 失败:`, err);
+  });
+
+  auditQueue.on('completed', (job) => {
+    console.log(`[Queue] Job ${job.id} 完成`);
+  });
+
+  console.log('[Worker] 审计 Worker 已启动，等待任务...');
 }

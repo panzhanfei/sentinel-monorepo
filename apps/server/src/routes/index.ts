@@ -1,10 +1,9 @@
 import { Router } from 'express';
-import authRouter from './auth';
+import authRouter from './scan';
 
 import { authMiddleware } from '@/middlewares';
 
 const router = Router();
-
 router.use('/api/v1', authMiddleware, authRouter);
 
 router.get('/api/v1', (req, res) => {

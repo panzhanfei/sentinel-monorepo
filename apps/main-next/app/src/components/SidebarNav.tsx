@@ -4,30 +4,20 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 
 const sidebarNavItems = [
-  {
-    href: "/dashboard",
-    label: "总览 (Next.js)",
-    icon: LayoutDashboard,
-  },
-  {
-    href: "/monitor",
-    label: "资产监控 (Vue)",
-    icon: Eye,
-  },
-  {
-    href: "/audit",
-    label: "安全审计 (React)",
-    icon: Shield,
-  },
+  { href: "/dashboard", label: "Security_Core", icon: LayoutDashboard },
+  { href: "/monitor", label: "Asset_Scanner", icon: Eye },
+  { href: "/audit", label: "Deep_Audit", icon: Shield },
 ];
 
 export const SidebarNav = () => {
   const pathname = usePathname();
-
   const isActive = (path: string) => pathname === path;
 
   return (
-    <nav className="flex-1 px-3 py-4 space-y-1">
+    <nav className="flex-1 px-4 py-8 space-y-3">
+      <div className="px-4 mb-4 text-[9px] font-black text-slate-600 uppercase tracking-[0.4em]">
+        Main Menu
+      </div>
       {sidebarNavItems.map(({ href, label, icon: Icon }) => {
         const active = isActive(href);
 
@@ -36,31 +26,23 @@ export const SidebarNav = () => {
             key={href}
             href={href}
             className={`
-              group relative flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium
-              transition-all duration-200 overflow-hidden
+              group relative flex items-center gap-4 px-6 py-4 rounded-2xl text-[11px] font-bold uppercase tracking-[0.2em]
+              transition-all duration-300
               ${
                 active
-                  ? "text-indigo-600 bg-indigo-50 shadow-sm"
-                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                  ? "text-blue-400 bg-blue-500/10 border border-blue-500/20 shadow-[0_0_20px_rgba(59,130,246,0.1)]"
+                  : "text-slate-500 hover:text-slate-200 hover:bg-white/5"
               }
             `}
           >
-            {/* 激活状态左侧指示条 */}
             {active && (
-              <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-indigo-600 rounded-r-full" />
+              <span className="absolute left-0 w-1.5 h-6 bg-blue-500 rounded-r-full shadow-[0_0_15px_#3b82f6]" />
             )}
-
-            {/* 图标 */}
             <Icon
               size={18}
-              className={`
-                transition-transform duration-200 group-hover:scale-110
-                ${active ? "text-indigo-600" : "text-gray-400 group-hover:text-gray-600"}
-              `}
+              className={`transition-transform duration-300 group-hover:scale-110 ${active ? "text-blue-400" : "text-slate-600 group-hover:text-slate-300"}`}
             />
-
-            {/* 标签 */}
-            <span>{label}</span>
+            <span className="relative z-10">{label}</span>
           </Link>
         );
       })}

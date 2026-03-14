@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { type Address } from "viem";
+import { useRisk } from "@/app/context";
 import type { ScanStatus, ScanResultData, AgentMessage } from "./types";
 
 export function useScan({
@@ -31,6 +32,7 @@ export function useScan({
       sseRef.current = null;
     }
   }, []);
+  const { setRiskLevel, triggerHighRisk } = useRisk();
 
   // 轮询 job 状态
   const checkJobStatus = useCallback(async () => {
@@ -48,6 +50,12 @@ export function useScan({
 
         if (data.status === "COMPLETED") {
           setScanResult(data.result);
+          if (data.result.allowances) {
+            triggerHighRisk(10000);
+          } else {
+            setRiskLevel("low");
+          }
+
           stopPolling();
           closeSSE();
         } else if (data.status === "FAILED") {
@@ -97,6 +105,7 @@ export function useScan({
                 setAgentLogs((prev) => {
                   const lastIndex = prev.length - 1;
                   const last = lastIndex >= 0 ? prev[lastIndex] : null;
+
                   if (
                     last &&
                     last.agent === data.agent &&
@@ -182,7 +191,7 @@ export function useScan({
         body: JSON.stringify({ address }),
       });
       if (!startRes.ok) throw new Error("Failed to start scan");
-
+      setRiskLevel("medium");
       const { jobId } = await startRes.json();
       if (jobId) {
         currentJobId.current = jobId;

@@ -107,7 +107,7 @@ const envSchema = z.object({
     .transform((val) => val === 'true'),
 
   // === AI Agent 1: DeepSeek (扫描器) ===
-  
+
   DEEPSEEK_API_KEY: z.string().min(1, 'DeepSeek API Key 缺失'),
   DEEPSEEK_API_URL: z.string().url().default('https://api.deepseek.com/v1'),
 
@@ -131,6 +131,7 @@ const envSchema = z.object({
   // === Agent 4: Telegram 预警配置 (脚本/逻辑) ===
   TELEGRAM_BOT_TOKEN: z.string().optional(), // 机器人 Token
   TELEGRAM_CHAT_ID: z.string().optional(), // 你的频道或个人 ID
+  REDIS_URL: z.string(), // Redis 连接 URL
 
   // === Agent 5: Watchdog (看门狗配置) ===
   WATCHDOG_INTERVAL_MS: z

@@ -1,5 +1,5 @@
 // src/types/express.d.ts
-import { TokenPayload } from "@/utils/jwt";
+import { TokenPayload } from '@/utils/jwt';
 
 // 扩展Express的Request接口
 declare global {
@@ -24,6 +24,8 @@ declare global {
        * 客户端IP地址
        */
       clientIp?: string;
+      sub: string;
+      role?: string;
     }
   }
 }
