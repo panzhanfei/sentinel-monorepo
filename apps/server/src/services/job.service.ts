@@ -36,7 +36,7 @@ export class JobService {
     return await prisma.job.findFirst({
       where: {
         user: { address: address.toLowerCase() },
-        status: 'COMPLETED',
+        // status: 'COMPLETED',
       },
       orderBy: { createdAt: 'desc' },
     });

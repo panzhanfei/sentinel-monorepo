@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { batchAuditAllowances } from '@sentinel/security-sdk';
+import { batchAuditAllowances, type Address } from '@sentinel/security-sdk';
 import {
   streamScanWithDeepSeek,
   streamAuditWithDeepSeek,
@@ -103,35 +103,28 @@ export const getLatestJob = async (req: Request, res: Response) => {
  * 流式审计逻辑（SSE）
  */
 export const handleAuditStream = async (req: Request, res: Response) => {
-  console.log(`[🙃handleAuditStream] 收到请求, query:`, req.query);
-
   try {
     const { address, jobId } = req.query as { address: string; jobId: string };
 
     if (!address || !jobId) {
-      console.log('[🙃handleAuditStream] 缺少参数');
       return res.status(400).json({ error: 'Missing address or jobId' });
     }
 
     // 检查用户认证（假设中间件已挂载 req.user）
     if (!req.user) {
-      console.log('[🙃handleAuditStream] 未认证');
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
     if (address.toLowerCase() !== req.user.sub.toLowerCase()) {
-      console.log('[🙃handleAuditStream] 地址不匹配');
       return res.status(403).json({ error: 'Forbidden: address mismatch' });
     }
 
     // 检查 job 是否存在并属于该用户
     const job = await JobService.getJobById(jobId);
     if (!job) {
-      console.log(`[🙃handleAuditStream] Job 不存在: ${jobId}`);
       return res.status(404).json({ error: 'Job not found' });
     }
     if (job.user?.address?.toLowerCase() !== address.toLowerCase()) {
-      console.log('[🙃handleAuditStream] Job 不属于该用户');
       return res.status(403).json({ error: 'Forbidden: job mismatch' });
     }
 
@@ -152,17 +145,41 @@ export const handleAuditStream = async (req: Request, res: Response) => {
       }
     };
 
-    console.log(
-      '[🙃handleAuditStream] 开始处理，jobId:',
-      jobId,
-      'address:',
-      address
-    );
-
     // 0. SDK 获取链上数据
     send('System', 'thinking', '正在提取链上授权数据...');
-    const allowances = await batchAuditAllowances(address as any);
+    const allowances = await batchAuditAllowances(
+      address as Address,
+      undefined,
+      50n,
+      5n
+    );
+
     if (isClosed) return;
+
+    if (allowances.length === 0) {
+      // 更新任务状态为已完成，并记录结果
+      await JobService.updateJob(jobId, {
+        progress: 100,
+        status: 'COMPLETED',
+        result: {
+          risk: 'LOW', // 无授权则无风险
+          allowances: [],
+          details: {
+            message: '未发现任何授权记录，无需审计。',
+            timestamp: Date.now(),
+          },
+        },
+      });
+
+      // 发送最终消息给客户端
+      send('System', 'done', '未发现任何授权记录，审计结束。');
+
+      // 关闭 SSE 连接
+      res.write('event: end\ndata: 无授权数据，流程结束\n\n');
+      res.end();
+      return; // 终止函数执行
+    }
+
     await JobService.updateJob(jobId, { progress: 20, status: 'RUNNING' });
 
     // 1. Agent 1: DeepSeek 扫描（流式）
@@ -222,7 +239,6 @@ export const handleAuditStream = async (req: Request, res: Response) => {
 
     res.write('event: end\ndata: 审计全链路完成\n\n');
     res.end();
-    console.log('[🙃handleAuditStream] 处理完成');
   } catch (error: any) {
     console.error('[🙃handleAuditStream] 捕获异常:', error);
     if (!res.headersSent) {

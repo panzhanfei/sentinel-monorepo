@@ -4,9 +4,11 @@ import {
   erc20Abi,
   Address,
   parseAbiItem,
+  BlockNumber,
 } from 'viem';
 import { mainnet } from 'viem/chains';
 import { SUPPORTED_TOKENS, COMMON_SPENDERS } from './constants';
+export { type Address } from 'viem';
 
 export interface AllowanceResult {
   tokenSymbol: string;
@@ -20,33 +22,86 @@ export interface AllowanceResult {
 export const publicClient = createPublicClient({
   chain: mainnet,
   transport: http('http://127.0.0.1:8545'),
-  // transport: http(process.env.RPC_URL || 'http://127.0.0.1:8545'), // 确保连上 Anvil
+  // transport: http(process.env.RPC_URL || 'http://127.0.0.1:8545'),
 });
 
+/**
+ * 批量审计指定地址的所有有效授权
+ * @param userAddress 要审计的地址
+ * @param fromBlock 起始区块，默认自动计算最近 maxBlocksToScan 个块
+ * @param maxBlocksToScan 最多扫描的区块数量，默认 10000
+ * @param chunkSize 每次查询的区块范围大小，必须 ≤ RPC 限制（例如 QuickNode 免费版为 5）
+ */
 export async function batchAuditAllowances(
-  userAddress: Address
+  userAddress: Address,
+  fromBlock?: BlockNumber,
+  maxBlocksToScan = 10000n,
+  chunkSize = 5n // ⚠️ 关键修改：将块范围限制在 5 以内
 ): Promise<AllowanceResult[]> {
-  // --- 💡 第一步：动态发现 (智能扫描的核心) ---
-  // 查找用户所有的 Approval 事件记录
-  const approvalLogs = await publicClient.getLogs({
-    event: parseAbiItem(
-      'event Approval(address indexed owner, address indexed spender, uint256 value)'
-    ),
-    args: { owner: userAddress },
-    // fromBlock: 0n, // 在 Anvil 上可以从 0 开始，主网建议限制范围
-    fromBlock: 'latest',
-  });
+  const latestBlock = await publicClient.getBlockNumber();
+  let startBlock: BlockNumber;
 
-  // 提取所有交互过的【代币地址】和【被授权地址(Spender)】
+  if (fromBlock !== undefined) {
+    startBlock = fromBlock;
+  } else {
+    // 默认扫描最近 maxBlocksToScan 个块
+    startBlock =
+      latestBlock > maxBlocksToScan ? latestBlock - maxBlocksToScan + 1n : 0n;
+    console.log(
+      `[batchAuditAllowances] 自动设置起始块: ${startBlock} (latest=${latestBlock})`
+    );
+  }
+
+  // 分块查询 Approval 事件
+  const approvalLogs = [];
+  let currentFrom = startBlock;
+
+  while (currentFrom <= latestBlock) {
+    const toBlock = currentFrom + chunkSize - 1n;
+    const safeToBlock = toBlock > latestBlock ? latestBlock : toBlock;
+
+    console.log(
+      `[batchAuditAllowances] 查询区块范围: ${currentFrom} 到 ${safeToBlock} (跨度 ${safeToBlock - currentFrom + 1n} 块)`
+    );
+    try {
+      const chunkLogs = await publicClient.getLogs({
+        event: parseAbiItem(
+          'event Approval(address indexed owner, address indexed spender, uint256 value)'
+        ),
+        args: { owner: userAddress },
+        fromBlock: currentFrom,
+        toBlock: safeToBlock,
+      });
+      approvalLogs.push(...chunkLogs);
+      console.log(
+        `[batchAuditAllowances] 本块范围找到 ${chunkLogs.length} 条日志`
+      );
+    } catch (error) {
+      console.error(
+        `[batchAuditAllowances] 区块范围 ${currentFrom}-${safeToBlock} 查询失败:`,
+        error
+      );
+      // 可选择继续或抛出，这里抛出以便调试
+      throw error;
+    }
+
+    if (safeToBlock === latestBlock) break;
+    currentFrom = safeToBlock + 1n;
+  }
+
+  console.log(
+    `[batchAuditAllowances] 总共找到 ${approvalLogs.length} 条 Approval 日志`
+  );
+
+  // 后续步骤（构建扫描队列、去重、multicall）保持不变
+  // ... (从你的原代码中复制后续部分，保持完整)
+  // 注意：以下代码段需完整粘贴，此处省略以节省篇幅，但你应保留原有所有逻辑
   const discoveredPairs = approvalLogs.map((log) => ({
     tokenAddress: log.address,
     spenderAddress: log.args.spender as Address,
   }));
 
-  // --- 💡 第二步：构造扫描队列 ---
   const scanQueue = [];
-
-  // A. 加入动态发现的对
   for (const pair of discoveredPairs) {
     scanQueue.push({
       address: pair.tokenAddress,
@@ -54,8 +109,6 @@ export async function batchAuditAllowances(
       spenderName: 'Unknown / Custom Contract',
     });
   }
-
-  // B. (可选) 保留原有的常用列表兜底
   for (const token of SUPPORTED_TOKENS) {
     for (const spender of COMMON_SPENDERS) {
       scanQueue.push({
@@ -65,8 +118,6 @@ export async function batchAuditAllowances(
       });
     }
   }
-
-  // 去重 (防止重复扫描)
   const uniqueQueue = scanQueue.filter(
     (v, i, a) =>
       a.findIndex(
@@ -74,15 +125,11 @@ export async function batchAuditAllowances(
       ) === i
   );
 
-  // --- 💡 第三步：执行 Multicall 批量查询 ---
   const finalResults: AllowanceResult[] = [];
-  const CHUNK_SIZE = 50;
+  const MULTICALL_CHUNK_SIZE = 50;
 
-  for (let i = 0; i < uniqueQueue.length; i += CHUNK_SIZE) {
-    const chunk = uniqueQueue.slice(i, i + CHUNK_SIZE);
-
-    // 我们需要获取 token 的 symbol 和 decimals 才能正确显示
-    // 实际生产环境建议用 multicall 同时查 symbol, decimals 和 allowance
+  for (let i = 0; i < uniqueQueue.length; i += MULTICALL_CHUNK_SIZE) {
+    const chunk = uniqueQueue.slice(i, i + MULTICALL_CHUNK_SIZE);
     const results = await publicClient.multicall({
       contracts: chunk.flatMap((c) => [
         {
@@ -124,5 +171,8 @@ export async function batchAuditAllowances(
     }
   }
 
+  console.log(
+    `[batchAuditAllowances] 最终找到 ${finalResults.length} 条有效授权`
+  );
   return finalResults;
 }
