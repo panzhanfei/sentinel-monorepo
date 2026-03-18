@@ -12,8 +12,12 @@ export const authMiddleware = (
   next: NextFunction
 ) => {
   // 从 Authorization 头或 Cookie 中提取 token
+
   const token =
-    req.headers.authorization?.replace('Bearer ', '') || req.cookies?.token; // 如果使用 cookie
+    req.headers.authorization?.replace('Bearer ', '') ||
+    req.cookies?.token ||
+    req.body?.token ||
+    req.query?.token;
 
   if (!token) {
     return res.status(401).json({ error: 'Unauthorized' });

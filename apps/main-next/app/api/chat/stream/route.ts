@@ -3,23 +3,18 @@ import { NODE_SERVICE } from "@/app/src/config/node_service";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const address = searchParams.get("address");
-  const jobId = searchParams.get("jobId");
+  const sessionId = searchParams.get("sessionId");
+  const message = searchParams.get("message")!;
+  const token = searchParams.get("token")!;
 
-  if (!address || !jobId) {
-    return new Response("Missing address or jobId", { status: 400 });
+  if (!sessionId) {
+    return new Response("Missing sessionId ", { status: 400 });
   }
 
-  // 从 cookie 中获取 token
-  const token = request.cookies.get("token")?.value;
-  if (!token) {
-    return new Response("Unauthorized", { status: 401 });
-  }
-  console.log("Request params:😗", { address, jobId });
   try {
     // 请求 Node 服务的流式接口，携带认证头
     const nodeRes = await fetch(
-      `${NODE_SERVICE}/scan/stream?address=${encodeURIComponent(address)}&jobId=${encodeURIComponent(jobId)}`,
+      `${NODE_SERVICE}/chat/stream?sessionId=${encodeURIComponent(sessionId)}&message=${encodeURIComponent(message)}&token=${encodeURIComponent(token)}`,
       {
         headers: {
           Accept: "text/event-stream",

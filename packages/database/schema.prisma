@@ -37,3 +37,25 @@ model Blacklist {
   level     String   // "HIGH", "MEDIUM", "LOW"
   addedAt   DateTime @default(now())
 }
+
+model ChatSession {
+  id        String   @id @default(cuid())
+  userId    String
+  address   String
+  createdAt DateTime @default(now())
+
+  messages  ChatMessage[]
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  sessionId String
+  session   ChatSession @relation(fields: [sessionId], references: [id])
+
+  role      String   // "user" | "assistant"
+  agent     String   // Scanner | Auditor | Decision | System
+  content   String   @db.Text
+  status    String   // thinking | done | error
+
+  createdAt DateTime @default(now())
+}

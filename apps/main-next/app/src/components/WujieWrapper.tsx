@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { ComponentType, useState, ReactNode } from "react";
 import { useAccount } from "wagmi";
 import { useWeb3Sync } from "@/app/src/hooks";
+import Cookies from "js-cookie";
 
 export interface WujieProps {
   name: string;
@@ -40,7 +41,6 @@ export const WujieClient = ({
   alive = true,
   props = {},
   fallback,
-
   afterMount,
 }: WujieProps) => {
   const { address, isConnected, chain } = useAccount();
@@ -54,7 +54,8 @@ export const WujieClient = ({
       afterMount?.();
     }, 300);
   };
-
+  const token = Cookies.get("token");
+ 
   return (
     <div className="relative w-full h-full" style={{ width, height }}>
       {!isLoaded && (
@@ -75,6 +76,7 @@ export const WujieClient = ({
         }}
         props={{
           ...props,
+          token: token,
           afterMount: handleAfterMount,
           web3Data: { address, chain, isConnected },
         }}

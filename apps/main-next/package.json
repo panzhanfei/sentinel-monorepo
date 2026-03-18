@@ -16,12 +16,11 @@
     "@sentinel/database": "workspace:^",
     "@sentinel/security-sdk": "workspace:*",
     "@tanstack/react-query": "^5.90.20",
-    "@types/node-fetch": "^2.6.13",
-    "@types/three": "^0.183.1",
     "@wagmi/core": "^3.3.1",
     "connectkit": "^1.9.1",
     "framer-motion": "^12.28.1",
     "https-proxy-agent": "^7.0.6",
+    "js-cookie": "^3.0.5",
     "lucide-react": "^0.562.0",
     "next": "16.1.4",
     "node-fetch": "^3.3.2",
@@ -43,7 +42,10 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.4",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "@types/js-cookie": "^3.0.6",
+    "@types/node-fetch": "^2.6.13",
+    "@types/three": "^0.183.1"
   },
   "overrides": {
     "connectkit": {

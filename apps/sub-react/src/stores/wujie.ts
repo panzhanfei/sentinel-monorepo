@@ -13,6 +13,7 @@ export type WujieWeb3Date = {
   address?: string;
   chain?: { id: number; name: string };
   isConnected?: boolean;
+  token?: string;
 };
 
 export const useWujieStore = create<WujieState>()(

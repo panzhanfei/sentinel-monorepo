@@ -22,36 +22,6 @@ export default defineComponent({
 
     return () => (
       <div class="min-h-screen  text-zinc-100 p-8 font-mono">
-        <header class="mb-12 flex justify-between items-start">
-          <div>
-            <h1 class="text-3xl font-black italic uppercase">
-              Sentinel_Monitor
-            </h1>
-            {/* 展示当前监控地址 */}
-            <div class="mt-2 flex items-center gap-2 px-3 py-1 bg-indigo-500/10 border border-indigo-500/20 rounded-lg w-fit">
-              <span class="text-[10px] text-indigo-400 font-mono uppercase tracking-widest">
-                Target_Wallet:
-              </span>
-              <span class="text-[10px] text-zinc-300 font-mono">
-                {address.value
-                  ? `${address.value.slice(0, 6)}...${address.value.slice(-4)}`
-                  : "NOT_CONNECTED"}
-              </span>
-            </div>
-          </div>
-
-          {/* 状态指示器 */}
-          <div class="flex flex-col items-end">
-            <div
-              class={[
-                "text-[10px] font-mono",
-                address.value ? "text-emerald-500" : "text-rose-500",
-              ]}
-            >
-              {address.value ? "● SYSTEM_LINKED" : "○ OFFLINE_MODE"}
-            </div>
-          </div>
-        </header>
         {!address.value && (
           <div class="h-64 flex flex-col items-center justify-center border-2 border-dashed border-white/5 rounded-4xl">
             <div class="text-zinc-600 font-mono text-xs animate-pulse">

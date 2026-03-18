@@ -12,7 +12,7 @@ export default defineComponent({
     });
 
     return () => (
-      <div class="max-w-5xl mx-auto h-screen flex flex-col pb-30">
+      <div class="max-w-7sxl mx-auto h-screen flex flex-col pb-30">
         <MonitorDashboard />
       </div>
     );

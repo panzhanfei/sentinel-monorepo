@@ -11,10 +11,17 @@ export default defineConfig({
     cors: true,
     // host: "0.0.0.0", // 可选：允许局域网访问（如手机调试）
     // open: true, // 可选：启动时自动打开浏览器
+    proxy: {
+      "/api": {
+        target: "http://localhost:3000/",
+        changeOrigin: true,
+        secure: false,
+      },
+    },
   },
   resolve: {
     alias: {
-      "@": resolve(__dirname, "src"), // 确保这里有配置
+      "@": resolve(__dirname, "src"),
     },
   },
 });
