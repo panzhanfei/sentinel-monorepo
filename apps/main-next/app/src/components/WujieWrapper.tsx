@@ -14,6 +14,7 @@ export interface WujieProps {
   alive?: boolean;
   props?: Record<string, unknown>;
   fallback?: ReactNode;
+  shadowDOM?: boolean;
   activated?: () => void;
   afterMount?: () => void;
 }
@@ -25,7 +26,7 @@ const WujieReact = dynamic(
     ),
   {
     ssr: false,
-    // 这里的 loading 仅用于 JS 资源下载期间，真正的骨架屏我们放在下方手动控制
+
     loading: () => null,
   },
 );
@@ -39,6 +40,7 @@ export const WujieClient = ({
   alive = true,
   props = {},
   fallback,
+
   afterMount,
 }: WujieProps) => {
   const { address, isConnected, chain } = useAccount();

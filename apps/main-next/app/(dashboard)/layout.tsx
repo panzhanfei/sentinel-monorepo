@@ -94,7 +94,9 @@ export default function DashboardLayout({
 
           {/* 内容展示区：半透明容器 */}
           <div className="flex-1 overflow-auto px-4 md:px-8 pb-8 custom-scrollbar">
-            <div className="max-w-7xl mx-auto">{children}</div>
+            <div className="max-w-7xl mx-auto relative w-full h-full">
+              {children}
+            </div>
           </div>
 
           {/* 装饰性扫描线效果 */}

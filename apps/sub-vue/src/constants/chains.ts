@@ -1,10 +1,27 @@
-import { mainnet, arbitrum, optimism, polygon } from "viem/chains";
+// @/constants/chains.ts
+import { mainnet, arbitrum, optimism, polygon, anvil } from "viem/chains";
 
-export const SUPPORTED_CHAINS = [mainnet, arbitrum, optimism, polygon];
+// 定义本地 Anvil 链配置
+export const localAnvil = {
+  ...anvil,
+  rpcUrls: {
+    default: { http: ["http://127.0.0.1:8545"] },
+    public: { http: ["http://127.0.0.1:8545"] },
+  },
+};
+
+export const SUPPORTED_CHAINS = [
+  localAnvil,
+  mainnet,
+  arbitrum,
+  optimism,
+  // polygon,
+];
 
 export type SupportedChain = (typeof SUPPORTED_CHAINS)[number];
 
 export const CHAIN_ID_TO_RPC: Record<number, string> = {
+  [localAnvil.id]: "http://127.0.0.1:8545",
   [mainnet.id]: "https://mainnet.infura.io/v3/329b3141ddff4730b2525b4669a9235b",
   [arbitrum.id]: "https://arb1.arbitrum.io/rpc",
   [optimism.id]: "https://mainnet.optimism.io",

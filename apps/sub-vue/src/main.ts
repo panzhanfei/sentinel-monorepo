@@ -1,4 +1,12 @@
-// main.js / main.ts
+Object.defineProperty(Document.prototype, "adoptedStyleSheets", {
+  get() {
+    return [];
+  },
+  set() {
+    // noop
+  },
+});
+
 import { createApp } from "vue";
 import { createPinia } from "pinia";
 import piniaPluginPersistedstate from "pinia-plugin-persistedstate";
@@ -7,6 +15,7 @@ import App from "./App";
 import "./style.css";
 
 const app = createApp(App);
+
 app.use(createPinia().use(piniaPluginPersistedstate));
 app.mount("#app");
 initWujieBusListener();

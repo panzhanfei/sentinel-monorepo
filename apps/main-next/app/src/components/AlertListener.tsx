@@ -78,33 +78,26 @@ export const AlertProvider: React.FC = () => {
 
   return (
     <>
-      {/* 3.1 3D 背景层 */}
       <div
-        className="fixed inset-0 bg-[#020202]"
+        className="fixed inset-0 bg-[#020202] "
         style={{ zIndex: -1 }} // 使用 style 确保层级最低
       >
         <Canvas
           shadows
           camera={{ position: [0, 0, 5], fov: 60 }}
-          // 加上 gl 配置，提升渲染质量
           gl={{ antialias: true, alpha: true }}
         >
           <RiskSphere riskLevel={riskLevel} />
         </Canvas>
       </div>
 
-      {/* 3.2 弹窗容器层 */}
       <Toaster
         position="top-right"
         containerStyle={{
           top: 40,
           right: 40,
         }}
-        toastOptions={
-          {
-            // 这里可以留空，因为我们用了 toast.custom
-          }
-        }
+        toastOptions={{}}
       />
     </>
   );
