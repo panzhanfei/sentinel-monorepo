@@ -1,12 +1,12 @@
 "use client";
-import { LayoutDashboard, Eye, Shield } from "lucide-react";
+import { Shield, Search, FileText } from "lucide-react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 
 const sidebarNavItems = [
-  { href: "/dashboard", label: "Security_Core", icon: LayoutDashboard },
-  { href: "/monitor", label: "Asset_Scanner", icon: Eye },
-  { href: "/audit", label: "Deep_Audit", icon: Shield },
+  { href: "/dashboard", label: "Security_Core", icon: Shield },
+  { href: "/monitor", label: "Asset_Scanner", icon: Search },
+  { href: "/audit", label: "Deep_Audit", icon: FileText },
 ];
 
 export const SidebarNav = () => {
@@ -26,12 +26,12 @@ export const SidebarNav = () => {
             key={href}
             href={href}
             className={`
-              group relative flex items-center gap-4 px-6 py-4 rounded-2xl text-[11px] font-bold uppercase tracking-[0.2em]
-              transition-all duration-300
+              group relative flex items-center gap-2 px-4 py-4 rounded-2xl text-[11px] font-bold uppercase tracking-[0.2em]
+              transition-shadow duration-300   
               ${
                 active
                   ? "text-blue-400 bg-blue-500/10 border border-blue-500/20 shadow-[0_0_20px_rgba(59,130,246,0.1)]"
-                  : "text-slate-500 hover:text-slate-200 hover:bg-white/5"
+                  : "text-slate-300 hover:text-white hover:bg-white/10"
               }
             `}
           >

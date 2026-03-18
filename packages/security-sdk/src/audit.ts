@@ -5,6 +5,7 @@ import {
   Address,
   parseAbiItem,
   BlockNumber,
+  formatUnits,
 } from 'viem';
 import { mainnet } from 'viem/chains';
 import { SUPPORTED_TOKENS, COMMON_SPENDERS } from './constants';
@@ -93,9 +94,6 @@ export async function batchAuditAllowances(
     `[batchAuditAllowances] 总共找到 ${approvalLogs.length} 条 Approval 日志`
   );
 
-  // 后续步骤（构建扫描队列、去重、multicall）保持不变
-  // ... (从你的原代码中复制后续部分，保持完整)
-  // 注意：以下代码段需完整粘贴，此处省略以节省篇幅，但你应保留原有所有逻辑
   const discoveredPairs = approvalLogs.map((log) => ({
     tokenAddress: log.address,
     spenderAddress: log.args.spender as Address,
@@ -128,8 +126,15 @@ export async function batchAuditAllowances(
   const finalResults: AllowanceResult[] = [];
   const MULTICALL_CHUNK_SIZE = 50;
 
+  // --- 替换你代码中的 for 循环部分 ---
   for (let i = 0; i < uniqueQueue.length; i += MULTICALL_CHUNK_SIZE) {
     const chunk = uniqueQueue.slice(i, i + MULTICALL_CHUNK_SIZE);
+
+    // 打印调试：确认当前正在查哪几个 token
+    console.log(
+      `[Audit_Debug] 正在验证区块数据，当前批次数量: ${chunk.length}`
+    );
+
     const results = await publicClient.multicall({
       contracts: chunk.flatMap((c) => [
         {
@@ -149,24 +154,39 @@ export async function batchAuditAllowances(
       const symbolRes = results[baseIdx + 1];
       const decimalRes = results[baseIdx + 2];
 
-      if (
-        allowanceRes.status === 'success' &&
-        BigInt(allowanceRes.result as bigint) > 0n
-      ) {
+      // 诊断日志：如果调用失败，看看是哪个合约报错
+      if (allowanceRes.status === 'failure') {
+        console.warn(
+          `[Audit_Warning] 无法获取授权额: ${chunk[j].address}, 可能是非标准 ERC20 或合约已销毁`
+        );
+        continue;
+      }
+
+      const rawValue = allowanceRes.result as bigint;
+
+      // 核心逻辑：只有当前额度大于 0 才是“有效风险”
+      // 如果日志里有 6 条但这里是 0，说明那 6 条记录对应的额度在链上已经被归零（Revoked）了
+      if (rawValue > 0n) {
         const symbol =
           symbolRes.status === 'success' ? String(symbolRes.result) : 'UNKNOWN';
         const decimals =
           decimalRes.status === 'success' ? Number(decimalRes.result) : 18;
-        const rawValue = allowanceRes.result as bigint;
 
         finalResults.push({
           tokenSymbol: symbol,
           tokenAddress: chunk[j].address,
           spenderName: chunk[j].spenderName,
           spenderAddress: chunk[j].spenderAddress,
-          allowance: (Number(rawValue) / 10 ** decimals).toString(),
+          // ✅ 修复点 1：严禁使用 Number(rawValue) / 10**decimals，会导致无限额度精度丢失
+          // 使用 viem 的 formatUnits
+          allowance: formatUnits(rawValue, decimals),
           rawAllowance: rawValue.toString(),
         });
+      } else {
+        // 诊断日志：帮助你确认为什么那 6 条被过滤了
+        console.log(
+          `[Audit_Info] 跳过额度为 0 的历史记录: Token=${chunk[j].address}, Spender=${chunk[j].spenderAddress}`
+        );
       }
     }
   }

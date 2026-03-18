@@ -50,7 +50,12 @@ export async function processJob(job: Job) {
 
     // 1. 获取链上数据
     publishLog('System', 'thinking', '正在提取链上授权数据...');
-    const allowances = await batchAuditAllowances(address, undefined, 500n, 5n);
+    const allowances = await batchAuditAllowances(
+      address,
+      undefined,
+      1000n,
+      3n
+    );
     await JobService.updateJob(jobId, { progress: 20 });
     await job.progress(20);
 

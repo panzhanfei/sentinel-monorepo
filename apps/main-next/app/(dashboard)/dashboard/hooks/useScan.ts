@@ -50,7 +50,7 @@ export function useScan({
 
         if (data.status === "COMPLETED") {
           setScanResult(data.result);
-          if (data.result.allowances) {
+          if (data.result.allowances.length) {
             triggerHighRisk(10000);
           } else {
             setRiskLevel("low");
