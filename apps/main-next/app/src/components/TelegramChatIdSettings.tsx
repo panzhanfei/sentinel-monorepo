@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Send } from "lucide-react";
 
 export function TelegramChatIdSettings() {
-  const containerRef = useRef<HTMLDivElement>(null);
   const [panelOpen, setPanelOpen] = useState(false);
   const [value, setValue] = useState("");
   const [loading, setLoading] = useState(false);
@@ -35,7 +34,9 @@ export function TelegramChatIdSettings() {
         }
         if (!cancelled) {
           setValue(
-            typeof data.telegramChatId === "string" ? data.telegramChatId : "",
+            typeof data.telegramChatId === "string"
+              ? data.telegramChatId
+              : "",
           );
         }
       } catch {
@@ -47,18 +48,6 @@ export function TelegramChatIdSettings() {
     return () => {
       cancelled = true;
     };
-  }, [panelOpen]);
-
-  useEffect(() => {
-    if (!panelOpen) return;
-    const onPointerDown = (e: PointerEvent) => {
-      const el = containerRef.current;
-      if (!el || el.contains(e.target as Node)) return;
-      setPanelOpen(false);
-      setError(null);
-    };
-    document.addEventListener("pointerdown", onPointerDown);
-    return () => document.removeEventListener("pointerdown", onPointerDown);
   }, [panelOpen]);
 
   const handleCancel = () => {
@@ -81,7 +70,9 @@ export function TelegramChatIdSettings() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(typeof data.error === "string" ? data.error : "保存失败");
+        setError(
+          typeof data.error === "string" ? data.error : "保存失败",
+        );
         return;
       }
       setValue(
@@ -96,7 +87,7 @@ export function TelegramChatIdSettings() {
   };
 
   return (
-    <div ref={containerRef} className="relative flex flex-col items-end gap-2">
+    <div className="relative flex flex-col items-end gap-2">
       <button
         type="button"
         onClick={() => setPanelOpen((o) => !o)}
@@ -122,7 +113,9 @@ export function TelegramChatIdSettings() {
                 placeholder="个人或频道 Chat ID"
                 className="w-full px-3 py-2 rounded-lg bg-slate-950/80 border border-white/10 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
               />
-              {error && <p className="text-xs text-rose-400 mt-2">{error}</p>}
+              {error && (
+                <p className="text-xs text-rose-400 mt-2">{error}</p>
+              )}
               <div className="flex justify-end gap-2 mt-3">
                 <button
                   type="button"

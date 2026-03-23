@@ -128,6 +128,12 @@ const envSchema = z.object({
     .url()
     .default('https://api.groq.com/openai/v1/chat/completions'),
 
+  // 本地 Anvil RPC（@sentinel/security-sdk 在 import 时读取 process.env.ANVIL_RPC_URL）
+  ANVIL_RPC_URL: z
+    .string()
+    .url()
+    .default('http://127.0.0.1:8545'),
+
   // === Agent 4: Telegram 预警配置 (脚本/逻辑) ===
   TELEGRAM_BOT_TOKEN: z.string().optional(), // 机器人 Token；接收方 Chat ID 存于 User.telegramChatId
   REDIS_URL: z.string(), // Redis 连接 URL
@@ -139,4 +145,7 @@ const envSchema = z.object({
 });
 
 // 4. 解析并验证环境变量
-export const env = envSchema.parse(process.env);
+const _env = envSchema.parse(process.env);
+// 供 workspace 包在模块加载时读取（未在 .env 中设置时沿用 zod 默认值）
+process.env.ANVIL_RPC_URL = process.env.ANVIL_RPC_URL || _env.ANVIL_RPC_URL;
+export const env = _env;

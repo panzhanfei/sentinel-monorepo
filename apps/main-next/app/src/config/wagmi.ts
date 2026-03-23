@@ -11,7 +11,9 @@ export const config = createConfig(
       [mainnet.id]: http(),
       [polygon.id]: http(),
       [arbitrum.id]: http(),
-      [anvil.id]: http("http://127.0.0.1:8545"),
+      [anvil.id]: http(
+        process.env.NEXT_PUBLIC_ANVIL_RPC_URL ?? "http://127.0.0.1:8545",
+      ),
     },
 
     // 必填项
