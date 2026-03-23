@@ -3,11 +3,76 @@
 import React, { useEffect } from "react";
 import { Canvas } from "@react-three/fiber";
 import { Toaster, toast } from "react-hot-toast";
+import { formatEther } from "viem";
 import { RiskSphere } from "./RiskSphere";
 import { useRisk } from "@/app/context";
 
+/** 链上 value 为代币最小单位；该阈值按 18 位精度资产（如 ETH/WETH）估算「大额」 */
+const LARGE_AMOUNT_WEI = 10n * 10n ** 18n;
+const MAX_UINT256 = 2n ** 256n - 1n;
+
+function parseWei(raw: string): bigint | null {
+  try {
+    return BigInt(raw);
+  } catch {
+    return null;
+  }
+}
+
+/** 转账：达到或超过阈值视为大额，背景变红 */
+function isLargeTransfer(valueWei: bigint): boolean {
+  return valueWei >= LARGE_AMOUNT_WEI;
+}
+
+/**
+ * 授权：大额额度、或常见「无限授权」（接近 uint256 最大值）视为高危
+ */
+function isHighRiskApproval(valueWei: bigint): boolean {
+  if (valueWei >= LARGE_AMOUNT_WEI) return true;
+  return valueWei > MAX_UINT256 / 2n;
+}
+
+function weiHint(wei: bigint): string {
+  try {
+    return `${formatEther(wei)} ETH（按 18 位小数换算，非 ETH 代币仅供参考）`;
+  } catch {
+    return `${wei.toString()} wei`;
+  }
+}
+
+const AUDIT_AI_STREAM_EVENT = "audit-ai-stream";
+
 export const AlertProvider: React.FC = () => {
   const { riskLevel, setRiskLevel, triggerHighRisk } = useRisk();
+
+  // 审计子应用 AI 流式问答时，与深度扫描一致将背景粒子切到 medium（黄/思考态）
+  useEffect(() => {
+    let cancelled = false;
+    let busRef: {
+      $off: (e: string, fn: (...args: unknown[]) => void) => void;
+    } | null = null;
+
+    const onAuditAiStream = (...args: unknown[]) => {
+      if (cancelled) return;
+      const payload = args[0] as { active?: boolean } | undefined;
+      setRiskLevel(payload?.active ? "medium" : "low");
+    };
+
+    import("wujie")
+      .then(({ bus }) => {
+        if (cancelled || !bus) return;
+        busRef = bus;
+        bus.$on(AUDIT_AI_STREAM_EVENT, onAuditAiStream);
+      })
+      .catch(() => {
+        /* 非微前端或未加载 wujie */
+      });
+
+    return () => {
+      cancelled = true;
+      busRef?.$off(AUDIT_AI_STREAM_EVENT, onAuditAiStream);
+    };
+  }, [setRiskLevel]);
 
   useEffect(() => {
     const eventSource = new EventSource("/api/events/watch");
@@ -59,18 +124,39 @@ export const AlertProvider: React.FC = () => {
 
     eventSource.addEventListener("transfer", (e) => {
       const data = JSON.parse(e.data);
-      setRiskLevel("low");
-      notify("交易监控", `检测到转账: ${data.value} ETH`, "success");
+      const wei = parseWei(data.value ?? "0");
+      const large = wei !== null && isLargeTransfer(wei);
+      const amountText =
+        wei !== null ? weiHint(wei) : `value=${data.value}`;
+      if (large) {
+        triggerHighRisk(8000);
+        notify("交易监控", `大额转账: ${amountText}`, "error");
+      } else {
+        setRiskLevel("low");
+        notify("交易监控", `转账: ${amountText}`, "success");
+      }
     });
 
     eventSource.addEventListener("approval", (e) => {
       const data = JSON.parse(e.data);
-      triggerHighRisk(8000);
-      notify(
-        "风险预警",
-        `发现授权变更: ${data.spender.slice(0, 10)}...`,
-        "error",
-      );
+      const wei = parseWei(data.value ?? "0");
+      const risky = wei !== null && isHighRiskApproval(wei);
+      const spenderShort = `${data.spender.slice(0, 10)}...`;
+      if (risky) {
+        triggerHighRisk(8000);
+        const detail =
+          wei !== null && wei > MAX_UINT256 / 2n
+            ? `Spender ${spenderShort}，无限或极高授权额度`
+            : `Spender ${spenderShort}，额度 ${wei !== null ? weiHint(wei) : data.value}`;
+        notify("风险预警", detail, "error");
+      } else {
+        setRiskLevel("low");
+        notify(
+          "授权监控",
+          `额度较低: ${spenderShort}${wei !== null ? `，${weiHint(wei)}` : ""}`,
+          "success",
+        );
+      }
     });
 
     return () => eventSource.close();

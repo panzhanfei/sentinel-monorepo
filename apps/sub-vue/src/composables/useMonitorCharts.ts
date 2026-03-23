@@ -1,22 +1,31 @@
-import { computed } from "vue";
+import { computed, type Ref } from "vue";
 
-export function useMonitorCharts(chainBalances: any, customTokens: any) {
+/** 图表用的最小资产行（原生 / ERC-20） */
+export interface ChartBalanceRow {
+  symbol: string;
+  balance: string;
+}
+
+export function useMonitorCharts(
+  chainBalances: Ref<readonly ChartBalanceRow[]>,
+  customTokens: Ref<readonly ChartBalanceRow[]>,
+) {
   // V-2: 资产分布饼图数据
   const distributionData = computed(() => {
-    const data = chainBalances.value.map((c: any) => ({
+    const data = chainBalances.value.map((c) => ({
       name: c.symbol,
       value: parseFloat(c.balance) || 0,
     }));
     // 加上自定义代币
-    customTokens.value.forEach((t: any) => {
+    customTokens.value.forEach((t) => {
       data.push({ name: t.symbol, value: parseFloat(t.balance) || 0 });
     });
-    return data.filter((d: any) => d.value > 0);
+    return data.filter((d) => d.value > 0);
   });
 
   const trendData = computed(() => {
     const base = chainBalances.value.reduce(
-      (acc: number, cur: any) => acc + parseFloat(cur.balance),
+      (acc, cur) => acc + parseFloat(cur.balance),
       0,
     );
     return {

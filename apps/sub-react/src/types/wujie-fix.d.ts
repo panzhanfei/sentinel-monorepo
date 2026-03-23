@@ -14,7 +14,11 @@ declare module "wujie-react" {
 
   const WujieReact: {
     props: WujieProps;
-    bus: EventBus;
+    bus: {
+      $on(event: string, fn: (...args: unknown[]) => void): void;
+      $off(event: string, fn: (...args: unknown[]) => void): void;
+      $emit(event: string, payload?: unknown): void;
+    };
     shadowRoot?: ShadowRoot;
   };
   export default WujieReact;

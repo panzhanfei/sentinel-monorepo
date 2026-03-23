@@ -15,7 +15,7 @@ export interface HeartbeatOptions {
  * @param options 配置项
  * @returns 包装后的函数，签名与原函数相同（但不再需要传入signal）
  */
-export function withHeartbeat<Args extends any[]>(
+export function withHeartbeat<Args extends unknown[]>(
   name: string,
   aiFunc: (
     onChunk: (chunk: string) => void,
@@ -66,11 +66,14 @@ export function withHeartbeat<Args extends any[]>(
         finished = true;
         if (heartbeatTimer) clearTimeout(heartbeatTimer);
         return result; // 成功返回
-      } catch (error: any) {
+      } catch (error: unknown) {
         finished = true;
         if (heartbeatTimer) clearTimeout(heartbeatTimer);
+        const name = error instanceof Error ? error.name : '';
+        const message =
+          error instanceof Error ? error.message : String(error);
         // 如果是用户主动中止（AbortError），视为心跳超时，进行重试
-        if (error.name === 'AbortError' || error.message?.includes('aborted')) {
+        if (name === 'AbortError' || message.includes('aborted')) {
           attempt++;
           onRestart?.(`心跳超时`, attempt);
           console.log(

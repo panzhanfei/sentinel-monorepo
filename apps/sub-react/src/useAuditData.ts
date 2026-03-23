@@ -2,28 +2,9 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { useWujieStore } from "@/stores";
 import { publicClient } from "@/utils";
 import { useQuery } from "@tanstack/react-query";
-import { fetchTransactions } from "@/api/audit";
-
-// 导出类型
-export interface LogEntry {
-  agent: string;
-  msg: string;
-  type: string;
-}
-
-export interface Transaction {
-  hash: string;
-  value: string;
-}
-
-export interface AuditDashboardProps {
-  address?: string;
-  txCount?: number;
-  txList?: Transaction[];
-  isLoading: boolean;
-  logs: LogEntry[];
-  onSendMessage: (msg: string) => void;
-}
+import { fetchFootprintTransactions } from "@/api/audit";
+import type { LogEntry, Transaction } from "@/types/audit";
+import { emitAuditAiStreamToHost } from "@/utils/wujieHost";
 
 export function useAuditData() {
   const wujieWeb3Date = useWujieStore((state) => state.wujieWeb3Date);
@@ -32,6 +13,8 @@ export function useAuditData() {
 
   const sessionId = useRef<string | undefined>(undefined);
   const eventSourceRef = useRef<EventSource | null>(null);
+
+  const [isAgentStreaming, setIsAgentStreaming] = useState(false);
 
   const [logs, setLogs] = useState<LogEntry[]>([
     {
@@ -54,10 +37,14 @@ export function useAuditData() {
     enabled: !!address,
   });
 
-  // 获取交易列表
+  // Footprint 列表：从当前 RPC（本地 Anvil 时见 VITE_USE_ANVIL）扫描区块
   const { data: txList, isLoading } = useQuery<Transaction[]>({
     queryKey: ["transactions", address],
-    queryFn: () => fetchTransactions(address!),
+    queryFn: () =>
+      fetchFootprintTransactions(publicClient, address!, {
+        limit: 10,
+        maxBlocks: 300,
+      }),
     enabled: !!address,
   });
 
@@ -96,6 +83,11 @@ export function useAuditData() {
       eventSourceRef.current.close();
       eventSourceRef.current = null;
     }
+  }, []);
+
+  const endAgentStream = useCallback(() => {
+    setIsAgentStreaming(false);
+    emitAuditAiStreamToHost(false);
   }, []);
 
   // 发送消息到 Agent（支持流式累积）
@@ -154,6 +146,8 @@ export function useAuditData() {
 
       const es = new EventSource(url.toString());
       eventSourceRef.current = es;
+      setIsAgentStreaming(true);
+      emitAuditAiStreamToHost(true);
 
       // ---- 流式累积变量 ----
       let currentAgent = ""; // 当前回复的 agent
@@ -165,6 +159,7 @@ export function useAuditData() {
 
           // 结束标记：关闭连接，不产生新日志
           if (data.status === "end") {
+            endAgentStream();
             es.close();
             eventSourceRef.current = null;
             return;
@@ -184,7 +179,9 @@ export function useAuditData() {
             if (data.content?.includes("Unauthorized")) {
               sessionId.current = undefined;
             }
-            // 错误后通常连接会关闭，但这里不主动关闭，等待服务器或浏览器处理
+            endAgentStream();
+            es.close();
+            eventSourceRef.current = null;
             return;
           }
 
@@ -232,6 +229,7 @@ export function useAuditData() {
 
       es.onerror = (err) => {
         console.error("EventSource error:", err);
+        endAgentStream();
         es.close();
         eventSourceRef.current = null;
         setLogs((prev) => [
@@ -245,13 +243,15 @@ export function useAuditData() {
         sessionId.current = undefined; // 重置 session，尝试重新初始化
       };
     },
-    [token, initSession, closeEventSource],
+    [token, initSession, closeEventSource, endAgentStream],
   );
 
-  // 组件卸载时关闭连接
+  // 组件卸载时关闭连接并通知宿主恢复背景
   useEffect(() => {
     return () => {
       closeEventSource();
+      setIsAgentStreaming(false);
+      emitAuditAiStreamToHost(false);
     };
   }, [closeEventSource]);
 
@@ -264,6 +264,7 @@ export function useAuditData() {
     txCount,
     txList,
     isLoading,
+    isAgentStreaming,
     logs,
     sendMessageToAgent,
   };

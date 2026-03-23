@@ -1,12 +1,17 @@
 // src/global.d.ts 或 src/types/wujie.d.ts
 export {}; // 确保文件是模块
 
-// 扩展全局的 Window 接口
 declare global {
+  interface WujieEventBus {
+    $on(event: string, fn: (...args: any[]) => void): void;
+    $off(event: string, fn: (...args: any[]) => void): void;
+    $emit(event: string, payload?: unknown): void;
+  }
+
   interface Window {
     $wujie?: {
-      props: WujieProps;
-      bus: EventBus;
+      props: Record<string, unknown>;
+      bus: WujieEventBus;
       shadowRoot?: ShadowRoot;
     };
   }

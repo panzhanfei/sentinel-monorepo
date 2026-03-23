@@ -24,7 +24,7 @@ export class Logger {
     return levels.indexOf(level) >= levels.indexOf(this.level);
   }
 
-  private formatMessage(level: LogLevel, message: string, meta?: any): string {
+  private formatMessage(level: LogLevel, message: string, meta?: unknown): string {
     const timestamp = new Date().toISOString();
     const prefix = `[${timestamp}] [${level.toUpperCase()}] [${this.name}]`;
 
@@ -36,25 +36,25 @@ export class Logger {
     return formatted;
   }
 
-  debug(message: string, meta?: any): void {
+  debug(message: string, meta?: unknown): void {
     if (this.shouldLog(LogLevel.DEBUG)) {
       console.debug(this.formatMessage(LogLevel.DEBUG, message, meta));
     }
   }
 
-  info(message: string, meta?: any): void {
+  info(message: string, meta?: unknown): void {
     if (this.shouldLog(LogLevel.INFO)) {
       console.info(this.formatMessage(LogLevel.INFO, message, meta));
     }
   }
 
-  warn(message: string, meta?: any): void {
+  warn(message: string, meta?: unknown): void {
     if (this.shouldLog(LogLevel.WARN)) {
       console.warn(this.formatMessage(LogLevel.WARN, message, meta));
     }
   }
 
-  error(message: string, meta?: any): void {
+  error(message: string, meta?: unknown): void {
     if (this.shouldLog(LogLevel.ERROR)) {
       console.error(this.formatMessage(LogLevel.ERROR, message, meta));
     }

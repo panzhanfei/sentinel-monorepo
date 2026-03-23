@@ -19,8 +19,10 @@ export const startScan = async (req: Request, res: Response) => {
 
     const job = await JobService.createJob(address);
     res.json({ jobId: job.id });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message || 'Internal server error' });
+  } catch (error: unknown) {
+    const message =
+      error instanceof Error ? error.message : 'Internal server error';
+    res.status(500).json({ error: message });
   }
 };
 
@@ -76,7 +78,7 @@ export const getLatestJob = async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'No job found for this address' });
     }
     res.json(job);
-  } catch (error: any) {
+  } catch {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
@@ -147,17 +149,17 @@ export const handleAuditStream = async (req: Request, res: Response) => {
     );
 
     // 注意：不结束响应，保持连接打开
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[handleAuditStream] 捕获异常:', error);
+    const errMsg =
+      error instanceof Error ? error.message : 'Internal server error';
     if (!res.headersSent) {
-      return res
-        .status(500)
-        .json({ error: error.message || 'Internal server error' });
+      return res.status(500).json({ error: errMsg });
     }
     // 如果已经发送了 SSE 头，尝试写入错误消息并关闭
     try {
       res.write(
-        `data: ${JSON.stringify({ agent: 'Watchdog', status: 'error', content: `服务器内部错误: ${error.message}` })}\n\n`
+        `data: ${JSON.stringify({ agent: 'Watchdog', status: 'error', content: `服务器内部错误: ${errMsg}` })}\n\n`
       );
       res.end();
     } catch {

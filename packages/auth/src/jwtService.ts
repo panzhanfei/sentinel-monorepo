@@ -5,7 +5,7 @@ import jwt, { SignOptions } from 'jsonwebtoken';
 export interface JwtPayload {
   sub: string; // 用户地址
   role?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface JwtOptions {

@@ -10,8 +10,10 @@ export const getTelegramChatId = async (req: Request, res: Response) => {
       req.user.sub
     );
     res.json({ telegramChatId });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message || 'Internal server error' });
+  } catch (error: unknown) {
+    const message =
+      error instanceof Error ? error.message : 'Internal server error';
+    res.status(500).json({ error: message });
   }
 };
 
@@ -37,7 +39,9 @@ export const updateTelegramChatId = async (req: Request, res: Response) => {
       normalized
     );
     res.json(result);
-  } catch (error: any) {
-    res.status(500).json({ error: error.message || 'Internal server error' });
+  } catch (error: unknown) {
+    const message =
+      error instanceof Error ? error.message : 'Internal server error';
+    res.status(500).json({ error: message });
   }
 };

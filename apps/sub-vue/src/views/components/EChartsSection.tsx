@@ -21,10 +21,20 @@ echarts.use([
   LegendComponent,
 ]);
 
+export interface DistributionSlice {
+  name: string;
+  value: number;
+}
+
+export interface TrendSeries {
+  dates: string[];
+  values: number[];
+}
+
 export const EChartsSection = defineComponent({
   props: {
-    distributionData: Array as PropType<any[]>,
-    trendData: Object as PropType<any>,
+    distributionData: Array as PropType<DistributionSlice[]>,
+    trendData: Object as PropType<TrendSeries>,
   },
   setup(props) {
     // 图表容器引用

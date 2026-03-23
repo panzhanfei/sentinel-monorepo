@@ -39,24 +39,20 @@ model Blacklist {
   addedAt   DateTime @default(now())
 }
 
-model ChatSession {
-  id        String   @id @default(cuid())
-  userId    String
-  address   String
-  createdAt DateTime @default(now())
-
-  messages  ChatMessage[]
-}
-
+// 单表会话：threadId 即对外 sessionId；一条 agent=__thread__ 的锚点行承载原 ChatSession 的 userId/address
 model ChatMessage {
   id        String   @id @default(cuid())
-  sessionId String
-  session   ChatSession @relation(fields: [sessionId], references: [id])
+  threadId  String
+  userId    String
+  address   String
 
-  role      String   // "user" | "assistant"
-  agent     String   // Scanner | Auditor | Decision | System
+  role      String   // "user" | "assistant" | "system"
+  agent     String   // Scanner | Auditor | USER | __thread__ 等
   content   String   @db.Text
   status    String   // thinking | done | error
 
   createdAt DateTime @default(now())
+
+  @@index([threadId, createdAt])
+  @@index([userId, createdAt])
 }

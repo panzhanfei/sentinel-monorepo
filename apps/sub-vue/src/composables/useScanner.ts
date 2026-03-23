@@ -148,14 +148,14 @@ export function useScanner() {
   };
 
   // 5. 实时监听 (以 Anvil 为主心跳，带动全线刷新)
-  let unwatch: any;
+  let unwatch: (() => void) | undefined;
   onMounted(() => {
     const client = viemManager.getClient(31337) || viemManager.getClient(1);
     unwatch = client?.watchBlockNumber({
       onBlockNumber: () => {
         refreshBaseData();
         // 同时静默刷新已添加的代币余额
-        customTokens.value.forEach((token) => {
+        customTokens.value.forEach(() => {
           // 这里可以按需实现一个静默更新余额的方法
         });
       },

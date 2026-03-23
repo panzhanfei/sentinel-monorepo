@@ -11,6 +11,7 @@ import {
   generateFinalReport,
 } from '@/services';
 import { prisma } from '@/client/prisma.client';
+import type { Prisma } from '@sentinel/database';
 
 // 创建带心跳监控的AI函数
 const heartbeatScan = withHeartbeat('Scanner', scanWithDeepSeek, {
@@ -60,6 +61,25 @@ export async function processJob(job: Job) {
     await JobService.updateJob(jobId, { progress: 20 });
     await job.progress(20);
 
+    if (!allowances.length) {
+      const summary =
+        '未检测到有效 ERC20 授权记录，已跳过 AI 分析以节省资源。';
+      publishLog('System', 'done', summary);
+      await JobService.updateJob(jobId, {
+        progress: 100,
+        status: 'COMPLETED',
+        result: {
+          risk: 'LOW',
+          allowances: [],
+          details: { message: summary, timestamp: Date.now() },
+        } as unknown as Prisma.InputJsonValue,
+      });
+      await job.progress(100);
+      publishLog('System', 'stream_end', '审计完成');
+      console.log(`[Worker] jobId=${jobId} 无授权数据，跳过 AI`);
+      return;
+    }
+
     // 2. Agent 1: 初扫（带心跳）
     publishLog('Scanner (DeepSeek)', 'thinking', '正在扫描合约授权模式...');
     const report1 = await heartbeatScan(
@@ -93,7 +113,7 @@ export async function processJob(job: Job) {
         risk: riskLevel,
         allowances,
         details: { message: finalReport, timestamp: Date.now() },
-      },
+      } as unknown as Prisma.InputJsonValue,
     });
     await job.progress(100);
 
@@ -122,13 +142,15 @@ export async function processJob(job: Job) {
     publishLog('System', 'stream_end', '审计完成');
 
     console.log(`[Worker] jobId=${jobId} 完成`);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(`[Worker] jobId=${jobId} 失败:`, error);
+    const message =
+      error instanceof Error ? error.message : 'Internal server error';
     await JobService.updateJob(jobId, {
       status: 'FAILED',
-      error: error.message,
+      error: message,
     });
-    publishLog('Watchdog', 'error', `任务失败: ${error.message}`);
+    publishLog('Watchdog', 'error', `任务失败: ${message}`);
     throw error; // 触发 Bull 重试
   }
 }
