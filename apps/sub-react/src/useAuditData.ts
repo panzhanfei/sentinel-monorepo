@@ -2,8 +2,8 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { useWujieStore } from "@/stores";
 import { publicClient } from "@/utils";
 import { useQuery } from "@tanstack/react-query";
-import { fetchFootprintTransactions } from "@/api/audit";
-import type { LogEntry, Transaction } from "@/types/audit";
+import { fetchFootprintAudit } from "@/api/audit";
+import type { LogEntry } from "@/types/audit";
 import { emitAuditAiStreamToHost } from "@/utils/wujieHost";
 
 export function useAuditData() {
@@ -30,23 +30,35 @@ export function useAuditData() {
   ]);
 
   // 获取交易数量
-  const { data: txCount } = useQuery({
+  const { data: txCount = 0 } = useQuery<number>({
     queryKey: ["txCount", address],
-    queryFn: () =>
-      publicClient.getTransactionCount({ address: address as `0x${string}` }),
-    enabled: !!address,
+    enabled: Boolean(address),
+    queryFn: async () => {
+      const account = address as `0x${string}`;
+      // 因此这里以 latest 交易计数为准即可。
+      const latestCount = await publicClient.getTransactionCount({
+        address: account,
+        blockTag: "latest",
+      });
+
+      return latestCount;
+    },
+    refetchInterval: 3_000,
+    refetchOnWindowFocus: true,
   });
 
-  // Footprint 列表：从当前 RPC（本地 Anvil 时见 VITE_USE_ANVIL）扫描区块
-  const { data: txList, isLoading } = useQuery<Transaction[]>({
-    queryKey: ["transactions", address],
+  // Footprint 列表 + 风险相关笔数：同一次区块扫描
+  const { data: footprintAudit, isLoading } = useQuery({
+    queryKey: ["footprintAudit", address],
     queryFn: () =>
-      fetchFootprintTransactions(publicClient, address!, {
+      fetchFootprintAudit(publicClient, address!, {
         limit: 10,
         maxBlocks: 300,
       }),
     enabled: !!address,
   });
+  const txList = footprintAudit?.transactions;
+  const riskRelatedCount = footprintAudit?.riskRelatedCount ?? 0;
 
   // 初始化会话
   const initSession = useCallback(async (): Promise<string> => {
@@ -262,6 +274,7 @@ export function useAuditData() {
   return {
     address,
     txCount,
+    riskRelatedCount,
     txList,
     isLoading,
     isAgentStreaming,

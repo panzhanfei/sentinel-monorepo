@@ -5,6 +5,7 @@ const App = () => {
   const {
     address,
     txCount,
+    riskRelatedCount,
     txList,
     isLoading,
     isAgentStreaming,
@@ -16,6 +17,7 @@ const App = () => {
     <AuditDashboard
       address={address}
       txCount={txCount}
+      riskRelatedCount={riskRelatedCount}
       txList={txList}
       isLoading={isLoading}
       isAgentStreaming={isAgentStreaming}

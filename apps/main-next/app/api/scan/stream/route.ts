@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { NODE_SERVICE } from "@/app/src/config/node_service";
+import { resolveBearerToken } from "@/app/src/utils/bffProxy";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -10,12 +11,11 @@ export async function GET(request: NextRequest) {
     return new Response("Missing address or jobId", { status: 400 });
   }
 
-  // 从 cookie 中获取 token
-  const token = request.cookies.get("token")?.value;
+  const token = resolveBearerToken(request);
   if (!token) {
     return new Response("Unauthorized", { status: 401 });
   }
-  console.log("Request params:😗", { address, jobId });
+
   try {
     // 请求 Node 服务的流式接口，携带认证头
     const nodeRes = await fetch(

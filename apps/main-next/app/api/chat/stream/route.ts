@@ -1,14 +1,18 @@
 import { NextRequest } from "next/server";
 import { NODE_SERVICE } from "@/app/src/config/node_service";
+import { resolveBearerToken } from "@/app/src/utils/bffProxy";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const sessionId = searchParams.get("sessionId");
-  const message = searchParams.get("message")!;
-  const token = searchParams.get("token")!;
+  const message = searchParams.get("message") ?? "";
+  const token = resolveBearerToken(request);
 
   if (!sessionId) {
     return new Response("Missing sessionId ", { status: 400 });
+  }
+  if (!token) {
+    return new Response("Unauthorized", { status: 401 });
   }
 
   try {

@@ -11,5 +11,5 @@ const anvilRpc = rpcUrl ?? "http://127.0.0.1:8545";
 
 export const publicClient = createPublicClient({
   chain: useAnvil ? foundry : mainnet,
-  transport: useAnvil ? http(anvilRpc) : rpcUrl ? http(rpcUrl) : http(),
+  transport: useAnvil ? http(anvilRpc) : http(rpcUrl),
 });

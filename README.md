@@ -103,6 +103,8 @@ pnpm run db:generate
 pnpm run db:push
 ```
 
+若数据库仍是旧结构（`ChatSession` 与 `ChatMessage.sessionId`），在同步 schema 前于同一目录执行一次 `pnpm run db:migrate`。
+
 `DATABASE_URL` 示例：
 
 ```text
@@ -187,7 +189,7 @@ pnpm run start:demo
 
 ## 数据模型要点（Prisma）
 
-定义见 `packages/database/schema.prisma`，主要包括：
+定义见 `packages/database/prisma/schema.prisma`，主要包括：
 
 - **User**：钱包地址、`telegramChatId` 等  
 - **Job**：扫描任务类型、状态、进度、`result` JSON  

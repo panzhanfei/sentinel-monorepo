@@ -37,10 +37,12 @@ export function OverviewCards({
       <StatCard
         label="Risk_Approvals"
         value={riskCount}
-        valueClassName="text-rose-500"
+        valueClassName={riskCount > 0 ? "text-amber-400" : "text-zinc-500"}
         footer={
           <p className="text-[10px] text-zinc-600 font-bold mt-3 uppercase tracking-tighter">
-            No_Threats_Detected
+            {riskCount > 0
+              ? "Approval_Permit_Calls_In_Scan_Window"
+              : "No_Approval_Pattern_Txs_In_Window"}
           </p>
         }
       />

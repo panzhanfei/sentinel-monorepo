@@ -6,6 +6,7 @@ import { OverviewCards } from "./OverviewCards";
 export function AuditDashboard({
   address,
   txCount,
+  riskRelatedCount,
   txList,
   isLoading,
   isAgentStreaming,
@@ -19,7 +20,10 @@ export function AuditDashboard({
       <div className="max-w-400 mx-auto space-y-10">
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-10">
           <div className="lg:col-span-3 space-y-10">
-            <OverviewCards txCount={txCount} />
+            <OverviewCards
+              txCount={txCount}
+              riskCount={riskRelatedCount}
+            />
             <FootprintTable
               txList={txList}
               isLoading={isLoading}

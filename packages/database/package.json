@@ -1,6 +1,9 @@
 {
   "name": "@sentinel/database",
   "version": "1.0.0",
+  "prisma": {
+    "schema": "prisma/schema.prisma"
+  },
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "dependencies": {
@@ -15,6 +18,8 @@
   "scripts": {
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
+    "db:migrate": "prisma migrate deploy",
+    "db:migrate:dev": "prisma migrate dev",
     "build": "tsc"
   },
   "files": [
