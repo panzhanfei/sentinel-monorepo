@@ -1,7 +1,7 @@
-import { type ChainBalance } from "@/composables";
+import type { ChainBalance, TokenBalance } from "@/composables";
 
 export interface AssetCardProps {
-  record: ChainBalance;
+  record: ChainBalance | TokenBalance;
   isRemovable?: boolean;
   className?: string;
 }

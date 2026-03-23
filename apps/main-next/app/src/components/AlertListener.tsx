@@ -126,8 +126,7 @@ export const AlertProvider: React.FC = () => {
       const data = JSON.parse(e.data);
       const wei = parseWei(data.value ?? "0");
       const large = wei !== null && isLargeTransfer(wei);
-      const amountText =
-        wei !== null ? weiHint(wei) : `value=${data.value}`;
+      const amountText = wei !== null ? weiHint(wei) : `value=${data.value}`;
       if (large) {
         triggerHighRisk(8000);
         notify("交易监控", `大额转账: ${amountText}`, "error");

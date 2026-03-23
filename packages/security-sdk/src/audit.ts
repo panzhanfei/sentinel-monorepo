@@ -25,6 +25,11 @@ export interface AllowanceResult {
   rawAllowance: string; // 原始 BigInt 字符串
 }
 
+/** viem multicall 返回值（用于绕过动态 contracts 的 TS2589 后的人工收窄） */
+type ViemMulticallRow =
+  | { status: 'success'; result: unknown }
+  | { status: 'failure' };
+
 export const publicClient = createPublicClient({
   chain: mainnet,
   transport: http(anvilRpcUrl),
@@ -130,7 +135,6 @@ export async function batchAuditAllowances(
   const finalResults: AllowanceResult[] = [];
   const MULTICALL_CHUNK_SIZE = 50;
 
-  // --- 替换你代码中的 for 循环部分 ---
   for (let i = 0; i < uniqueQueue.length; i += MULTICALL_CHUNK_SIZE) {
     const chunk = uniqueQueue.slice(i, i + MULTICALL_CHUNK_SIZE);
 
@@ -139,18 +143,26 @@ export async function batchAuditAllowances(
       `[Audit_Debug] 正在验证区块数据，当前批次数量: ${chunk.length}`
     );
 
-    const results = await publicClient.multicall({
-      contracts: chunk.flatMap((c) => [
-        {
-          address: c.address,
-          abi: erc20Abi,
-          functionName: 'allowance',
-          args: [userAddress, c.spenderAddress],
-        },
-        { address: c.address, abi: erc20Abi, functionName: 'symbol' },
-        { address: c.address, abi: erc20Abi, functionName: 'decimals' },
-      ]),
-    });
+    // Dynamic-length contracts blow viem's multicall tuple inference (TS2589).
+    const contracts = chunk.flatMap((c) => [
+      {
+        address: c.address,
+        abi: erc20Abi,
+        functionName: 'allowance' as const,
+        args: [userAddress, c.spenderAddress] as const,
+      },
+      {
+        address: c.address,
+        abi: erc20Abi,
+        functionName: 'symbol' as const,
+      },
+      {
+        address: c.address,
+        abi: erc20Abi,
+        functionName: 'decimals' as const,
+      },
+    ]);
+    const results = (await publicClient.multicall({ contracts } as any)) as readonly ViemMulticallRow[];
 
     for (let j = 0; j < chunk.length; j++) {
       const baseIdx = j * 3;

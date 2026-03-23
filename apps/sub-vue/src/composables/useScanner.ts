@@ -29,6 +29,17 @@ const ERC20_ABI = [
   },
 ] as const;
 
+/** 单链原生资产余额（用于 AssetCard 等） */
+export interface ChainBalance {
+  chainId: number;
+  chainName: string;
+  balance: string;
+  symbol: string;
+  height: number;
+  loading: boolean;
+  isError?: boolean;
+}
+
 export interface TokenBalance {
   id: string; // 唯一标识: chainId-address
   chainId: number;
@@ -37,6 +48,7 @@ export interface TokenBalance {
   symbol: string;
   balance: string;
   loading: boolean;
+  isError?: boolean;
 }
 
 export function useScanner() {
@@ -44,7 +56,7 @@ export function useScanner() {
   const address = computed(() => web3Store.web3Date?.address as Address);
 
   // 1. 原生资产状态 (ETH/MATIC 等)
-  const chainBalances = ref(
+  const chainBalances = ref<ChainBalance[]>(
     SUPPORTED_CHAINS.map((c) => ({
       chainId: c.id,
       chainName: c.name,
@@ -52,6 +64,7 @@ export function useScanner() {
       symbol: c.nativeCurrency?.symbol || "ETH",
       height: 0,
       loading: false,
+      isError: false,
     })),
   );
 
@@ -74,7 +87,9 @@ export function useScanner() {
           ]);
           item.balance = parseFloat(formatEther(bal)).toFixed(4);
           item.height = Number(height);
+          item.isError = false;
         } catch (e) {
+          item.isError = true;
           console.warn(`Fetch failed for ${item.chainName}`, e);
         } finally {
           item.loading = false;
