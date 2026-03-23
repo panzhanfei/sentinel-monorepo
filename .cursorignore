@@ -1,0 +1,102 @@
+# Add directories or file patterns to ignore during indexing (e.g. foo/ or *.csv)
+# ==============================================
+# .cursorignore – 让 Cursor 忽略这些文件/目录
+# 语法与 .gitignore 一致，支持通配符 * 和 **
+# ==============================================
+
+# 依赖目录（体积大且无意义）
+node_modules/
+bower_components/
+vendor/
+
+# 构建输出目录
+dist/
+build/
+out/
+.next/
+.nuxt/
+.nuxt2/
+.cache/
+.parcel-cache/
+
+# 测试覆盖率
+coverage/
+.nyc_output/
+
+# 日志
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 临时文件
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# IDE 配置（各人习惯不同，无需索引）
+.vscode/
+.idea/
+*.sublime-*
+
+# 环境变量文件（可能包含敏感信息）
+.env
+.env.local
+.env.*.local
+*.env
+
+# 操作系统文件
+.DS_Store
+Thumbs.db
+
+# 数据库文件（通常较大且变动频繁）
+*.sqlite
+*.db
+
+# 大文件或媒体资源
+*.mp4
+*.avi
+*.mov
+*.mp3
+*.wav
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.ico
+*.webp
+
+# 文档与生成物
+docs/_build/
+*.pdf
+*.doc
+*.docx
+*.xls
+*.xlsx
+
+# 特定语言/框架的临时目录
+__pycache__/
+*.pyc
+*.pyo
+
+# 包锁文件（通常由包管理器管理，但不是必须索引）
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+composer.lock
+Gemfile.lock
+
+# 其他临时或无关目录
+tmp/
+temp/
+log/
+logs/
+
+# Monorepo 缓存与构建产物
+.turbo/                 # Turborepo 缓存（如果你用了 turbo）
+.tsbuildinfo            # TypeScript 增量构建信息
+*.tsbuildinfo

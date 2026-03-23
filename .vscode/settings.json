@@ -1,9 +1,32 @@
 {
+  // 核心：开启保存自动格式化
   "editor.formatOnSave": true,
+  
+  // 核心：指定默认格式化程序为 Prettier
   "editor.defaultFormatter": "esbenp.prettier-vscode",
+
+  // 针对不同语言的特定配置
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+
+  // 保存时自动修复 ESLint 错误（比如自动删掉没用的 import）
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit"
   },
-  "eslint.workingDirectories": [{ "mode": "auto" }],
-  "wake.compiler.solc.remappings": []
+
+  // 如果你觉得打字时 Cursor 总在跳提示很烦，可以关掉这个
+  "editor.suggestSelection": "first",
+  
+  // 适应你的 Web3 项目，可能会有很多大文件，调大内存限制
+  "files.maxMemoryForLargeFilesMB": 4096
 }

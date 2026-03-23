@@ -10,6 +10,7 @@ import {
   auditWithDeepSeek,
   generateFinalReport,
 } from '@/services';
+import { prisma } from '@/client/prisma.client';
 
 // 创建带心跳监控的AI函数
 const heartbeatScan = withHeartbeat('Scanner', scanWithDeepSeek, {
@@ -104,7 +105,17 @@ export async function processJob(job: Job) {
         'active',
         '检测到高危风险，正在推送 Telegram 预警...'
       );
-      await sendTelegramAlert(`检测到高危地址: ${address}\n\n${finalReport}`);
+      const jobWithUser = await prisma.job.findUnique({
+        where: { id: String(jobId) },
+        include: { user: true },
+      });
+      const telegramChatId =
+        (jobWithUser?.user as { telegramChatId?: string | null } | undefined)
+          ?.telegramChatId ?? null;
+      await sendTelegramAlert(
+        `检测到高危地址: ${address}\n\n${finalReport}`,
+        telegramChatId
+      );
     }
 
     // 修改点：使用 publishLog 发送结束标记，而不是原始文本

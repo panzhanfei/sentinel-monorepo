@@ -5,6 +5,7 @@ import {
   SidebarNav,
   Web3ConnectKitButton,
   AlertProvider,
+  TelegramChatIdSettings,
 } from "@/app/src/components";
 import { Menu, X } from "lucide-react";
 import { RiskProvider } from "@/app/context";
@@ -88,6 +89,7 @@ export default function DashboardLayout({
               </p>
             </div>
             <div className="flex items-center gap-4">
+              <TelegramChatIdSettings />
               <Web3ConnectKitButton />
             </div>
           </header>

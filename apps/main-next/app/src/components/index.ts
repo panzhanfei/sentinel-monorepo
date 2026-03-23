@@ -1,6 +1,7 @@
 export * from "./Web3Providers";
 export * from "./WujieWrapper";
 export * from "./Web3ConnectKitButton";
+export * from "./TelegramChatIdSettings";
 export * from "./SidebarNav";
 export * from "./AuthGuard";
 export * from "./skeletons";

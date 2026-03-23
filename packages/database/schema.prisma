@@ -9,10 +9,11 @@ datasource db {
 
 // 用户模型
 model User {
-  id            String    @id @default(cuid())
-  address       String    @unique // 钱包地址
-  createdAt     DateTime  @default(now())
-  jobs          Job[]
+  id               String    @id @default(cuid())
+  address          String    @unique // 钱包地址
+  telegramChatId   String?   // Telegram 预警接收 Chat ID
+  createdAt        DateTime  @default(now())
+  jobs             Job[]
 }
 
 // 任务模型（核心：记录扫描状态与进度）

@@ -1,12 +1,14 @@
 import { Router } from 'express';
 import authRouter from './scan';
 import chatRouter from './chat';
+import userRouter from './user';
 
 import { authMiddleware } from '@/middlewares';
 
 const router = Router();
 router.use('/api/v1', authMiddleware, authRouter);
 router.use('/api/v1', authMiddleware, chatRouter);
+router.use('/api/v1', authMiddleware, userRouter);
 router.get('/api/v1', (req, res) => {
   res.status(200).json({
     name: 'API Service',

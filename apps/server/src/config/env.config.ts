@@ -129,8 +129,7 @@ const envSchema = z.object({
     .default('https://api.groq.com/openai/v1/chat/completions'),
 
   // === Agent 4: Telegram 预警配置 (脚本/逻辑) ===
-  TELEGRAM_BOT_TOKEN: z.string().optional(), // 机器人 Token
-  TELEGRAM_CHAT_ID: z.string().optional(), // 你的频道或个人 ID
+  TELEGRAM_BOT_TOKEN: z.string().optional(), // 机器人 Token；接收方 Chat ID 存于 User.telegramChatId
   REDIS_URL: z.string(), // Redis 连接 URL
 
   // === Agent 5: Watchdog (看门狗配置) ===
