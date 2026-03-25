@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { NODE_SERVICE } from "@/app/src/config/node_service";
-import { authHeadersForProxy, parseUpstreamJson } from "@/app/src/utils/bffProxy";
+import {
+  authHeadersForProxy,
+  dualAuthUnauthorizedJson,
+  parseUpstreamJson,
+} from "@/app/src/utils/bffProxy";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -8,6 +12,9 @@ export async function GET(request: NextRequest) {
   if (!address) {
     return NextResponse.json({ error: "Address required" }, { status: 400 });
   }
+
+  const unauthorized = dualAuthUnauthorizedJson(request);
+  if (unauthorized) return unauthorized;
 
   try {
     const targetUrl = `${NODE_SERVICE}/scan/latest?address=${encodeURIComponent(address)}`;

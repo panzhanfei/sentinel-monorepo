@@ -50,7 +50,9 @@ export function middleware(request: NextRequest) {
     return applyApiCors(request, NextResponse.next());
   }
 
-  const session = request.cookies.get("token")?.value;
+  const access = request.cookies.get("accessToken")?.value;
+  const refresh = request.cookies.get("refreshToken")?.value;
+  const session = access && refresh ? true : false;
 
   // 1. 定义路由分类
   const onProtectedRoute = isProtectedRoute(pathname);

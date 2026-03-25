@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { NODE_SERVICE } from "@/app/src/config/node_service";
 import {
   authHeadersForProxy,
+  dualAuthUnauthorizedJson,
   parseUpstreamJson,
-  resolveBearerToken,
 } from "@/app/src/utils/bffProxy";
 
 /** GET：address 必填；鉴权为 Cookie（httpOnly token）或 Authorization / ?token= */
@@ -16,9 +16,8 @@ export async function GET(request: NextRequest) {
         { status: 400 },
       );
     }
-    if (!resolveBearerToken(request)) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const unauthorized = dualAuthUnauthorizedJson(request);
+    if (unauthorized) return unauthorized;
 
     const res = await fetch(`${NODE_SERVICE}/chat/session`, {
       method: "POST",
@@ -39,6 +38,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const unauthorized = dualAuthUnauthorizedJson(request);
+    if (unauthorized) return unauthorized;
+
     const body = await request.json();
 
     const res = await fetch(`${NODE_SERVICE}/chat/session`, {

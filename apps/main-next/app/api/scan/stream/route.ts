@@ -1,6 +1,9 @@
 import { NextRequest } from "next/server";
 import { NODE_SERVICE } from "@/app/src/config/node_service";
-import { resolveBearerToken } from "@/app/src/utils/bffProxy";
+import {
+  dualAuthUnauthorizedJson,
+  proxyHeadersToNode,
+} from "@/app/src/utils/bffProxy";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -11,20 +14,17 @@ export async function GET(request: NextRequest) {
     return new Response("Missing address or jobId", { status: 400 });
   }
 
-  const token = resolveBearerToken(request);
-  if (!token) {
-    return new Response("Unauthorized", { status: 401 });
-  }
+  const unauthorized = dualAuthUnauthorizedJson(request);
+  if (unauthorized) return unauthorized;
 
   try {
-    // 请求 Node 服务的流式接口，携带认证头
     const nodeRes = await fetch(
       `${NODE_SERVICE}/scan/stream?address=${encodeURIComponent(address)}&jobId=${encodeURIComponent(jobId)}`,
       {
-        headers: {
-          Accept: "text/event-stream",
-          Authorization: `Bearer ${token}`,
-        },
+        headers: proxyHeadersToNode(request, {
+          contentType: false,
+          accept: "text/event-stream",
+        }),
       },
     );
 

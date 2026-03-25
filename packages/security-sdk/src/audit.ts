@@ -55,6 +55,20 @@ export const publicClient = createPublicClient({
 });
 
 /**
+ * viem 对 `multicall({ contracts })` 会按 contracts 元组做极深返回类型推断；
+ * 动态长度批次在部分 tsconfig 下触发 TS2589。经 unknown 收口为固定返回形状。
+ */
+async function erc20ChunkMulticall(
+  contracts: readonly Erc20MulticallItem[]
+): Promise<readonly ViemMulticallRow[]> {
+  const call = publicClient.multicall as unknown as (params: {
+    contracts: readonly Erc20MulticallItem[];
+    allowFailure?: boolean;
+  }) => Promise<readonly ViemMulticallRow[]>;
+  return call({ contracts });
+}
+
+/**
  * 批量审计指定地址的所有有效授权
  * @param userAddress 要审计的地址
  * @param fromBlock 起始区块，默认自动计算最近 maxBlocksToScan 个块
@@ -181,9 +195,7 @@ export async function batchAuditAllowances(
         functionName: 'decimals' as const,
       },
     ]);
-    const results = (await publicClient.multicall({
-      contracts,
-    })) as readonly ViemMulticallRow[];
+    const results = await erc20ChunkMulticall(contracts);
 
     for (let j = 0; j < chunk.length; j++) {
       const baseIdx = j * 3;

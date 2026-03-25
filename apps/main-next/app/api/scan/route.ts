@@ -2,11 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { NODE_SERVICE } from "@/app/src/config/node_service";
 import {
   authHeadersForProxy,
+  dualAuthUnauthorizedJson,
   parseUpstreamJson,
 } from "@/app/src/utils/bffProxy";
 
 export async function POST(request: NextRequest) {
   try {
+    const unauthorized = dualAuthUnauthorizedJson(request);
+    if (unauthorized) return unauthorized;
+
     const body = await request.json();
 
     const res = await fetch(`${NODE_SERVICE}/scan`, {

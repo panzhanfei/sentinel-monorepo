@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { NODE_SERVICE } from "@/app/src/config/node_service";
 import {
   authHeadersForProxy,
+  dualAuthUnauthorizedJson,
   parseUpstreamJson,
-  resolveBearerToken,
 } from "@/app/src/utils/bffProxy";
 
 export async function GET(
@@ -16,9 +16,8 @@ export async function GET(
       return NextResponse.json({ error: "Job ID required" }, { status: 400 });
     }
 
-    if (!resolveBearerToken(request)) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const unauthorized = dualAuthUnauthorizedJson(request);
+    if (unauthorized) return unauthorized;
 
     const res = await fetch(`${NODE_SERVICE}/scan/${jobId}`, {
       cache: "no-store", // 必须禁用缓存，确保拿到真实进度

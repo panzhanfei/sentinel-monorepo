@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { NODE_SERVICE } from "@/app/src/config/node_service";
 import {
   authHeadersForProxy,
+  dualAuthUnauthorizedJson,
   parseUpstreamJson,
-  resolveBearerToken,
 } from "@/app/src/utils/bffProxy";
 
 export async function GET(request: NextRequest) {
@@ -13,9 +13,8 @@ export async function GET(request: NextRequest) {
     if (!sessionId) {
       return NextResponse.json({ error: "sessionId required" }, { status: 400 });
     }
-    if (!resolveBearerToken(request)) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const unauthorized = dualAuthUnauthorizedJson(request);
+    if (unauthorized) return unauthorized;
 
     const limit = searchParams.get("limit") ?? "5";
     const before = searchParams.get("before");

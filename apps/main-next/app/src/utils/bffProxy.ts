@@ -1,24 +1,74 @@
 import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
-/** Cookie、Authorization 头或 URL ?token= 与 Node 端 auth 中间件对齐 */
+/**
+ * Access：Authorization Bearer → Cookie accessToken → 旧版 Cookie token → ?token=
+ */
 export function resolveBearerToken(request: NextRequest): string | undefined {
   const auth = request.headers.get("authorization");
-  if (auth?.startsWith("Bearer ")) return auth.slice(7).trim();
+  if (auth?.startsWith("Bearer ")) {
+    const t = auth.slice(7).trim();
+    if (t) return t;
+  }
   if (auth?.trim()) return auth.trim();
-  const cookie = request.cookies.get("token")?.value;
-  if (cookie) return cookie;
+
+  const access =
+    request.cookies.get("accessToken")?.value ??
+    request.cookies.get("token")?.value;
+  if (access) return access;
+
   return request.nextUrl.searchParams.get("token") ?? undefined;
 }
 
-export function authHeadersForProxy(request: NextRequest): HeadersInit {
-  const headers: HeadersInit = {
-    "Content-Type": "application/json",
-  };
+export function resolveRefreshTokenCookie(
+  request: NextRequest,
+): string | undefined {
+  return request.cookies.get("refreshToken")?.value ?? undefined;
+}
+
+/** BFF 侧与 Node 双令牌策略对齐：缺一则 401 */
+export function dualAuthUnauthorizedJson(
+  request: NextRequest,
+): NextResponse | null {
+  if (!resolveBearerToken(request) || !resolveRefreshTokenCookie(request)) {
+    return NextResponse.json(
+      { error: "Unauthorized", code: "DUAL_TOKEN_REQUIRED" },
+      { status: 401 },
+    );
+  }
+  return null;
+}
+
+export type ProxyToNodeHeadersOpts = {
+  contentType?: string | false;
+  accept?: string;
+};
+
+/** 转发 Authorization + 原始 Cookie（含 refreshToken），供 Node 双令牌校验 */
+export function proxyHeadersToNode(
+  request: NextRequest,
+  opts?: ProxyToNodeHeadersOpts,
+): HeadersInit {
+  const headers = new Headers();
+  if (opts?.accept) {
+    headers.set("Accept", opts.accept);
+  }
+  if (opts?.contentType !== false) {
+    headers.set("Content-Type", opts?.contentType ?? "application/json");
+  }
   const token = resolveBearerToken(request);
   if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
+    headers.set("Authorization", `Bearer ${token}`);
+  }
+  const cookie = request.headers.get("cookie");
+  if (cookie) {
+    headers.set("Cookie", cookie);
   }
   return headers;
+}
+
+export function authHeadersForProxy(request: NextRequest): HeadersInit {
+  return proxyHeadersToNode(request);
 }
 
 export async function parseUpstreamJson(res: Response): Promise<unknown> {

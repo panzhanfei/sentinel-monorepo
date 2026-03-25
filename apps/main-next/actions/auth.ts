@@ -1,25 +1,41 @@
 "use server";
 
 import { cookies } from "next/headers";
-import { NonceService, JwtService } from "@sentinel/auth";
+import {
+  NonceService,
+  DualJwtService,
+  type DualJwtOptions,
+} from "@sentinel/auth";
 import { redis } from "@/lib/redis";
 import { revalidatePath } from "next/cache";
 
-// 初始化服务
 const nonceService = new NonceService(redis, { prefix: "nonce", ttl: 300 });
-const jwtService = new JwtService({
-  secret: process.env.JWT_SECRET!,
-  expiresIn: "7d",
-});
+
+const dualJwtOptions: DualJwtOptions = {
+  accessSecret: process.env.JWT_SECRET!,
+  refreshSecret:
+    process.env.REFRESH_TOKEN_SECRET ??
+    "your-refresh-token-secret-different-from-jwt",
+  accessExpiresIn: (process.env.JWT_EXPIRES_IN ?? "15m") as DualJwtOptions["accessExpiresIn"],
+  refreshExpiresIn: (process.env.REFRESH_TOKEN_EXPIRES_IN ??
+    "7d") as DualJwtOptions["refreshExpiresIn"],
+};
+const dualJwt = new DualJwtService(dualJwtOptions);
+
+const cookieBase = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: "lax" as const,
+  path: "/",
+};
 
 export async function getLoginNonce(address: string) {
-  // 限流（使用 redis 的 slidingWindowLimit 方法）
   const now = Date.now();
   const isAllowed = await redis.slidingWindowLimit(
     `rate_limit:nonce:${address.toLowerCase()}`,
     now,
-    60000, // 1分钟窗口
-    5, // 最多5次
+    60000,
+    5,
   );
   if (!isAllowed) {
     throw new Error("请求太频繁，请一分钟后再试");
@@ -30,7 +46,6 @@ export async function getLoginNonce(address: string) {
 }
 
 export async function verifySignature(address: string, signature: string) {
-  // 注意：这里需要知道之前生成的 nonce 消息，可以从 Redis 取出
   const key = `nonce:login:${address.toLowerCase()}`;
   const savedNonce = await redis.get(key);
   if (!savedNonce) {
@@ -47,19 +62,22 @@ export async function verifySignature(address: string, signature: string) {
     throw new Error("签名验证失败，疑似伪造请求");
   }
 
-  // 签发 JWT
-  const token = jwtService.sign({
+  const { accessToken, refreshToken } = dualJwt.generatePair({
     sub: address.toLowerCase(),
     role: "user",
   });
 
   const cookieStore = await cookies();
-  cookieStore.set("token", token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+
+  cookieStore.delete("token");
+
+  cookieStore.set("accessToken", accessToken, {
+    ...cookieBase,
+    maxAge: 15 * 60,
+  });
+  cookieStore.set("refreshToken", refreshToken, {
+    ...cookieBase,
     maxAge: 60 * 60 * 24 * 7,
-    path: "/",
   });
 
   return { success: true };
@@ -68,5 +86,7 @@ export async function verifySignature(address: string, signature: string) {
 export async function logout() {
   const cookieStore = await cookies();
   cookieStore.delete("token");
+  cookieStore.delete("accessToken");
+  cookieStore.delete("refreshToken");
   revalidatePath("/", "layout");
 }

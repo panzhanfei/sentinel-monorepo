@@ -1,29 +1,28 @@
 import { NextRequest } from "next/server";
 import { NODE_SERVICE } from "@/app/src/config/node_service";
-import { resolveBearerToken } from "@/app/src/utils/bffProxy";
+import {
+  dualAuthUnauthorizedJson,
+  proxyHeadersToNode,
+} from "@/app/src/utils/bffProxy";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const sessionId = searchParams.get("sessionId");
   const message = searchParams.get("message") ?? "";
-  const token = resolveBearerToken(request);
-
   if (!sessionId) {
     return new Response("Missing sessionId ", { status: 400 });
   }
-  if (!token) {
-    return new Response("Unauthorized", { status: 401 });
-  }
+  const unauthorized = dualAuthUnauthorizedJson(request);
+  if (unauthorized) return unauthorized;
 
   try {
-    // 请求 Node 服务的流式接口，携带认证头
     const nodeRes = await fetch(
-      `${NODE_SERVICE}/chat/stream?sessionId=${encodeURIComponent(sessionId)}&message=${encodeURIComponent(message)}&token=${encodeURIComponent(token)}`,
+      `${NODE_SERVICE}/chat/stream?sessionId=${encodeURIComponent(sessionId)}&message=${encodeURIComponent(message)}`,
       {
-        headers: {
-          Accept: "text/event-stream",
-          Authorization: `Bearer ${token}`,
-        },
+        headers: proxyHeadersToNode(request, {
+          contentType: false,
+          accept: "text/event-stream",
+        }),
       },
     );
 

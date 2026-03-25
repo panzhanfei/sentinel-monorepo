@@ -1,14 +1,13 @@
 // src/types/express.d.ts
-import { TokenPayload } from '@/utils/jwt';
+import type { JwtPayload } from '@sentinel/auth';
 
-// 扩展Express的Request接口
 declare global {
   namespace Express {
     interface Request {
       /**
-       * 用户信息（来自JWT）
+       * 用户信息（来自 Access Token JWT）
        */
-      user?: TokenPayload;
+      user?: JwtPayload;
 
       /**
        * 请求唯一标识符（用于日志追踪）
@@ -24,11 +23,8 @@ declare global {
        * 客户端IP地址
        */
       clientIp?: string;
-      sub: string;
-      role?: string;
     }
   }
 }
 
-// 空导出使文件成为模块
 export {};

@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { NODE_SERVICE } from "@/app/src/config/node_service";
-import { authHeadersForProxy, parseUpstreamJson } from "@/app/src/utils/bffProxy";
+import {
+  authHeadersForProxy,
+  dualAuthUnauthorizedJson,
+  parseUpstreamJson,
+} from "@/app/src/utils/bffProxy";
 
 export async function GET(request: NextRequest) {
   try {
+    const unauthorized = dualAuthUnauthorizedJson(request);
+    if (unauthorized) return unauthorized;
     const res = await fetch(`${NODE_SERVICE}/user/telegram-chat-id`, {
       method: "GET",
       cache: "no-store",
@@ -23,6 +29,9 @@ export async function GET(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
+    const unauthorized = dualAuthUnauthorizedJson(request);
+    if (unauthorized) return unauthorized;
+
     const body = await request.json();
     const res = await fetch(`${NODE_SERVICE}/user/telegram-chat-id`, {
       method: "PATCH",
