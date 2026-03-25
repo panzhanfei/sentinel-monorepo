@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { isProtectedRoute } from "@/lib/authRoutes";
+import { getMiddlewareAuthNavigation } from "@/lib/middlewareAuthNavigation";
 
 /** 微前端子应用直连主站 BFF（带 Cookie）时的 CORS 来源 */
 const BFF_CORS_ORIGINS = new Set([
@@ -52,23 +52,23 @@ export function middleware(request: NextRequest) {
 
   const access = request.cookies.get("accessToken")?.value;
   const refresh = request.cookies.get("refreshToken")?.value;
-  const session = access && refresh ? true : false;
+  const hasSession = Boolean(access && refresh);
 
-  // 1. 定义路由分类
-  const onProtectedRoute = isProtectedRoute(pathname);
-  const isAuthRoute = pathname === "/login";
+  const navigation = getMiddlewareAuthNavigation({
+    pathname,
+    hasSession,
+  });
 
-  // 2. 核心逻辑 A：未登录访问受保护页面 -> 踢到登录页
-  if (!session && onProtectedRoute) {
-    const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("from", pathname);
-    return NextResponse.redirect(loginUrl);
+  if (navigation.kind === "redirect") {
+    const url = new URL(navigation.path, request.url);
+    if (navigation.search) {
+      for (const [key, value] of Object.entries(navigation.search)) {
+        url.searchParams.set(key, value);
+      }
+    }
+    return NextResponse.redirect(url);
   }
 
-  // 3. 核心逻辑 B：已登录还想去登录页 -> 送回 Dashboard
-  if (session && isAuthRoute) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
-  }
   return NextResponse.next();
 }
 

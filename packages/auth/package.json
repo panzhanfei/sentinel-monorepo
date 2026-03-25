@@ -10,6 +10,10 @@
       "require": "./dist/index.js"
     }
   },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
   "files": [
     "dist"
   ],
@@ -24,6 +28,7 @@
     "@types/jsonwebtoken": "^9.0.2",
     "@types/node": "^20.0.0",
     "ioredis": "^5.4.1",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "vitest": "^3.0.5"
   }
 }

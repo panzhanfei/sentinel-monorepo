@@ -10,6 +10,7 @@
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types",
+    "test": "turbo run test",
     "node:fork": "export $(grep -v '^#' .env.local | grep -v '^$' | xargs) && anvil --fork-url $QUICKNODE_RPC_URL --chain-id 31337",
     "start:demo": "pnpm run node:fork & sleep 5 && pnpm run dev"
   },
