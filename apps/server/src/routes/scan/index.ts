@@ -1,16 +1,12 @@
 import { Router } from 'express';
 import * as AuditController from '@/controllers';
+import { asyncHandler } from '@/middlewares';
 
 const router = Router();
 
-// 发起扫描任务 (POST)
-router.post('/scan', AuditController.startScan);
+router.post('/scan', asyncHandler(AuditController.startScan));
+router.get('/scan/latest', asyncHandler(AuditController.getLatestJob));
+router.get('/scan/stream', asyncHandler(AuditController.handleAuditStream));
+router.get('/scan/:jobId', asyncHandler(AuditController.getJobStatus));
 
-//  获取最近一次成功扫描 (GET)
-router.get('/scan/latest', AuditController.getLatestJob);
-
-//  SSE 流式日志 (GET)
-router.get('/scan/stream', AuditController.handleAuditStream);
-//  获取任务进度/详情 (GET)
-router.get('/scan/:jobId', AuditController.getJobStatus);
 export default router;

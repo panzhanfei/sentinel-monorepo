@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser';
 import { env } from '@/config';
 import { startScan } from '@/workers/scanner';
 import router from '@/routes';
+import { errorHandler } from '@/middlewares';
 
 const app = express();
 const PORT = env.PORT;
@@ -12,6 +13,7 @@ app.use(cors());
 app.use(express.json());
 app.use(cookieParser());
 app.use(router);
+app.use(errorHandler);
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);

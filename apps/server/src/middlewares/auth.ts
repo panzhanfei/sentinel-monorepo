@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { sendFailure } from '@/utils/apiResponse';
 import type { JwtPayload } from '@sentinel/auth';
 import { DualJwtService } from '@sentinel/auth';
 import { dualJwt } from '@/lib/dualJwt';
@@ -48,10 +49,7 @@ export const authMiddleware = (
   const refreshToken = extractRefreshToken(req);
 
   if (!accessToken || !refreshToken) {
-    return res.status(401).json({
-      error: 'Unauthorized',
-      code: 'DUAL_TOKEN_REQUIRED',
-    });
+    return sendFailure(res, 401, 'Unauthorized', 'DUAL_TOKEN_REQUIRED');
   }
 
   try {
@@ -59,15 +57,12 @@ export const authMiddleware = (
     const refreshPayload = dualJwt.verifyRefresh(refreshToken);
 
     if (!sameSubject(accessPayload, refreshPayload)) {
-      return res.status(401).json({
-        error: 'Unauthorized',
-        code: 'TOKEN_SUBJECT_MISMATCH',
-      });
+      return sendFailure(res, 401, 'Unauthorized', 'TOKEN_SUBJECT_MISMATCH');
     }
 
     req.user = accessPayload;
     next();
   } catch {
-    return res.status(401).json({ error: 'Invalid token' });
+    return sendFailure(res, 401, 'Invalid token', 'INVALID_TOKEN');
   }
 };

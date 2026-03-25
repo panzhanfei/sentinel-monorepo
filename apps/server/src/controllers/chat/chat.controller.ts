@@ -1,11 +1,12 @@
 import { Request, Response } from 'express';
 import { JobService } from '@/services';
+import { HttpError, sendSuccess } from '@/utils/apiResponse';
 import {
   hasCompletedScanWithData,
   isClearlyOffTopicQuestion,
-} from './guards';
-import { ChatService } from './service';
-import { runChatAgents } from './stream';
+} from '@/modules/chat/guards';
+import { ChatService } from '@/modules/chat/service';
+import { runChatAgents } from '@/modules/chat/stream';
 
 /** SSE 保活：注释行过代理；JSON 供前端忽略，不写入对话 */
 const CHAT_SSE_HEARTBEAT_MS = 20_000;
@@ -13,13 +14,15 @@ const CHAT_SSE_HEARTBEAT_MS = 20_000;
 export const createSession = async (req: Request, res: Response) => {
   const { address } = req.body;
 
-  if (!address) return res.status(401).json({ error: 'address?' });
+  if (!address) {
+    throw new HttpError(400, 'address is required', 'ADDRESS_REQUIRED');
+  }
   const session = await ChatService.getOrCreateSession(
     req.user.sub.toLowerCase(),
     address
   );
 
-  res.json({ sessionId: session.id });
+  sendSuccess(res, { sessionId: session.id });
 };
 
 export const chatStream = async (req: Request, res: Response) => {
@@ -64,7 +67,6 @@ export const chatStream = async (req: Request, res: Response) => {
   };
 
   try {
-    // 1. 保存用户输入
     const userMsg = await ChatService.addMessage(
       sessionId,
       userId,
@@ -110,7 +112,6 @@ export const chatStream = async (req: Request, res: Response) => {
       return;
     }
 
-    // 2. 执行 AI（已有非空扫描数据且非明显闲聊/无关求助）
     await runChatAgents(message, publish);
 
     res.write(`data: ${JSON.stringify({ status: 'end' })}\n\n`);
@@ -131,7 +132,7 @@ export const getChatMessages = async (req: Request, res: Response) => {
   const beforeIso = req.query.before as string | undefined;
 
   if (!sessionId) {
-    return res.status(400).json({ error: 'sessionId required' });
+    throw new HttpError(400, 'sessionId required', 'SESSION_ID_REQUIRED');
   }
 
   const limit = Math.min(50, Math.max(1, Number(limitRaw) || 5));
@@ -140,7 +141,7 @@ export const getChatMessages = async (req: Request, res: Response) => {
   if (beforeIso !== undefined && beforeIso !== '') {
     const createdAt = new Date(beforeIso);
     if (Number.isNaN(createdAt.getTime())) {
-      return res.status(400).json({ error: 'Invalid before' });
+      throw new HttpError(400, 'Invalid before', 'INVALID_BEFORE');
     }
     before = createdAt;
   }
@@ -152,10 +153,10 @@ export const getChatMessages = async (req: Request, res: Response) => {
   });
 
   if (page === null) {
-    return res.status(404).json({ error: 'Thread not found' });
+    throw new HttpError(404, 'Thread not found', 'THREAD_NOT_FOUND');
   }
 
-  res.json({
+  sendSuccess(res, {
     messages: page.messages.map((m) => ({
       id: m.id,
       role: m.role,

@@ -5,20 +5,21 @@ import userRouter from './user';
 
 import { authMiddleware } from '@/middlewares';
 import { refreshTokens } from '@/controllers/auth/refresh.controller';
+import { sendSuccess } from '@/utils/apiResponse';
 
 const router = Router();
 
 router.post('/api/v1/auth/refresh', refreshTokens);
 
-router.get('/api/v1', (req, res) => {
-  res.status(200).json({
+router.get('/api/v1', (_req, res) => {
+  sendSuccess(res, {
     name: 'API Service',
     version: '1.0.0',
     status: 'running',
     timestamp: new Date().toISOString(),
     endpoints: {
       auth: '/api/v1/auth',
-      docs: '/api/v1/docs', // 可选：API文档
+      docs: '/api/v1/docs',
     },
   });
 });

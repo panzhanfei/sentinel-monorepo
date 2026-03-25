@@ -14,7 +14,10 @@ describe("initChatSession", () => {
       "fetch",
       vi.fn().mockResolvedValue({
         ok: true,
-        json: async () => ({ sessionId: "sess-1" }),
+        json: async () => ({
+          success: true,
+          data: { sessionId: "sess-1" },
+        }),
       }),
     );
     await expect(initChatSession("0xabc", "http://bff.local")).resolves.toBe(
@@ -49,7 +52,7 @@ describe("initChatSession", () => {
       "fetch",
       vi.fn().mockResolvedValue({
         ok: true,
-        json: async () => ({}),
+        json: async () => ({ success: true, data: {} }),
       }),
     );
     await expect(initChatSession("0x", "http://x")).rejects.toThrow(

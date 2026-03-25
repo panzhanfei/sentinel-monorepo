@@ -35,14 +35,18 @@ export async function fetchChatMessages(
     throw new Error(`chat messages ${res.status}`);
   }
 
-  const data = (await res.json()) as {
-    messages?: ChatHistoryMessage[];
-    hasMore?: boolean;
+  const body = (await res.json()) as {
+    success?: boolean;
+    data?: { messages?: ChatHistoryMessage[]; hasMore?: boolean };
   };
 
+  if (!body.success || !body.data) {
+    throw new Error(`chat messages invalid response ${res.status}`);
+  }
+
   return {
-    messages: data.messages ?? [],
-    hasMore: Boolean(data.hasMore),
+    messages: body.data.messages ?? [],
+    hasMore: Boolean(body.data.hasMore),
   };
 }
 

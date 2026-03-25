@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express';
 import { dualJwt } from '@/lib/dualJwt';
+import { sendFailure, sendSuccess } from '@/utils/apiResponse';
 
 /**
  * 仅校验 Refresh Token，签发新的 access + refresh（旋转刷新令牌）。
@@ -14,7 +15,7 @@ export function refreshTokens(req: Request, res: Response) {
       : undefined);
 
   if (!refreshToken) {
-    return res.status(401).json({ error: 'Missing refresh token' });
+    return sendFailure(res, 401, 'Missing refresh token', 'MISSING_REFRESH');
   }
 
   try {
@@ -23,8 +24,8 @@ export function refreshTokens(req: Request, res: Response) {
       sub: payload.sub,
       role: typeof payload.role === 'string' ? payload.role : undefined,
     });
-    return res.status(200).json({ accessToken, refreshToken: nextRefresh });
+    return sendSuccess(res, { accessToken, refreshToken: nextRefresh });
   } catch {
-    return res.status(401).json({ error: 'Invalid refresh token' });
+    return sendFailure(res, 401, 'Invalid refresh token', 'INVALID_REFRESH');
   }
 }

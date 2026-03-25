@@ -4,6 +4,10 @@ import {
   parseUpstreamJson,
   proxyHeadersToNode,
 } from "@/app/src/utils/bffProxy";
+import {
+  getNodeApiData,
+  getNodeApiErrorMessage,
+} from "@/app/src/utils/nodeApiEnvelope";
 
 const cookieBase = {
   httpOnly: true,
@@ -19,25 +23,32 @@ export async function POST(request: NextRequest) {
       headers: proxyHeadersToNode(request),
     });
 
-    const data = (await parseUpstreamJson(res)) as {
-      accessToken?: string;
-      refreshToken?: string;
-      error?: string;
-    };
+    const body = await parseUpstreamJson(res);
+    const tokens = getNodeApiData<{
+      accessToken: string;
+      refreshToken: string;
+    }>(
+      body,
+      (d) =>
+        typeof d.accessToken === "string" && typeof d.refreshToken === "string",
+    );
 
-    if (!res.ok || !data.accessToken || !data.refreshToken) {
+    if (!res.ok || !tokens) {
       return NextResponse.json(
-        { error: data.error ?? "Refresh failed", code: "REFRESH_FAILED" },
+        {
+          error: getNodeApiErrorMessage(body) ?? "Refresh failed",
+          code: "REFRESH_FAILED",
+        },
         { status: res.status >= 400 ? res.status : 401 },
       );
     }
 
     const out = NextResponse.json({ ok: true });
-    out.cookies.set("accessToken", data.accessToken, {
+    out.cookies.set("accessToken", tokens.accessToken, {
       ...cookieBase,
       maxAge: 15 * 60,
     });
-    out.cookies.set("refreshToken", data.refreshToken, {
+    out.cookies.set("refreshToken", tokens.refreshToken, {
       ...cookieBase,
       maxAge: 60 * 60 * 24 * 7,
     });

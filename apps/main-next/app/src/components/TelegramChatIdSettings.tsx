@@ -21,23 +21,25 @@ export function TelegramChatIdSettings() {
           credentials: "include",
           cache: "no-store",
         });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as {
+          success?: boolean;
+          data?: { telegramChatId?: string | null };
+          error?: { message?: string };
+        };
+        if (!res.ok || data.success === false) {
           if (!cancelled) {
-            setError(
-              typeof data.error === "string"
-                ? data.error
-                : "无法加载 Telegram Chat ID",
-            );
+            const msg =
+              data.error?.message ??
+              (typeof (data as { error?: string }).error === "string"
+                ? (data as { error: string }).error
+                : null);
+            setError(msg ?? "无法加载 Telegram Chat ID");
           }
           return;
         }
         if (!cancelled) {
-          setValue(
-            typeof data.telegramChatId === "string"
-              ? data.telegramChatId
-              : "",
-          );
+          const id = data.data?.telegramChatId;
+          setValue(typeof id === "string" ? id : "");
         }
       } catch {
         if (!cancelled) setError("网络错误");
@@ -68,16 +70,22 @@ export function TelegramChatIdSettings() {
           telegramChatId: trimmed === "" ? null : trimmed,
         }),
       });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setError(
-          typeof data.error === "string" ? data.error : "保存失败",
-        );
+      const data = (await res.json().catch(() => ({}))) as {
+        success?: boolean;
+        data?: { telegramChatId?: string | null };
+        error?: { message?: string };
+      };
+      if (!res.ok || data.success === false) {
+        const msg =
+          data.error?.message ??
+          (typeof (data as { error?: string }).error === "string"
+            ? (data as { error: string }).error
+            : null);
+        setError(msg ?? "保存失败");
         return;
       }
-      setValue(
-        typeof data.telegramChatId === "string" ? data.telegramChatId : "",
-      );
+      const id = data.data?.telegramChatId;
+      setValue(typeof id === "string" ? id : "");
       setPanelOpen(false);
     } catch {
       setError("网络错误");

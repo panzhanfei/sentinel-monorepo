@@ -42,15 +42,27 @@ export function useScan({
         cache: "no-store",
       });
       if (!response.ok) throw new Error("Fetch status failed");
-      const data = await response.json();
+      const envelope = (await response.json()) as {
+        success?: boolean;
+        data?: {
+          status?: string;
+          progress?: number;
+          result?: ScanResultData;
+        };
+      };
+      if (!envelope.success || !envelope.data) {
+        throw new Error("Invalid job status response");
+      }
+      const data = envelope.data;
 
       if (data.status) {
-        setScanStatus(data.status);
+        setScanStatus(data.status as ScanStatus);
         setScanProgress(data.progress || 0);
 
         if (data.status === "COMPLETED") {
-          setScanResult(data.result);
-          if (data.result.allowances.length) {
+          setScanResult(data.result ?? null);
+          const allowances = data.result?.allowances;
+          if (allowances?.length) {
             triggerHighRisk(10000);
           } else {
             setRiskLevel("low");
@@ -79,7 +91,17 @@ export function useScan({
       try {
         const res = await fetch(`/api/scan/latest?address=${address}`);
         if (res.ok) {
-          const job = await res.json();
+          const envelope = (await res.json()) as {
+            success?: boolean;
+            data?: {
+              id?: string;
+              status?: string;
+              progress?: number;
+              result?: ScanResultData;
+            };
+          };
+          if (!envelope.success || !envelope.data) return;
+          const job = envelope.data;
           if (
             job?.id &&
             (job.status === "PENDING" || job.status === "RUNNING")
@@ -192,7 +214,14 @@ export function useScan({
       });
       if (!startRes.ok) throw new Error("Failed to start scan");
       setRiskLevel("medium");
-      const { jobId } = await startRes.json();
+      const startBody = (await startRes.json()) as {
+        success?: boolean;
+        data?: { jobId?: string };
+      };
+      const jobId =
+        startBody.success && startBody.data?.jobId
+          ? startBody.data.jobId
+          : undefined;
       if (jobId) {
         currentJobId.current = jobId;
         pollIntervalRef.current = setInterval(checkJobStatus, 1500);

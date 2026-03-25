@@ -31,9 +31,12 @@ export async function initChatSession(
     );
   }
 
-  const body = (await res.json()) as { sessionId?: string };
-  if (!body.sessionId) {
+  const body = (await res.json()) as {
+    success?: boolean;
+    data?: { sessionId?: string };
+  };
+  if (!body.success || typeof body.data?.sessionId !== "string") {
     throw new Error("Session ID missing in response");
   }
-  return body.sessionId;
+  return body.data.sessionId;
 }
