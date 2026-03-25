@@ -28,6 +28,7 @@
 - **清晰分层**：共享包（`security-sdk`、`auth`、`database`）与多应用（宿主、子应用、API/Worker）拆分，链上逻辑、鉴权与持久化可复用、便于测试与演进。
 - **长任务与实时 UI 解耦**：扫描走 **Bull**；Worker 经 **Redis Pub/Sub** 向 `job:{jobId}:log` 推送结构化日志，前端可 SSE/轮询展示进度与中间结果。
 - **可扩展的微前端**：宿主承担统一入口与部分 BFF，子应用技术栈独立构建部署，由 Wujie 嵌入，降低后续并行迭代成本。
+- **双 Token 与会话一致性**：Access + Refresh 分离签发与校验；受保护接口要求两者同时有效且 `sub` 一致；Next **middleware** 以双 Cookie 判定登录态，并配合 BFF 为子应用 Origin 开启 **CORS + credentials**，解决跨端口嵌入时的鉴权与刷新。
 
 ---
 
@@ -37,8 +38,8 @@
 - **多阶段 AI 流水线**：扫描（Scanner）→ 复核（Auditor）→ 决策与 Markdown 报告（Decision）；当前主链路为 **DeepSeek** 流式输出；单阶段超时由心跳包装器监控并可自动重试。
 - **异步任务与实时日志**：**Bull** 处理扫描任务；Worker 通过 **Redis Pub/Sub** 向频道 `job:{jobId}:log` 推送结构化日志。
 - **高危告警**：最终评级为 `HIGH` 时，可经 **Telegram Bot** 向用户配置的 `telegramChatId` 推送摘要（需 `TELEGRAM_BOT_TOKEN` 与用户 Chat ID）。
-- **微前端**：主应用 **Next.js** 内嵌 **Vite + React**（审计面板，默认 `http://localhost:3001`）与 **Vite + Vue**（监控面板，默认 `http://localhost:3002`）。
-- **鉴权与数据**：**JWT**（`@sentinel/auth`）、**Prisma + PostgreSQL**；Redis 用于队列、Pub/Sub 及会话相关能力。
+- **微前端**：主应用 **Next.js** 内嵌 **Vite + React**（审计面板，默认 `http://localhost:3001`）与 **Vite + Vue**（监控面板，默认 `http://localhost:3002`）。子应用入口与 **BFF `/api` 的 CORS 白名单** 由 `apps/main-next/lib/subAppOrigins.ts` 统一维护（默认本地 3001/3002，可通过 `NEXT_PUBLIC_WUJIE_*` 与 `NEXT_PUBLIC_WUJIE_EXTRA_ORIGINS` 覆盖）。
+- **鉴权与数据**：**双 JWT**（`DualJwtService`，`@sentinel/auth`）：登录后写入 HttpOnly Cookie **`accessToken`**（短期）与 **`refreshToken`**（长期），废弃旧单 Cookie `token`；Express 受保护路由从 **Authorization Bearer**、Cookie 或兼容字段读取 Access，Refresh 可从 Cookie、`X-Refresh-Token` 头或查询参数传入；Next 提供 **`/api/auth/refresh`** BFF 代理 Node 刷新接口并回写 Cookie。**Prisma + PostgreSQL**；Redis 用于队列、Pub/Sub、Nonce 限流与相关能力。
 
 ---
 
@@ -46,12 +47,12 @@
 
 | 路径                                                    | 说明                                                                                                                                        |
 | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| `apps/main-next`                                        | 主应用：**Next.js 16**（App Router）、RainbowKit / wagmi、Wujie 宿主、部分 **BFF** API。默认开发端口 **3000**。                             |
-| `apps/sub-react`                                        | 审计子应用：**Vite + React 19**，端口 **3001**；开发环境下 `/api` 代理到 `http://localhost:3000`。                                          |
-| `apps/sub-vue`                                          | 监控子应用：**Vite + Vue 3** + ECharts，端口 **3002**。                                                                                     |
-| `apps/server`                                           | **Express** API 与 **Bull Worker**（`tsx watch` 开发）；默认端口 **4000**，路由前缀见 `NODE_SERVICE`（如 `http://127.0.0.1:4000/api/v1`）。 |
+| `apps/main-next`                                        | 主应用：**Next.js 16**（App Router）、RainbowKit / wagmi、Wujie 宿主、**BFF**（含 `/api/auth/refresh`）。`middleware` 以双 Cookie 判定登录并对 `/api` 做子应用 **CORS**。端口 **3000**。 |
+| `apps/sub-react`                                        | 审计子应用：**Vite + React 19**，端口 **3001**；开发环境下 `/api` 代理到 `http://localhost:3000`；逻辑与 API 分层并含 Vitest 用例。          |
+| `apps/sub-vue`                                          | 监控子应用：**Vite + Vue 3** + ECharts，端口 **3002**；监控逻辑拆分为 Store / Service / 图表模型与 Vitest 单测，视图以小组件组合。          |
+| `apps/server`                                           | **Express** API 与 **Bull Worker**；**双 Token** 校验中间件（Access+Refresh、`sub` 一致）。默认 **4000**，前缀见 `NODE_SERVICE`。          |
 | `packages/database`                                     | **Prisma** schema（PostgreSQL）、`@prisma/client` 与 Redis 客户端封装。                                                                     |
-| `packages/auth`                                         | 鉴权工具（Nonce、JWT 等）。                                                                                                                 |
+| `packages/auth`                                         | 鉴权工具：**Nonce**、**DualJwtService**（Access/Refresh 签发与校验）、幂等等；含 **Vitest** 单测。                                          |
 | `packages/security-sdk`                                 | 链上扫描与授权审计逻辑（`viem`）。                                                                                                          |
 | `packages/ui`                                           | 共享 UI（`@repo/ui`）。                                                                                                                     |
 | `packages/eslint-config` / `packages/typescript-config` | 共享 ESLint 与 TS 配置（`@repo/*`）。                                                                                                       |
@@ -148,7 +149,8 @@ Server 从 **`apps/server` 工作目录**加载 **`.env.development`**（或 `.e
 | ------------------------------------- | ----------------------------------------------------- |
 | `PORT`                                | HTTP 端口，默认 `4000`                                |
 | `REDIS_URL`                           | Redis 连接 URL（与 Docker 中密码、端口一致）          |
-| `JWT_SECRET` / `REFRESH_TOKEN_SECRET` | 至少 32 字符（生产环境务必替换默认值）                |
+| `JWT_SECRET` / `REFRESH_TOKEN_SECRET` | Access / Refresh 各自密钥，至少 32 字符（生产务必替换默认值） |
+| `JWT_EXPIRES_IN` / `REFRESH_TOKEN_EXPIRES_IN` | 可选，默认 `15m` / `7d`，与宿主登录 Cookie `maxAge` 策略对齐 |
 | `DEEPSEEK_API_KEY`                    | DeepSeek API，扫描链路主用                            |
 | `GEMINI_API_KEY` / `GROQ_API_KEY`     | 当前 schema 要求非空；可按需填有效 Key 或后续收紧校验 |
 | `CORS_ORIGIN`                         | 默认 `http://localhost:3000`                          |
@@ -163,7 +165,7 @@ Server 从 **`apps/server` 工作目录**加载 **`.env.development`**（或 `.e
 NODE_SERVICE=http://127.0.0.1:4000/api/v1
 ```
 
-微前端子应用 URL 在宿主页面中配置（审计页 `http://localhost:3001`，监控页 `http://localhost:3002`），请与 Vite `server.port` 保持一致。
+微前端子应用 URL 默认与 `subAppOrigins` 一致（审计 `http://localhost:3001`，监控 `http://localhost:3002`）；部署或改端口时请同时设置 **`NEXT_PUBLIC_WUJIE_REACT_URL`**、**`NEXT_PUBLIC_WUJIE_VUE_URL`**（必要时 **`NEXT_PUBLIC_WUJIE_EXTRA_ORIGINS`**，逗号分隔），以便 Wujie 加载地址与 BFF CORS 白名单一致。`middleware` 对 `/api` 的 **OPTIONS** 预检与响应会按上述白名单返回 `Access-Control-Allow-Credentials: true`，便于子应用 `fetch` 宿主 BFF 时携带 Cookie。
 
 ### 7. 一键开发
 
@@ -198,6 +200,7 @@ pnpm run start:demo
 | `pnpm run lint`                                   | 全仓库 lint                       |
 | `pnpm run check-types`                            | TypeScript 检查                   |
 | `pnpm run format`                                 | Prettier 格式化 `*.ts,*.tsx,*.md` |
+| `pnpm run test`                                   | Turbo 并行执行各包 `test`（Vitest，含 `auth`、`sub-react`、`sub-vue`、`main-next` 等） |
 | `pnpm run infra:up` / `infra:down` / `infra:logs` | Docker 基础设施                   |
 
 ---
@@ -228,6 +231,8 @@ pnpm run start:demo
 ## 开发与规范
 
 代码风格与类型检查以各包内 ESLint / `tsc` 配置为准。修改 Prisma schema 后请重新执行 `db:generate`，并按环境选择 `db:push`（本地快速迭代）或迁移流程（生产）。
+
+**单元测试**：根目录执行 `pnpm run test` 会通过 Turbo 跑通已声明 `test` 脚本的包；`@sentinel/auth` 与各微前端子包使用 **Vitest**，配置见各目录下的 `vitest.config.ts`。
 
 ---
 
