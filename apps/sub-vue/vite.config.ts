@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
 import vueJsx from "@vitejs/plugin-vue-jsx";
@@ -6,6 +7,10 @@ import { resolve } from "path";
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [vue(), vueJsx(), tailwindcss()],
+  test: {
+    environment: "happy-dom",
+    include: ["src/**/*.test.ts"],
+  },
   server: {
     port: 3002, // 设置为你想要的端口，例如 3000
     cors: true,

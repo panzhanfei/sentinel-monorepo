@@ -1,11 +1,30 @@
 import { defineComponent, ref } from "vue";
-import { useScanner } from "@/composables/useScanner";
+import type { Address } from "viem";
+import { useMonitorStore } from "@/stores/useMonitorStore";
+import { useWeb3Store } from "@/stores/useWeb3Store";
+import { scanErc20AcrossChains } from "@/services/monitorChainService";
+import { viemManager } from "@/utils/viemClients";
 import { AssetCard } from "@/components";
 
+/** 独立入口：只操作 Model + Service，不重复注册区块订阅（由 MonitorDashboard 负责刷新） */
 export const TokenManager = defineComponent({
+  name: "TokenManager",
   setup() {
-    const { addToken, customTokens } = useScanner();
+    const monitorStore = useMonitorStore();
+    const web3 = useWeb3Store();
     const inputAddr = ref("");
+
+    const addToken = async () => {
+      const addr = web3.web3Date?.address as Address | undefined;
+      if (!addr) return;
+      const found = await scanErc20AcrossChains(
+        inputAddr.value,
+        addr,
+        (id) => viemManager.getClient(id),
+      );
+      monitorStore.mergeScannedTokens(found);
+      inputAddr.value = "";
+    };
 
     return () => (
       <div class="mt-8 border-t pt-6">
@@ -17,17 +36,17 @@ export const TokenManager = defineComponent({
             class="flex-1 border p-2 rounded"
           />
           <button
-            onClick={() => addToken(inputAddr.value)}
+            type="button"
+            onClick={() => void addToken()}
             class="bg-blue-600 text-white px-4 py-2 rounded"
           >
             添加监控
           </button>
         </div>
 
-        {/* 动态渲染用户添加的代币 */}
         <div class="grid grid-cols-2 gap-4">
-          {customTokens.value.map((token) => (
-            <AssetCard record={token} isRemovable={true} />
+          {monitorStore.customTokens.map((token) => (
+            <AssetCard key={token.id} record={token} isRemovable={true} />
           ))}
         </div>
       </div>
