@@ -13,14 +13,16 @@ export type WujieWeb3Date = {
   address?: string;
   chain?: { id: number; name: string };
   isConnected?: boolean;
-  token?: string;
 };
 
 export const useWujieStore = create<WujieState>()(
   devtools(
     (set) => ({
       wujieAfterMount: window.$wujie?.props?.afterMount,
-      wujieWeb3Date: window.$wujie?.props?.web3Date || {},
+      wujieWeb3Date:
+        window.$wujie?.props?.web3Data ||
+        window.$wujie?.props?.web3Date ||
+        {},
       updateWujieState: (newWeb3Date: WujieWeb3Date) =>
         set(
           (state) => ({

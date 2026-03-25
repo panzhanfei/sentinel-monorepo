@@ -1,4 +1,5 @@
 import type { ChatRow, LogEntry } from "@/types/audit";
+import { getBffBaseUrl } from "@/utils/bffOrigin";
 
 export type ChatHistoryMessage = {
   id: string;
@@ -10,7 +11,6 @@ export type ChatHistoryMessage = {
 };
 
 export async function fetchChatMessages(
-  token: string,
   sessionId: string,
   options: {
     limit: number;
@@ -18,17 +18,14 @@ export async function fetchChatMessages(
     beforeCreatedAt?: string;
   },
 ): Promise<{ messages: ChatHistoryMessage[]; hasMore: boolean }> {
-  const url = new URL("/api/chat/messages", window.location.origin);
+  const url = new URL("/api/chat/messages", getBffBaseUrl());
   url.searchParams.set("sessionId", sessionId);
-  url.searchParams.set("token", token);
   url.searchParams.set("limit", String(options.limit));
   if (options.beforeCreatedAt) {
     url.searchParams.set("before", options.beforeCreatedAt);
   }
 
-  const res = await fetch(url.toString(), {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const res = await fetch(url.toString(), { credentials: "include" });
 
   if (!res.ok) {
     throw new Error(`chat messages ${res.status}`);

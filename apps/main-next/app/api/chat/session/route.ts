@@ -6,7 +6,7 @@ import {
   resolveBearerToken,
 } from "@/app/src/utils/bffProxy";
 
-/** GET：便于浏览器/简单客户端用 ?token=&address= 创建会话（上游仍为 POST） */
+/** GET：address 必填；鉴权为 Cookie（httpOnly token）或 Authorization / ?token= */
 export async function GET(request: NextRequest) {
   try {
     const address = request.nextUrl.searchParams.get("address");

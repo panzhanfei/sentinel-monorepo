@@ -1,10 +1,9 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { ComponentType, useState, ReactNode } from "react";
+import { ComponentType, useState, useEffect, ReactNode } from "react";
 import { useAccount } from "wagmi";
 import { useWeb3Sync } from "@/app/src/hooks";
-import Cookies from "js-cookie";
 
 export interface WujieProps {
   name: string;
@@ -45,8 +44,13 @@ export const WujieClient = ({
 }: WujieProps) => {
   const { address, isConnected, chain } = useAccount();
   const [isLoaded, setIsLoaded] = useState(false); // 手动控制状态
+  const [bffOrigin, setBffOrigin] = useState("");
 
   useWeb3Sync();
+
+  useEffect(() => {
+    setBffOrigin(window.location.origin);
+  }, []);
 
   const handleAfterMount = () => {
     setTimeout(() => {
@@ -54,8 +58,6 @@ export const WujieClient = ({
       afterMount?.();
     }, 300);
   };
-  const token = Cookies.get("token");
- 
   return (
     <div className="relative w-full h-full" style={{ width, height }}>
       {!isLoaded && (
@@ -76,9 +78,9 @@ export const WujieClient = ({
         }}
         props={{
           ...props,
-          token: token,
           afterMount: handleAfterMount,
           web3Data: { address, chain, isConnected },
+          ...(bffOrigin ? { bffOrigin } : {}),
         }}
       />
     </div>

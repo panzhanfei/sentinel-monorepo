@@ -10,7 +10,7 @@ declare global {
 
   interface Window {
     $wujie?: {
-      props: Record<string, unknown>;
+      props: Record<string, unknown> & { bffOrigin?: string };
       bus: WujieEventBus;
       shadowRoot?: ShadowRoot;
     };

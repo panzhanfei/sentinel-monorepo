@@ -15,6 +15,7 @@ import {
 } from "@/api/chatHistory";
 import type { ChatRow } from "@/types/audit";
 import { emitAuditAiStreamToHost } from "@/utils/wujieHost";
+import { getBffBaseUrl } from "@/utils/bffOrigin";
 
 const WELCOME_ROWS: ChatRow[] = [
   {
@@ -46,7 +47,7 @@ const CHAT_QUEUE_MAX = 30;
 export function useAuditData() {
   const wujieWeb3Date = useWujieStore((state) => state.wujieWeb3Date);
   const wujieAfterMount = useWujieStore((state) => state.wujieAfterMount);
-  const { address, token } = wujieWeb3Date;
+  const { address, isConnected } = wujieWeb3Date;
 
   const sessionId = useRef<string | undefined>(undefined);
   const eventSourceRef = useRef<EventSource | null>(null);
@@ -94,19 +95,12 @@ export function useAuditData() {
   const riskRelatedCount = footprintAudit?.riskRelatedCount ?? 0;
 
   const initSession = useCallback(async (): Promise<string> => {
-    if (!token) throw new Error("No token available");
-
-    const res = await fetch(
-      `/api/chat/session?token=${encodeURIComponent(token)}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ address, token }),
-      },
-    );
+    const res = await fetch(`${getBffBaseUrl()}/api/chat/session`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ address }),
+    });
 
     if (!res.ok) {
       throw new Error(
@@ -119,7 +113,7 @@ export function useAuditData() {
 
     sessionId.current = newSessionId;
     return newSessionId;
-  }, [token, address]);
+  }, [address]);
 
   const closeEventSource = useCallback(() => {
     if (eventSourceRef.current) {
@@ -143,16 +137,15 @@ export function useAuditData() {
 
   const startChatStream = useCallback(
     (message: string) => {
-      if (!sessionId.current || !token) return;
+      if (!sessionId.current) return;
 
       markStreamingStarted();
 
-      const url = new URL("/api/chat/stream", window.location.origin);
+      const url = new URL("/api/chat/stream", getBffBaseUrl());
       url.searchParams.set("sessionId", sessionId.current);
       url.searchParams.set("message", message);
-      url.searchParams.set("token", token);
 
-      const es = new EventSource(url.toString());
+      const es = new EventSource(url.toString(), { withCredentials: true });
       eventSourceRef.current = es;
 
       let currentAgent = "";
@@ -279,7 +272,7 @@ export function useAuditData() {
         drainOrRelease();
       };
     },
-    [token, markStreamingStarted, markStreamingEnded],
+    [markStreamingStarted, markStreamingEnded],
   );
 
   useLayoutEffect(() => {
@@ -288,7 +281,7 @@ export function useAuditData() {
 
   const sendMessageToAgent = useCallback(
     async (message: string) => {
-      if (!token) {
+      if (!address || !isConnected) {
         setChatRows((prev) => [
           ...prev,
           {
@@ -296,7 +289,7 @@ export function useAuditData() {
             createdAt: new Date().toISOString(),
             entry: {
               agent: "SYSTEM",
-              msg: "Authentication token missing. Please reconnect wallet.",
+              msg: "请先连接钱包。若已连接仍无法对话，请在主站重新登录。",
               type: "error",
             },
             persisted: false,
@@ -381,12 +374,11 @@ export function useAuditData() {
 
       startChatStream(message);
     },
-    [token, initSession, startChatStream],
+    [address, isConnected, initSession, startChatStream],
   );
 
   const requestOlderChat = useCallback(async () => {
     if (
-      !token ||
       !sessionId.current ||
       !hasMoreChatHistory ||
       isLoadingOlderChat ||
@@ -406,7 +398,6 @@ export function useAuditData() {
     setIsLoadingOlderChat(true);
     try {
       const { messages, hasMore } = await fetchChatMessages(
-        token,
         sessionId.current,
         {
           limit: CHAT_PAGE_SIZE,
@@ -431,7 +422,7 @@ export function useAuditData() {
     } finally {
       setIsLoadingOlderChat(false);
     }
-  }, [token, hasMoreChatHistory, isLoadingOlderChat]);
+  }, [hasMoreChatHistory, isLoadingOlderChat]);
 
   useEffect(() => {
     let cancelled = false;
@@ -446,7 +437,7 @@ export function useAuditData() {
     setHasMoreChatHistory(false);
     setIsLoadingOlderChat(false);
 
-    if (!token || !address) {
+    if (!address || !isConnected) {
       return () => {
         cancelled = true;
       };
@@ -457,7 +448,6 @@ export function useAuditData() {
         await initSession();
         if (cancelled || !sessionId.current) return;
         const { messages, hasMore } = await fetchChatMessages(
-          token,
           sessionId.current,
           { limit: CHAT_PAGE_SIZE },
         );
@@ -473,7 +463,7 @@ export function useAuditData() {
     return () => {
       cancelled = true;
     };
-  }, [token, address, initSession, closeEventSource]);
+  }, [address, isConnected, initSession, closeEventSource]);
 
   useEffect(() => {
     return () => {

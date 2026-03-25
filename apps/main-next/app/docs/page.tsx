@@ -42,7 +42,7 @@ const bffRows = [
   ["GET /api/scan/latest", "按 `address` 查询最近任务，可选 Cookie。"],
   ["GET /api/scan/[jobId]", "任务详情与进度，需 Cookie JWT。"],
   ["POST /api/chat/session", "聊天会话，Cookie JWT 转发 Node。"],
-  ["GET /api/chat/stream", "SSE：query 含 sessionId、message、token，转发 Node。"],
+  ["GET /api/chat/stream", "SSE：sessionId、message；鉴权为 Cookie（httpOnly JWT）或 Authorization。"],
   ["GET /api/events/watch", "链上 Transfer / Approval 等事件的 SSE，需 `NEXT_PUBLIC_RPC_URL`。"],
   ["GET /api/price", "CoinGecko 价格代理，可走 `HTTPS_PROXY`（默认 127.0.0.1:7897）。"],
   ["GET/PATCH /api/user/telegram-chat-id", "读写用户 Telegram Chat ID，Cookie JWT。"],
