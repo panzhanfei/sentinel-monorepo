@@ -6,6 +6,7 @@ import {
   useState,
   ReactNode,
   useCallback,
+  useMemo,
 } from "react";
 
 export type RiskLevel = "low" | "medium" | "high";
@@ -27,10 +28,13 @@ export const RiskProvider = ({ children }: { children: ReactNode }) => {
     setTimeout(() => setRiskLevel("low"), duration);
   }, []);
 
+  const value = useMemo(
+    () => ({ riskLevel, setRiskLevel, triggerHighRisk }),
+    [riskLevel, triggerHighRisk],
+  );
+
   return (
-    <RiskContext.Provider value={{ riskLevel, setRiskLevel, triggerHighRisk }}>
-      {children}
-    </RiskContext.Provider>
+    <RiskContext.Provider value={value}>{children}</RiskContext.Provider>
   );
 };
 

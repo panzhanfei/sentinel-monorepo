@@ -38,8 +38,12 @@ export function useKickOutSession() {
         }
         router.replace(`${loginUrl.pathname}${loginUrl.search}`);
       } catch (e) {
-        inFlightRef.current = false;
         console.error("kickOutSession failed:", e);
+      } finally {
+        // 成功跳转后仍需释放，否则根布局不卸载时无法再次踢出
+        queueMicrotask(() => {
+          inFlightRef.current = false;
+        });
       }
     },
     [router, disconnect],
