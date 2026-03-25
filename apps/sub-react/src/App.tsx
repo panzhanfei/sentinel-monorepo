@@ -9,7 +9,11 @@ const App = () => {
     txList,
     isLoading,
     isAgentStreaming,
-    logs,
+    queuedMessageCount,
+    chatRows,
+    hasMoreChatHistory,
+    isLoadingOlderChat,
+    onRequestOlderChat,
     sendMessageToAgent,
   } = useAuditData();
 
@@ -21,7 +25,11 @@ const App = () => {
       txList={txList}
       isLoading={isLoading}
       isAgentStreaming={isAgentStreaming}
-      logs={logs}
+      queuedMessageCount={queuedMessageCount}
+      chatRows={chatRows}
+      hasMoreChatHistory={hasMoreChatHistory}
+      isLoadingOlderChat={isLoadingOlderChat}
+      onRequestOlderChat={onRequestOlderChat}
       onSendMessage={sendMessageToAgent}
     />
   );

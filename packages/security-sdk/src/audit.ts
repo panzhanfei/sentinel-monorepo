@@ -30,6 +30,25 @@ type ViemMulticallRow =
   | { status: 'success'; result: unknown }
   | { status: 'failure' };
 
+/** 单批 multicall 中每条 ERC20 读调用（避免可变长 contracts 触发 viem 深度实例化 TS2589） */
+type Erc20MulticallItem =
+  | {
+      address: Address;
+      abi: typeof erc20Abi;
+      functionName: 'allowance';
+      args: readonly [Address, Address];
+    }
+  | {
+      address: Address;
+      abi: typeof erc20Abi;
+      functionName: 'symbol';
+    }
+  | {
+      address: Address;
+      abi: typeof erc20Abi;
+      functionName: 'decimals';
+    };
+
 export const publicClient = createPublicClient({
   chain: mainnet,
   transport: http(anvilRpcUrl),
@@ -144,7 +163,7 @@ export async function batchAuditAllowances(
     );
 
     // Dynamic-length contracts blow viem's multicall tuple inference (TS2589).
-    const contracts = chunk.flatMap((c) => [
+    const contracts: readonly Erc20MulticallItem[] = chunk.flatMap((c) => [
       {
         address: c.address,
         abi: erc20Abi,
@@ -162,7 +181,9 @@ export async function batchAuditAllowances(
         functionName: 'decimals' as const,
       },
     ]);
-    const results = (await publicClient.multicall({ contracts } as any)) as readonly ViemMulticallRow[];
+    const results = (await publicClient.multicall({
+      contracts,
+    })) as readonly ViemMulticallRow[];
 
     for (let j = 0; j < chunk.length; j++) {
       const baseIdx = j * 3;

@@ -3,8 +3,8 @@ export {}; // 确保文件是模块
 
 declare global {
   interface WujieEventBus {
-    $on(event: string, fn: (...args: any[]) => void): void;
-    $off(event: string, fn: (...args: any[]) => void): void;
+    $on(event: string, fn: (...args: unknown[]) => void): void;
+    $off(event: string, fn: (...args: unknown[]) => void): void;
     $emit(event: string, payload?: unknown): void;
   }
 

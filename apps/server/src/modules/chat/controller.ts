@@ -7,11 +7,14 @@ import {
 import { ChatService } from './service';
 import { runChatAgents } from './stream';
 
+/** SSE 保活：注释行过代理；JSON 供前端忽略，不写入对话 */
+const CHAT_SSE_HEARTBEAT_MS = 20_000;
+
 export const createSession = async (req: Request, res: Response) => {
   const { address } = req.body;
 
   if (!address) return res.status(401).json({ error: 'address?' });
-  const session = await ChatService.createSession(
+  const session = await ChatService.getOrCreateSession(
     req.user.sub.toLowerCase(),
     address
   );
@@ -29,6 +32,21 @@ export const chatStream = async (req: Request, res: Response) => {
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
 
+  let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
+  const stopHeartbeat = () => {
+    if (heartbeatTimer) clearInterval(heartbeatTimer);
+    heartbeatTimer = null;
+  };
+  heartbeatTimer = setInterval(() => {
+    if (!res.writableEnded) {
+      res.write(': sse-heartbeat\n\n');
+      res.write(
+        `data: ${JSON.stringify({ status: 'heartbeat' })}\n\n`
+      );
+    }
+  }, CHAT_SSE_HEARTBEAT_MS);
+  res.once('close', stopHeartbeat);
+
   const userId = req.user!.sub;
 
   const publish = async (agent: string, status: string, content: string) => {
@@ -36,10 +54,9 @@ export const chatStream = async (req: Request, res: Response) => {
 
     res.write(`data: ${msg}\n\n`);
 
-    await ChatService.addMessage(
+    await ChatService.recordAssistantStream(
       sessionId,
       userId,
-      'assistant',
       agent,
       content,
       status
@@ -103,5 +120,50 @@ export const chatStream = async (req: Request, res: Response) => {
       `data: ${JSON.stringify({ agent: 'System', status: 'error', content })}\n\n`
     );
     res.write(`data: ${JSON.stringify({ status: 'end' })}\n\n`);
+  } finally {
+    stopHeartbeat();
   }
+};
+
+export const getChatMessages = async (req: Request, res: Response) => {
+  const sessionId = req.query.sessionId as string | undefined;
+  const limitRaw = req.query.limit as string | undefined;
+  const beforeIso = req.query.before as string | undefined;
+
+  if (!sessionId) {
+    return res.status(400).json({ error: 'sessionId required' });
+  }
+
+  const limit = Math.min(50, Math.max(1, Number(limitRaw) || 5));
+
+  let before: Date | undefined;
+  if (beforeIso !== undefined && beforeIso !== '') {
+    const createdAt = new Date(beforeIso);
+    if (Number.isNaN(createdAt.getTime())) {
+      return res.status(400).json({ error: 'Invalid before' });
+    }
+    before = createdAt;
+  }
+
+  const userId = req.user!.sub;
+  const page = await ChatService.getMessagesPage(sessionId, userId, {
+    limit,
+    before,
+  });
+
+  if (page === null) {
+    return res.status(404).json({ error: 'Thread not found' });
+  }
+
+  res.json({
+    messages: page.messages.map((m) => ({
+      id: m.id,
+      role: m.role,
+      agent: m.agent,
+      content: m.content,
+      status: m.status,
+      createdAt: m.createdAt.toISOString(),
+    })),
+    hasMore: page.hasMore,
+  });
 };

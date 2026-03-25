@@ -10,7 +10,11 @@ export function AuditDashboard({
   txList,
   isLoading,
   isAgentStreaming,
-  logs,
+  queuedMessageCount,
+  chatRows,
+  hasMoreChatHistory,
+  isLoadingOlderChat,
+  onRequestOlderChat,
   onSendMessage,
 }: AuditDashboardViewProps) {
   const hasWallet = Boolean(address);
@@ -33,9 +37,13 @@ export function AuditDashboard({
 
           <div className="lg:col-span-2">
             <AgentTerminal
-              logs={logs}
+              chatRows={chatRows}
               onSendMessage={onSendMessage}
-              inputLocked={Boolean(isAgentStreaming)}
+              isStreaming={Boolean(isAgentStreaming)}
+              queuedMessageCount={queuedMessageCount ?? 0}
+              hasMoreChatHistory={hasMoreChatHistory}
+              isLoadingOlderChat={isLoadingOlderChat}
+              onRequestOlderChat={onRequestOlderChat}
             />
           </div>
         </div>

@@ -1,0 +1,74 @@
+import type { ChatRow, LogEntry } from "@/types/audit";
+
+export type ChatHistoryMessage = {
+  id: string;
+  role: string;
+  agent: string;
+  content: string;
+  status: string;
+  createdAt: string;
+};
+
+export async function fetchChatMessages(
+  token: string,
+  sessionId: string,
+  options: {
+    limit: number;
+    /** 当前已展示数据中最早一条的 createdAt（ISO），拉取严格更早的一页 */
+    beforeCreatedAt?: string;
+  },
+): Promise<{ messages: ChatHistoryMessage[]; hasMore: boolean }> {
+  const url = new URL("/api/chat/messages", window.location.origin);
+  url.searchParams.set("sessionId", sessionId);
+  url.searchParams.set("token", token);
+  url.searchParams.set("limit", String(options.limit));
+  if (options.beforeCreatedAt) {
+    url.searchParams.set("before", options.beforeCreatedAt);
+  }
+
+  const res = await fetch(url.toString(), {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!res.ok) {
+    throw new Error(`chat messages ${res.status}`);
+  }
+
+  const data = (await res.json()) as {
+    messages?: ChatHistoryMessage[];
+    hasMore?: boolean;
+  };
+
+  return {
+    messages: data.messages ?? [],
+    hasMore: Boolean(data.hasMore),
+  };
+}
+
+export function mapHistoryMessageToChatRow(m: ChatHistoryMessage): ChatRow {
+  let entry: LogEntry;
+  if (m.role === "user") {
+    entry = { agent: "YOU", msg: m.content, type: "user" };
+  } else if (m.role === "assistant") {
+    const t =
+      m.status === "error"
+        ? "error"
+        : m.status === "done"
+          ? "success"
+          : "normal";
+    entry = { agent: m.agent, msg: m.content, type: t };
+  } else {
+    entry = {
+      agent: m.agent || "SYSTEM",
+      msg: m.content,
+      type: "sys",
+    };
+  }
+
+  return {
+    id: m.id,
+    createdAt: m.createdAt,
+    entry,
+    persisted: true,
+  };
+}

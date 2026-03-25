@@ -1,7 +1,17 @@
 export interface LogEntry {
   agent: string;
   msg: string;
-  type: string;
+  /** user = 用户发送；其余为系统/Agent 输出 */
+  type: "sys" | "success" | "normal" | "error" | "user";
+}
+
+/** 终端虚拟列表一行（含服务端同步标记） */
+export interface ChatRow {
+  id: string;
+  createdAt: string;
+  entry: LogEntry;
+  /** 是否已落库，用于滚顶加载游标 */
+  persisted: boolean;
 }
 
 export interface Transaction {
@@ -19,6 +29,14 @@ export interface AuditDashboardViewProps {
   isLoading: boolean;
   /** AI 流式输出中，用于禁用输入并与主应用背景联动 */
   isAgentStreaming?: boolean;
-  logs: LogEntry[];
+  /** 当前在排队等待发送的用户消息条数 */
+  queuedMessageCount?: number;
+  chatRows: ChatRow[];
+  /** 是否还有更早消息可拉取 */
+  hasMoreChatHistory?: boolean;
+  /** 正在拉取更早消息 */
+  isLoadingOlderChat?: boolean;
+  /** 滚顶或下拉触发（由终端内部调用） */
+  onRequestOlderChat?: () => void;
   onSendMessage: (msg: string) => void;
 }
