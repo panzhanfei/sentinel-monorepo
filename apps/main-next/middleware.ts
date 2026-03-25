@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isProtectedRoute } from "@/lib/authRoutes";
 
 /** 微前端子应用直连主站 BFF（带 Cookie）时的 CORS 来源 */
 const BFF_CORS_ORIGINS = new Set([
@@ -52,13 +53,11 @@ export function middleware(request: NextRequest) {
   const session = request.cookies.get("token")?.value;
 
   // 1. 定义路由分类
-  const isProtectedRoute = ["/dashboard", "/monitor", "/audit"].some((route) =>
-    pathname.startsWith(route),
-  );
+  const onProtectedRoute = isProtectedRoute(pathname);
   const isAuthRoute = pathname === "/login";
 
   // 2. 核心逻辑 A：未登录访问受保护页面 -> 踢到登录页
-  if (!session && isProtectedRoute) {
+  if (!session && onProtectedRoute) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("from", pathname);
     return NextResponse.redirect(loginUrl);

@@ -14,7 +14,10 @@ import {
   mapHistoryMessageToChatRow,
 } from "@/api/chatHistory";
 import type { ChatRow } from "@/types/audit";
-import { emitAuditAiStreamToHost } from "@/utils/wujieHost";
+import {
+  emitAuditAiStreamToHost,
+  emitAuthSessionInvalidToHost,
+} from "@/utils/wujieHost";
 import { getBffBaseUrl } from "@/utils/bffOrigin";
 
 const WELCOME_ROWS: ChatRow[] = [
@@ -103,6 +106,9 @@ export function useAuditData() {
     });
 
     if (!res.ok) {
+      if (res.status === 401) {
+        emitAuthSessionInvalidToHost({ reason: "chat_session_init" });
+      }
       throw new Error(
         `Failed to init session: ${res.status} ${res.statusText}`,
       );
@@ -195,6 +201,7 @@ export function useAuditData() {
               },
             ]);
             if (data.content?.includes("Unauthorized")) {
+              emitAuthSessionInvalidToHost({ reason: "chat_stream" });
               messageQueueRef.current = [];
               setQueuedMessageCount(0);
               sessionId.current = undefined;
