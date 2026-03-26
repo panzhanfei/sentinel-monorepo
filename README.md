@@ -35,7 +35,7 @@
 ## 功能概览
 
 - **链上授权审计**：`@sentinel/security-sdk`（`viem`）批量拉取地址的 ERC20 `allowance`，作为 AI 分析输入。
-- **多阶段 AI 流水线**：扫描（Scanner）→ 复核（Auditor）→ 决策与 Markdown 报告（Decision）；当前主链路为 **DeepSeek** 流式输出；单阶段超时由心跳包装器监控并可自动重试。
+- **多阶段 AI 流水线**：扫描（Scanner）→ 复核（Auditor）→ 决策与 Markdown 报告（Decision）；三阶段均使用 **DeepSeek** 流式输出；单阶段超时由心跳包装器监控并可自动重试。
 - **异步任务与实时日志**：**Bull** 处理扫描任务；Worker 通过 **Redis Pub/Sub** 向频道 `job:{jobId}:log` 推送结构化日志。
 - **高危告警**：最终评级为 `HIGH` 时，可经 **Telegram Bot** 向用户配置的 `telegramChatId` 推送摘要（需 `TELEGRAM_BOT_TOKEN` 与用户 Chat ID）。
 - **微前端**：主应用 **Next.js** 内嵌 **Vite + React**（审计面板，默认 `http://localhost:3001`）与 **Vite + Vue**（监控面板，默认 `http://localhost:3002`）。子应用入口与 **BFF `/api` 的 CORS 白名单** 由 `apps/main-next/lib/subAppOrigins.ts` 统一维护（默认本地 3001/3002，可通过 `NEXT_PUBLIC_WUJIE_*` 与 `NEXT_PUBLIC_WUJIE_EXTRA_ORIGINS` 覆盖）。
@@ -80,7 +80,7 @@ Worker 逻辑位于 `apps/server/src/workers/scanner.ts`：
 4. **Decision（DeepSeek）**：生成最终 Markdown 报告，正文中需包含 `[RISK_LEVEL: HIGH/MEDIUM/LOW]`；当前实现用是否包含 `HIGH` 字符串粗判风险等级。
 5. **可选 Telegram**：风险为 `HIGH` 时向用户绑定 Chat ID 发告警。
 
-> **说明**：`apps/server/src/config/env.config.ts` 中同时校验 **Gemini**、**Groq** 等 API Key（并导出 `ai.config`），主扫描链路当前以 **DeepSeek** 为主；部署时需按 schema 提供有效变量，否则进程无法在 Zod 校验阶段启动。
+> **说明**：`apps/server/src/config/env.config.ts` 仅校验 **DeepSeek** 相关变量（`DEEPSEEK_API_KEY`、可选 `DEEPSEEK_API_URL`）及 Redis、JWT 等；部署时需按 schema 提供有效变量，否则进程无法在 Zod 校验阶段启动。
 
 ---
 
@@ -91,7 +91,7 @@ Worker 逻辑位于 `apps/server/src/workers/scanner.ts`：
 - **Node.js** ≥ 18
 - **pnpm** 9（仓库指定 `packageManager`）
 - **Docker**（可选，用于 PostgreSQL / Redis）
-- 各 AI 与链上能力所需的 **API Key / RPC**（见下文环境变量）
+- **DeepSeek API** 与链上能力所需的 **API Key / RPC**（见下文环境变量）
 
 ### 2. 安装依赖
 
@@ -151,8 +151,8 @@ Server 从 **`apps/server` 工作目录**加载 **`.env.development`**（或 `.e
 | `REDIS_URL`                           | Redis 连接 URL（与 Docker 中密码、端口一致）          |
 | `JWT_SECRET` / `REFRESH_TOKEN_SECRET` | Access / Refresh 各自密钥，至少 32 字符（生产务必替换默认值） |
 | `JWT_EXPIRES_IN` / `REFRESH_TOKEN_EXPIRES_IN` | 可选，默认 `15m` / `7d`，与宿主登录 Cookie `maxAge` 策略对齐 |
-| `DEEPSEEK_API_KEY`                    | DeepSeek API，扫描链路主用                            |
-| `GEMINI_API_KEY` / `GROQ_API_KEY`     | 当前 schema 要求非空；可按需填有效 Key 或后续收紧校验 |
+| `DEEPSEEK_API_KEY`                    | DeepSeek API，审计流水线必填                          |
+| `DEEPSEEK_API_URL`                    | 可选，默认 `https://api.deepseek.com/v1`            |
 | `CORS_ORIGIN`                         | 默认 `http://localhost:3000`                          |
 | `ANVIL_RPC_URL`                       | 默认 `http://127.0.0.1:8545`，与本地分叉节点对齐      |
 | `TELEGRAM_BOT_TOKEN`                  | 可选，启用 Telegram 告警                              |

@@ -1,7 +1,7 @@
 export type AgentName =
   | "Scanner (DeepSeek)"
-  | "Auditor (Gemini)"
-  | "Decision (Groq)"
+  | "Auditor (DeepSeek)"
+  | "Decision (DeepSeek)"
   | "Watchdog"
   | "Alerter (Bot)";
 

@@ -461,11 +461,14 @@ if (allowance > BigInt(0)) {
                 <code className="text-xs bg-slate-100 px-1 rounded">
                   [RISK_LEVEL: HIGH/MEDIUM/LOW]
                 </code>
-                ）。当前主链路使用 <strong>DeepSeek</strong> 流式输出；环境变量校验见{" "}
+                ）。三阶段（Scanner / Auditor / Decision）均通过 <strong>DeepSeek</strong>{" "}
+                流式输出；环境变量校验见{" "}
                 <code className="text-xs bg-slate-100 px-1 rounded">
                   env.config.ts
                 </code>
-                。
+                （仅需 <code className="text-xs bg-slate-100 px-1 rounded">DEEPSEEK_API_KEY</code>
+                ，可选 <code className="text-xs bg-slate-100 px-1 rounded">DEEPSEEK_API_URL</code>
+                ）。
               </p>
               <div className="grid gap-4">
                 {[
@@ -538,6 +541,10 @@ if (allowance > BigInt(0)) {
                       DEEPSEEK_API_KEY
                     </code>
                     、
+                    <code className="text-xs bg-white px-1 rounded">
+                      DEEPSEEK_API_URL
+                    </code>
+                    （可选）、
                     <code className="text-xs bg-white px-1 rounded">
                       CORS_ORIGIN
                     </code>
