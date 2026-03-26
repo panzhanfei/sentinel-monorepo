@@ -12,14 +12,18 @@
     "check-types": "turbo run check-types",
     "test": "turbo run test",
     "node:fork": "export $(grep -v '^#' .env.local | grep -v '^$' | xargs) && anvil --fork-url $QUICKNODE_RPC_URL --chain-id 31337",
-    "start:demo": "pnpm run node:fork & sleep 5 && pnpm run dev"
+    "start:demo": "pnpm run node:fork & sleep 5 && pnpm run dev",
+    "pm2:start": "pm2 start ecosystem.config.cjs",
+    "pm2:stop": "pm2 delete sentinel-api sentinel-next sentinel-sub-react sentinel-sub-vue",
+    "pm2:logs": "pm2 logs"
   },
   "devDependencies": {
     "eslint-config-prettier": "^10.1.1",
     "eslint-plugin-prettier": "^5.5.5",
     "prettier": "^3.7.4",
     "turbo": "^2.8.0",
-    "typescript": "5.9.2"
+    "typescript": "5.9.2",
+    "pm2": "^6.0.14"
   },
   "packageManager": "pnpm@9.0.0",
   "engines": {
