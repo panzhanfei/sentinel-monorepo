@@ -113,6 +113,16 @@ REDIS_PASSWORD=your_redis_secret
 REDIS_PORT=6379
 ```
 
+若 **`docker compose pull` 仍访问 `registry-1.docker.io` 失败**（超时、连接被拒绝等），可在同一 `.env` 中增加镜像前缀，经国内镜像站拉取（与官方镜像内容一致，仅注册表不同）：
+
+```bash
+POSTGRES_IMAGE=docker.m.daocloud.io/library/postgres:15-alpine
+REDIS_IMAGE=docker.m.daocloud.io/library/redis:7-alpine
+REDISINSIGHT_IMAGE=docker.m.daocloud.io/redislabs/redisinsight:latest
+```
+
+保存后执行 `docker compose pull` 再 `pnpm run infra:up`。若不需要 RedisInsight，可在 `docker-compose.yml` 中暂时注释 `redis-insight` 服务以少拉一个镜像。
+
 启动：
 
 ```bash

@@ -1,9 +1,8 @@
-version: '3.8'
-
+# 镜像名可通过根目录 .env 覆盖（见 README「国内拉取镜像」）
 services:
   # PostgreSQL: 核心业务数据库 (Prisma 强力搭档)
   postgres:
-    image: postgres:15-alpine
+    image: ${POSTGRES_IMAGE:-postgres:15-alpine}
     container_name: sentinel-postgres
     restart: always
     environment:
@@ -24,7 +23,7 @@ services:
 
   # Redis: Nonce 存储与 JWT 黑名单
   redis:
-    image: redis:7-alpine
+    image: ${REDIS_IMAGE:-redis:7-alpine}
     container_name: sentinel-redis
     restart: always
     command: redis-server --requirepass ${REDIS_PASSWORD} --appendonly yes
@@ -37,7 +36,7 @@ services:
 
   # RedisInsight: 可视化调试
   redis-insight:
-    image: redislabs/redisinsight:latest
+    image: ${REDISINSIGHT_IMAGE:-redislabs/redisinsight:latest}
     container_name: sentinel-redis-insight
     ports:
       - '8001:5540'
