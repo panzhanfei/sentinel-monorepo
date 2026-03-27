@@ -4,9 +4,5 @@
 
 	reverse_proxy {$CADDY_UPSTREAM_NEXT:host.docker.internal:3000} {
 		flush_interval -1
-		transport http {
-			read_timeout 0
-			write_timeout 0
-		}
 	}
 }
