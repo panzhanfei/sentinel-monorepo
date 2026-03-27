@@ -3,17 +3,30 @@ import { getDefaultConfig } from "connectkit";
 import { createConfig, http } from "wagmi";
 import { mainnet, polygon, arbitrum, sepolia, anvil } from "wagmi/chains";
 
+const fallbackRpcUrl =
+  process.env.NEXT_PUBLIC_ANVIL_RPC_URL ??
+  process.env.NEXT_PUBLIC_MAINNET_RPC_URL ??
+  "http://127.0.0.1:8545";
+
 export const config = createConfig(
   getDefaultConfig({
     // 你的 dApp 需要支持的链
     chains: [mainnet, polygon, arbitrum, sepolia, anvil],
     transports: {
-      [mainnet.id]: http(),
-      [polygon.id]: http(),
-      [arbitrum.id]: http(),
-      [anvil.id]: http(
-        process.env.NEXT_PUBLIC_ANVIL_RPC_URL ?? "http://127.0.0.1:8545",
+      // 统一使用项目配置的 RPC，避免命中 wagmi 默认公共节点（如 eth.merkle.io）。
+      [mainnet.id]: http(
+        process.env.NEXT_PUBLIC_MAINNET_RPC_URL ?? fallbackRpcUrl,
       ),
+      [polygon.id]: http(
+        process.env.NEXT_PUBLIC_POLYGON_RPC_URL ?? fallbackRpcUrl,
+      ),
+      [arbitrum.id]: http(
+        process.env.NEXT_PUBLIC_ARBITRUM_RPC_URL ?? fallbackRpcUrl,
+      ),
+      [sepolia.id]: http(
+        process.env.NEXT_PUBLIC_SEPOLIA_RPC_URL ?? fallbackRpcUrl,
+      ),
+      [anvil.id]: http(process.env.NEXT_PUBLIC_ANVIL_RPC_URL ?? fallbackRpcUrl),
     },
 
     // 必填项

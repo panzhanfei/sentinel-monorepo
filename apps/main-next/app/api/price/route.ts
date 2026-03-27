@@ -6,6 +6,7 @@ const proxyUrl = process.env.HTTPS_PROXY || process.env.HTTP_PROXY;
 const proxyAgent = proxyUrl ? new HttpsProxyAgent(proxyUrl) : undefined;
 const REQUEST_TIMEOUT_MS = 12_000;
 const isProduction = process.env.NODE_ENV === "production";
+const PRICE_API_MODE = (process.env.PRICE_API_MODE || "mock").toLowerCase();
 
 function parseNoProxyList(raw: string | undefined): string[] {
   if (!raw?.trim()) return [];
@@ -40,9 +41,41 @@ function asErrorMessage(error: unknown): string {
   return String(error);
 }
 
+function hashId(seed: string): number {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
+  }
+  return hash;
+}
+
+function buildMockPriceResponse(ids: string): Record<string, unknown> {
+  const idList = ids
+    .split(",")
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+
+  const data: Record<string, unknown> = {};
+  for (const id of idList.length ? idList : ["ethereum"]) {
+    const h = hashId(id);
+    const usdBase = 100 + (h % 4000);
+    const usd = Number((usdBase + ((h % 100) / 100)).toFixed(2));
+    const change = Number((((h % 2000) - 1000) / 100).toFixed(2)); // -10.00 ~ +9.99
+    data[id] = {
+      usd,
+      usd_24h_change: change,
+    };
+  }
+  return data;
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const ids = searchParams.get("ids") || "ethereum";
+
+  if (PRICE_API_MODE !== "real") {
+    return NextResponse.json(buildMockPriceResponse(ids));
+  }
 
   const apiUrl = `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true`;
   console.log("Fetching URL with node-fetch:", apiUrl);
