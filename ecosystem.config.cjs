@@ -1,6 +1,7 @@
 /**
  * 生产环境用 PM2 一次拉起 API + Next + 两个 Vite 子应用。
  * 使用前：根目录 pnpm run build，Docker 已起 Postgres/Redis，各 app 已配置 .env.production。
+ * 对外 HTTPS：另用 `pnpm run infra:up:edge` 起 Caddy，见根目录 Caddyfile、caddy.d/ 与 README。
  *
  * 启动：pnpm run pm2:start
  * 查看：pm2 logs

@@ -57,7 +57,18 @@
 | `packages/ui`                                           | 共享 UI（`@repo/ui`）。                                                                                                                     |
 | `packages/eslint-config` / `packages/typescript-config` | 共享 ESLint 与 TS 配置（`@repo/*`）。                                                                                                       |
 
-根目录 `docker-compose.yml` 提供 **PostgreSQL 15**、**Redis 7** 及 **RedisInsight**（默认映射 `8001:5540`）。
+根目录 `docker-compose.yml` 提供 **PostgreSQL 15**、**Redis 7**、**RedisInsight**（默认映射 `8001:5540`）、可选 **Foundry Anvil**（仅 **JSON-RPC**，默认 `127.0.0.1:8545`→容器 `8545`；宿主机端口可用 `ANVIL_RPC_HOST_PORT` 覆盖；当前 `foundry` 镜像无独立 Web UI 端口），以及可选 **Caddy**（`--profile edge`）用于 **HTTPS 反代**。
+
+### Caddy（HTTPS 与反代）
+
+面向生产的典型安排：**云主机上** `docker compose` 起数据库与 Caddy，业务进程用 **PM2**（`pnpm run build` 后 `pnpm run pm2:start`）跑在宿主机；Caddy 容器通过 `host.docker.internal` 反代到 **Next `3000`** 等端口。
+
+1. 根目录 `.env`（与 compose 共用）中设置 **`SENTINEL_DOMAIN`**，例如 `example.com`（不要带 `https://`）。DNS 已为 `@` / `www` 配置 **A 记录** 指向该主机。
+2. **（可选）** 微前端需独立子域时：为 `react.example.com`、`vue.example.com` 增加解析，将 `caddy.d/20-microfe.caddy.example` **复制为** `caddy.d/20-microfe.caddy`，并把各应用的 **`NEXT_PUBLIC_WUJIE_*`**、`CORS_ORIGIN` 等改为对应的 `https://…`。
+3. **（可选）** 在仓库根 **`Caddyfile`** 顶部增加全局块 `email your@example.com`，便于 Let’s Encrypt 续期通知。
+4. 启动带边缘反代：`pnpm run infra:up:edge`（或 `docker compose --profile edge up -d`）。仅起数据库、不起 Caddy 时仍用 `pnpm run infra:up`。
+
+国内若拉取 `caddy` 镜像较慢，可在 `.env` 中增加 `CADDY_IMAGE=docker.m.daocloud.io/library/caddy:2-alpine`（与其它镜像变量方式一致）。大陆网络下 Let's Encrypt HTTP-01 偶发失败时，可改为云厂商托管证书并在 `caddy.d` 中配置 `tls` 指令，详见 [Caddy 文档](https://caddyserver.com/docs/caddyfile/directives/tls)。
 
 ---
 
@@ -119,6 +130,10 @@ REDIS_PORT=6379
 POSTGRES_IMAGE=docker.m.daocloud.io/library/postgres:15-alpine
 REDIS_IMAGE=docker.m.daocloud.io/library/redis:7-alpine
 REDISINSIGHT_IMAGE=docker.m.daocloud.io/redislabs/redisinsight:latest
+CADDY_IMAGE=docker.m.daocloud.io/library/caddy:2-alpine
+
+# 使用 docker compose --profile edge 时必填（apex 域名，无协议）
+# SENTINEL_DOMAIN=example.com
 ```
 
 保存后执行 `docker compose pull` 再 `pnpm run infra:up`。若不需要 RedisInsight，可在 `docker-compose.yml` 中暂时注释 `redis-insight` 服务以少拉一个镜像。
@@ -211,7 +226,8 @@ pnpm run start:demo
 | `pnpm run check-types`                            | TypeScript 检查                   |
 | `pnpm run format`                                 | Prettier 格式化 `*.ts,*.tsx,*.md` |
 | `pnpm run test`                                   | Turbo 并行执行各包 `test`（Vitest，含 `auth`、`sub-react`、`sub-vue`、`main-next` 等） |
-| `pnpm run infra:up` / `infra:down` / `infra:logs` | Docker 基础设施                   |
+| `pnpm run infra:up` / `infra:down` / `infra:logs` | Docker 基础设施（DB、Redis、Anvil 等） |
+| `pnpm run infra:up:edge`                          | 在上述基础上启动 **Caddy**（需配置 `SENTINEL_DOMAIN`） |
 
 ---
 

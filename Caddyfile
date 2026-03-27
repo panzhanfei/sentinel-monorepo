@@ -1,0 +1,11 @@
+# Sentinel — Caddy 自动 HTTPS，反代宿主机上的 Node 服务（PM2 / 手动启动）。
+# 使用：docker compose --profile edge up -d（见根目录 README）
+#
+# 如需 Let’s Encrypt 续期通知邮箱，在本文件顶部增加全局块，例如：
+# {
+#     email your@example.com
+# }
+#
+# 域名由 caddy.d 分片中使用环境变量 SENTINEL_DOMAIN（compose 注入）。
+
+import caddy.d/*.caddy

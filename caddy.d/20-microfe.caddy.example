@@ -1,0 +1,14 @@
+# 微前端子应用：复制为同目录下 20-microfe.caddy 并确保 DNS 已配置：
+#   react.<SENTINEL_DOMAIN>  → 服务器公网 IP
+#   vue.<SENTINEL_DOMAIN>   → 同上
+# 同时设置 NEXT_PUBLIC_WUJIE_REACT_URL / NEXT_PUBLIC_WUJIE_VUE_URL 与之一致。
+
+react.{$SENTINEL_DOMAIN} {
+	encode gzip zstd
+	reverse_proxy {$CADDY_UPSTREAM_REACT:host.docker.internal:3001}
+}
+
+vue.{$SENTINEL_DOMAIN} {
+	encode gzip zstd
+	reverse_proxy {$CADDY_UPSTREAM_VUE:host.docker.internal:3002}
+}

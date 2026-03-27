@@ -1,5 +1,25 @@
 # 镜像名可通过根目录 .env 覆盖（见 README「国内拉取镜像」）
 services:
+  # Caddy：对外 80/443，反代宿主机 PM2（Next 3000 等）。默认不启动，使用 --profile edge
+  caddy:
+    image: ${CADDY_IMAGE:-caddy:2-alpine}
+    container_name: sentinel-caddy
+    restart: unless-stopped
+    profiles:
+      - edge
+    ports:
+      - '80:80'
+      - '443:443'
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    environment:
+      SENTINEL_DOMAIN: ${SENTINEL_DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./caddy.d:/etc/caddy/caddy.d:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
   # PostgreSQL: 核心业务数据库 (Prisma 强力搭档)
   postgres:
     image: ${POSTGRES_IMAGE:-postgres:15-alpine}
@@ -43,13 +63,15 @@ services:
     networks:
       - sentinel-network
 
-  # Anvil: 本地测试链
+  # Anvil: 本地测试链（仅绑定本机回环，避免公网暴露预置私钥）
+  # 宿主机端口冲突时可在 .env 设置 ANVIL_RPC_HOST_PORT / ANVIL_WEB_HOST_PORT
   anvil:
     image: ghcr.io/foundry-rs/foundry:latest
-    command: anvil --host 0.0.0.0 --port 8545 --web-port 8080
+    # 镜像 ENTRYPOINT 为 sh -c，Compose 数组 command 不能正确传参；需直接 exec anvil
+    # 部分 foundry 版本已移除 --web-port；仅映射 RPC 即可，调试可用 cast rpc / 钱包连 8545
+    entrypoint: ['anvil', '--host', '0.0.0.0', '--port', '8545']
     ports:
-      - '8545:8545' # RPC 端口
-      - '8080:8080' # Web 界面端口
+      - '127.0.0.1:${ANVIL_RPC_HOST_PORT:-8545}:8545'
 
 networks:
   sentinel-network:
@@ -58,3 +80,5 @@ networks:
 volumes:
   sentinel_pg_data:
   sentinel_redis_data:
+  caddy_data:
+  caddy_config:

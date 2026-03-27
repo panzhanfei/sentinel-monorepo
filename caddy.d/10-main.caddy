@@ -1,0 +1,12 @@
+# Next.js 宿主（默认 PM2 sentinel-next 监听 3000）
+{$SENTINEL_DOMAIN}, www.{$SENTINEL_DOMAIN} {
+	encode gzip zstd
+
+	reverse_proxy {$CADDY_UPSTREAM_NEXT:host.docker.internal:3000} {
+		flush_interval -1
+		transport http {
+			read_timeout 0
+			write_timeout 0
+		}
+	}
+}
