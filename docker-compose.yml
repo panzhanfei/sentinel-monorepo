@@ -64,11 +64,9 @@ services:
       - sentinel-network
 
   # Anvil: 本地测试链（仅绑定本机回环，避免公网暴露预置私钥）
-  # 宿主机端口冲突时可在 .env 设置 ANVIL_RPC_HOST_PORT / ANVIL_WEB_HOST_PORT
+  # 宿主机端口冲突时可在 .env 设置
   anvil:
     image: ghcr.io/foundry-rs/foundry:latest
-    # 镜像 ENTRYPOINT 为 sh -c，Compose 数组 command 不能正确传参；需直接 exec anvil
-    # 部分 foundry 版本已移除 --web-port；仅映射 RPC 即可，调试可用 cast rpc / 钱包连 8545
     entrypoint: ['anvil', '--host', '0.0.0.0', '--port', '8545']
     ports:
       - '127.0.0.1:${ANVIL_RPC_HOST_PORT:-8545}:8545'

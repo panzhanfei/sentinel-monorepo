@@ -2,7 +2,13 @@
 {$SENTINEL_DOMAIN}, www.{$SENTINEL_DOMAIN} {
 	encode gzip zstd
 
-	reverse_proxy {$CADDY_UPSTREAM_NEXT:host.docker.internal:3000} {
-		flush_interval -1
+	handle /anvil-rpc/* {
+		reverse_proxy {$CADDY_UPSTREAM_ANVIL:host.docker.internal:8545}
+	}
+
+	handle {
+		reverse_proxy {$CADDY_UPSTREAM_NEXT:host.docker.internal:3000} {
+			flush_interval -1
+		}
 	}
 }
