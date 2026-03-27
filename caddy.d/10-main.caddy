@@ -2,8 +2,10 @@
 {$SENTINEL_DOMAIN}, www.{$SENTINEL_DOMAIN} {
 	encode gzip zstd
 
-	handle /anvil-rpc/* {
-		reverse_proxy {$CADDY_UPSTREAM_ANVIL:host.docker.internal:8545}
+	@anvil path /anvil-rpc /anvil-rpc/*
+	handle @anvil {
+		uri strip_prefix /anvil-rpc
+		reverse_proxy {$CADDY_UPSTREAM_ANVIL:anvil:8545}
 	}
 
 	handle {
