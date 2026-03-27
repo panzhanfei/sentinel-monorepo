@@ -43,6 +43,14 @@ services:
     networks:
       - sentinel-network
 
+  # Anvil: 本地测试链
+  anvil:
+    image: ghcr.io/foundry-rs/foundry:latest
+    command: anvil --host 0.0.0.0 --port 8545 --web-port 8080
+    ports:
+      - '8545:8545' # RPC 端口
+      - '8080:8080' # Web 界面端口
+
 networks:
   sentinel-network:
     driver: bridge
