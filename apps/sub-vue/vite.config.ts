@@ -7,6 +7,11 @@ import { resolve } from "path";
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [vue(), vueJsx(), tailwindcss()],
+  preview: {
+    host: "0.0.0.0",
+    port: 3002,
+    allowedHosts: ["vue.pzfnqbn.top"],
+  },
   test: {
     environment: "happy-dom",
     include: ["src/**/*.test.ts"],

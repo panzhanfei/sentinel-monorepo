@@ -6,6 +6,11 @@ import { resolve } from "path";
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  preview: {
+    host: "0.0.0.0",
+    port: 3001,
+    allowedHosts: ["react.pzfnqbn.top"],
+  },
   server: {
     port: 3001, // 设置为你想要的端口，例如 3000
     cors: true,
