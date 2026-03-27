@@ -5,8 +5,13 @@ import { SseMessage } from "@/app/src/types/alert"; // 导入新类型
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-export async function GET(): Promise<Response> {
+export async function GET(request: Request): Promise<Response> {
   const encoder = new TextEncoder();
+  const { searchParams } = new URL(request.url);
+  const address = searchParams.get("address")?.trim().toLowerCase();
+  if (!address) {
+    return new Response("Missing address query param", { status: 400 });
+  }
 
   const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL;
   if (!rpcUrl) {
@@ -55,6 +60,9 @@ export async function GET(): Promise<Response> {
           logs.forEach((log) => {
             // 确保必要字段存在
             if (!log.args.from || !log.args.to || !log.blockNumber) return;
+            const from = log.args.from.toLowerCase();
+            const to = log.args.to.toLowerCase();
+            if (from !== address && to !== address) return;
             send({
               type: "transfer",
               txHash: log.transactionHash,
@@ -76,6 +84,7 @@ export async function GET(): Promise<Response> {
           logs.forEach((log) => {
             if (!log.args.owner || !log.args.spender || !log.blockNumber)
               return;
+            if (log.args.owner.toLowerCase() !== address) return;
             send({
               type: "approval",
               txHash: log.transactionHash,

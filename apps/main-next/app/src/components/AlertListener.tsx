@@ -4,6 +4,7 @@ import React, { useEffect } from "react";
 import { Canvas } from "@react-three/fiber";
 import { Toaster, toast } from "react-hot-toast";
 import { formatEther } from "viem";
+import { useAccount } from "wagmi";
 import { RiskSphere } from "./RiskSphere";
 import { useRisk } from "@/app/context";
 
@@ -34,7 +35,7 @@ function isHighRiskApproval(valueWei: bigint): boolean {
 
 function weiHint(wei: bigint): string {
   try {
-    return `${formatEther(wei)} ETH（按 18 位小数换算，非 ETH 代币仅供参考）`;
+    return `${formatEther(wei)}（按 18 位小数估算，具体代币请以合约 decimals 为准）`;
   } catch {
     return `${wei.toString()} wei`;
   }
@@ -44,6 +45,7 @@ const AUDIT_AI_STREAM_EVENT = "audit-ai-stream";
 
 export const AlertProvider: React.FC = () => {
   const { riskLevel, setRiskLevel, triggerHighRisk } = useRisk();
+  const { address } = useAccount();
 
   // 审计子应用 AI 流式问答时，与深度扫描一致将背景粒子切到 medium（黄/思考态）
   useEffect(() => {
@@ -75,7 +77,10 @@ export const AlertProvider: React.FC = () => {
   }, [setRiskLevel]);
 
   useEffect(() => {
-    const eventSource = new EventSource("/api/events/watch");
+    if (!address) return;
+    const eventSource = new EventSource(
+      `/api/events/watch?address=${encodeURIComponent(address)}`,
+    );
 
     // 封装一个炫酷的自定义弹窗函数
     const notify = (
@@ -159,7 +164,7 @@ export const AlertProvider: React.FC = () => {
     });
 
     return () => eventSource.close();
-  }, [setRiskLevel, triggerHighRisk]);
+  }, [address, setRiskLevel, triggerHighRisk]);
 
   return (
     <>

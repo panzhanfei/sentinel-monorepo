@@ -66,7 +66,7 @@ export function AssetList({ assets }: Props) {
                 <AnimatedNumber value={token.val} />
               </div>
               <div className="text-[10px] text-slate-500 font-mono font-bold tracking-widest opacity-70">
-                ${token.price} <span className="text-slate-700 ml-1">USD</span>
+                {token.price} <span className="text-slate-700 ml-1">USD</span>
               </div>
             </div>
           </div>
