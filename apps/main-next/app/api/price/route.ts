@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import fetch from "node-fetch"; // 使用 node-fetch 而不是内置 fetch
 import { HttpsProxyAgent } from "https-proxy-agent";
 
-const proxyUrl = process.env.HTTPS_PROXY || "http://127.0.0.1:7897";
-const proxyAgent = new HttpsProxyAgent(proxyUrl);
+const proxyUrl = process.env.HTTPS_PROXY;
+const proxyAgent = proxyUrl ? new HttpsProxyAgent(proxyUrl) : undefined;
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
