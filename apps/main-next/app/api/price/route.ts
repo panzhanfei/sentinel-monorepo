@@ -2,8 +2,43 @@ import { NextResponse } from "next/server";
 import fetch from "node-fetch"; // 使用 node-fetch 而不是内置 fetch
 import { HttpsProxyAgent } from "https-proxy-agent";
 
-const proxyUrl = process.env.HTTPS_PROXY;
+const proxyUrl = process.env.HTTPS_PROXY || process.env.HTTP_PROXY;
 const proxyAgent = proxyUrl ? new HttpsProxyAgent(proxyUrl) : undefined;
+const REQUEST_TIMEOUT_MS = 12_000;
+const isProduction = process.env.NODE_ENV === "production";
+
+function parseNoProxyList(raw: string | undefined): string[] {
+  if (!raw?.trim()) return [];
+  return raw
+    .split(",")
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+function shouldBypassProxy(hostname: string, noProxyRules: string[]): boolean {
+  const host = hostname.toLowerCase();
+  for (const rule of noProxyRules) {
+    if (rule === "*") return true;
+    if (rule.startsWith(".")) {
+      // .example.com 匹配 foo.example.com
+      if (host.endsWith(rule)) return true;
+      continue;
+    }
+    if (rule.startsWith("*.")) {
+      // *.example.com 匹配 foo.example.com
+      const suffix = rule.slice(1);
+      if (host.endsWith(suffix)) return true;
+      continue;
+    }
+    if (rule === host) return true;
+  }
+  return false;
+}
+
+function asErrorMessage(error: unknown): string {
+  if (error instanceof Error && error.message) return error.message;
+  return String(error);
+}
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -13,10 +48,46 @@ export async function GET(request: Request) {
   console.log("Fetching URL with node-fetch:", apiUrl);
 
   try {
-    // 使用 node-fetch 并传入 agent
-    const response = await fetch(apiUrl, {
-      agent: proxyAgent,
-    });
+    // 同时兼容本地/线上：根据环境与 NO_PROXY 决定优先级，并自动回退。
+    const hostname = new URL(apiUrl).hostname;
+    const noProxyRules = parseNoProxyList(
+      process.env.NO_PROXY || process.env.no_proxy,
+    );
+    const bypassProxy = shouldBypassProxy(hostname, noProxyRules);
+    const useProxy = Boolean(proxyAgent) && !bypassProxy;
+    const preferProxyFirst = isProduction && useProxy;
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+    let response: Awaited<ReturnType<typeof fetch>> | undefined;
+    let lastError: unknown;
+
+    const attempts: Array<"proxy" | "direct"> = preferProxyFirst
+      ? ["proxy", "direct"]
+      : ["direct", "proxy"];
+
+    try {
+      for (const mode of attempts) {
+        if (mode === "proxy" && !useProxy) continue;
+        try {
+          response = await fetch(apiUrl, {
+            agent: mode === "proxy" ? proxyAgent : undefined,
+            signal: controller.signal,
+          });
+          break;
+        } catch (err) {
+          lastError = err;
+          console.warn(`Price API request failed via ${mode}, trying fallback:`, err);
+        }
+      }
+    } finally {
+      clearTimeout(timeout);
+    }
+
+    if (!response) {
+      throw lastError || new Error("Unable to fetch CoinGecko");
+    }
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -37,7 +108,7 @@ export async function GET(request: Request) {
   } catch (error) {
     console.error("价格 API 内部错误:", error);
     return NextResponse.json(
-      { error: "获取价格失败", message: String(error), ids },
+      { error: "获取价格失败", message: asErrorMessage(error), ids },
       { status: 500 },
     );
   }
