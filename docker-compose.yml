@@ -73,9 +73,9 @@ services:
     command:
       - |
         if [ -n "$${ANVIL_FORK_URL}" ]; then
-          exec anvil --host 0.0.0.0 --port 8545 --fork-url "$${ANVIL_FORK_URL}";
+          exec anvil --host 0.0.0.0 --port 8545 --chain-id 31337 --fork-url "$${ANVIL_FORK_URL}";
         else
-          exec anvil --host 0.0.0.0 --port 8545;
+          exec anvil --host 0.0.0.0 --port 8545 --chain-id 31337;
         fi
     environment:
       ANVIL_FORK_URL: ${ANVIL_FORK_URL:-}

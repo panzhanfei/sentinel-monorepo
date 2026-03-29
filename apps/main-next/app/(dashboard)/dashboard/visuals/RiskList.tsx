@@ -1,14 +1,31 @@
 "use client";
+import { useState } from "react";
 import { AllowanceAudit } from "../hooks/types";
 import { Address } from "viem";
 import { ShieldX, Target } from "lucide-react";
 
 interface Props {
   allowances: AllowanceAudit[];
-  onRevoke: (token: Address, spender: Address) => void;
+  onRevoke: (token: Address, spender: Address) => Promise<unknown> | void;
 }
 
 export function RiskList({ allowances, onRevoke }: Props) {
+  const [pendingRevokeKey, setPendingRevokeKey] = useState<string | null>(null);
+
+  const getRevokeKey = (token: Address, spender: Address) =>
+    `${token.toLowerCase()}-${spender.toLowerCase()}`;
+
+  const handleClick = async (token: Address, spender: Address) => {
+    const key = getRevokeKey(token, spender);
+    if (pendingRevokeKey === key) return;
+    setPendingRevokeKey(key);
+    try {
+      await Promise.resolve(onRevoke(token, spender));
+    } finally {
+      setPendingRevokeKey((current) => (current === key ? null : current));
+    }
+  };
+
   if (allowances.length === 0) {
     return (
       <div className="py-12 text-center bg-emerald-500/5 rounded-3xl border border-dashed border-emerald-500/20 animate-in zoom-in duration-500">
@@ -56,14 +73,27 @@ export function RiskList({ allowances, onRevoke }: Props) {
             </div>
             <button
               onClick={() =>
-                onRevoke(
+                handleClick(
                   item.tokenAddress as Address,
                   item.spenderAddress as Address,
                 )
               }
-              className="text-[10px] font-black text-rose-500 bg-rose-500/10 px-3 py-1 rounded-lg border border-rose-500/20 hover:bg-rose-500 hover:text-white transition-all cursor-pointer tracking-widest uppercase"
+              disabled={
+                pendingRevokeKey ===
+                getRevokeKey(
+                  item.tokenAddress as Address,
+                  item.spenderAddress as Address,
+                )
+              }
+              className="text-[10px] font-black text-rose-500 bg-rose-500/10 px-3 py-1 rounded-lg border border-rose-500/20 hover:bg-rose-500 hover:text-white transition-all cursor-pointer tracking-widest uppercase disabled:cursor-not-allowed disabled:opacity-60"
             >
-              REVOKE_ACCESS
+              {pendingRevokeKey ===
+              getRevokeKey(
+                item.tokenAddress as Address,
+                item.spenderAddress as Address,
+              )
+                ? "REVOKING..."
+                : "REVOKE_ACCESS"}
             </button>
           </div>
         </div>
