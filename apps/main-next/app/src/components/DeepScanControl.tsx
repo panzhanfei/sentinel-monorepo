@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { authFetch } from "@/app/src/utils/authFetch";
 
 export default function DeepScanControl({ address }: { address: string }) {
   const [loading, setLoading] = useState(false);
@@ -8,7 +9,7 @@ export default function DeepScanControl({ address }: { address: string }) {
 
   // 轮询函数：每秒查一次进度
   const checkStatus = async () => {
-    const res = await fetch(`/api/scan/status?address=${address}`);
+    const res = await authFetch(`/api/scan/status?address=${address}`);
     const data = await res.json();
 
     setProgress(data.progress);
@@ -24,8 +25,9 @@ export default function DeepScanControl({ address }: { address: string }) {
   const startScan = async () => {
     setLoading(true);
     // 1. 触发后端扫描
-    await fetch("/api/scan/run", {
+    await authFetch("/api/scan/run", {
       method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ address }),
     });
 

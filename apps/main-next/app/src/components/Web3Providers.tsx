@@ -7,6 +7,7 @@ import { WagmiProvider } from "wagmi";
 import { config } from "@/app/src/config";
 import { ReactNode, useState } from "react";
 import { AuthGuard } from "./AuthGuard";
+import { SessionRefreshScheduler } from "./SessionRefreshScheduler";
 import "@rainbow-me/rainbowkit/styles.css";
 
 export const Web3Providers = ({ children }: { children: ReactNode }) => {
@@ -24,6 +25,7 @@ export const Web3Providers = ({ children }: { children: ReactNode }) => {
           modalSize="compact" // 紧凑型弹窗更有高级感
         >
           <AuthGuard />
+          <SessionRefreshScheduler />
           {children}
         </RainbowKitProvider>
       </QueryClientProvider>

@@ -64,10 +64,21 @@ services:
       - sentinel-network
 
   # Anvil: 本地测试链（仅绑定本机回环，避免公网暴露预置私钥）
-  # 宿主机端口冲突时可在 .env 设置
+  # 宿主机端口冲突时可在 .env 设置 ANVIL_RPC_HOST_PORT
+  # 根目录 .env 设置 ANVIL_FORK_URL=主网 HTTPS RPC 可 fork，便于与 security-sdk 主网代币地址 / multicall 对齐
   anvil:
     image: ghcr.io/foundry-rs/foundry:latest
-    entrypoint: ['anvil', '--host', '0.0.0.0', '--port', '8545']
+    entrypoint: ['/bin/sh', '-c']
+    # $${VAR}：Compose 将 $$ 变为 $，供容器内 shell 展开 ${ANVIL_FORK_URL}
+    command:
+      - |
+        if [ -n "$${ANVIL_FORK_URL}" ]; then
+          exec anvil --host 0.0.0.0 --port 8545 --fork-url "$${ANVIL_FORK_URL}";
+        else
+          exec anvil --host 0.0.0.0 --port 8545;
+        fi
+    environment:
+      ANVIL_FORK_URL: ${ANVIL_FORK_URL:-}
     ports:
       - '127.0.0.1:${ANVIL_RPC_HOST_PORT:-8545}:8545'
 

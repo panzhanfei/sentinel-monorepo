@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { type Address } from "viem";
 import { useRisk } from "@/app/context";
+import { authFetch } from "@/app/src/utils/authFetch";
 import type { ScanStatus, ScanResultData, AgentMessage } from "./types";
 
 export function useScan({
@@ -38,7 +39,7 @@ export function useScan({
   const checkJobStatus = useCallback(async () => {
     if (!currentJobId.current) return;
     try {
-      const response = await fetch(`/api/scan/${currentJobId.current}`, {
+      const response = await authFetch(`/api/scan/${currentJobId.current}`, {
         cache: "no-store",
       });
       if (!response.ok) throw new Error("Fetch status failed");
@@ -89,7 +90,7 @@ export function useScan({
 
     const init = async () => {
       try {
-        const res = await fetch(`/api/scan/latest?address=${address}`);
+        const res = await authFetch(`/api/scan/latest?address=${address}`);
         if (res.ok) {
           const envelope = (await res.json()) as {
             success?: boolean;
@@ -207,7 +208,7 @@ export function useScan({
     currentJobId.current = null;
 
     try {
-      const startRes = await fetch("/api/scan", {
+      const startRes = await authFetch("/api/scan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ address }),

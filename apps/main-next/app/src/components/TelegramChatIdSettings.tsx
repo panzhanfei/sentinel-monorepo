@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Send } from "lucide-react";
+import { authFetch } from "@/app/src/utils/authFetch";
 
 export function TelegramChatIdSettings() {
   const [panelOpen, setPanelOpen] = useState(false);
@@ -17,7 +18,7 @@ export function TelegramChatIdSettings() {
     setLoading(true);
     (async () => {
       try {
-        const res = await fetch("/api/user/telegram-chat-id", {
+        const res = await authFetch("/api/user/telegram-chat-id", {
           credentials: "include",
           cache: "no-store",
         });
@@ -62,7 +63,7 @@ export function TelegramChatIdSettings() {
     setError(null);
     try {
       const trimmed = value.trim();
-      const res = await fetch("/api/user/telegram-chat-id", {
+      const res = await authFetch("/api/user/telegram-chat-id", {
         method: "PATCH",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
