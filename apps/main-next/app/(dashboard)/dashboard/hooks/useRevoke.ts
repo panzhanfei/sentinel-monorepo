@@ -2,7 +2,11 @@ import { useWriteContract } from "wagmi";
 import { erc20Abi, type Address } from "viem";
 import { publicClient } from "@sentinel/security-sdk";
 
-export function useRevoke({ onSuccess }: { onSuccess?: () => void }) {
+export function useRevoke({
+  onSuccess,
+}: {
+  onSuccess?: (tokenAddress: Address, spenderAddress: Address) => void | Promise<void>;
+}) {
   const { writeContractAsync } = useWriteContract();
 
   const handleRevoke = async (
@@ -18,7 +22,7 @@ export function useRevoke({ onSuccess }: { onSuccess?: () => void }) {
       });
       const receipt = await publicClient.waitForTransactionReceipt({ hash });
       if (receipt.status === "success") {
-        onSuccess?.();
+        await onSuccess?.(tokenAddress, spenderAddress);
       }
       return hash;
     } catch (error) {

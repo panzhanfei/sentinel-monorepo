@@ -290,8 +290,31 @@ export function useScan({
     };
   }, [stopPolling, closeSSE]);
 
-  const suspiciousCount = scanResult?.details?.riskCount || 0;
+  const suspiciousCount =
+    scanResult?.allowances?.length ?? scanResult?.details?.riskCount ?? 0;
   const scanLoading = scanStatus === "PENDING" || scanStatus === "RUNNING";
+
+  const removeAllowanceLocally = useCallback(
+    (tokenAddress: Address, spenderAddress: Address) => {
+      const token = tokenAddress.toLowerCase();
+      const spender = spenderAddress.toLowerCase();
+
+      setScanResult((prev) => {
+        if (!prev?.allowances?.length) return prev;
+        return {
+          ...prev,
+          allowances: prev.allowances.filter(
+            (item) =>
+              !(
+                item.tokenAddress.toLowerCase() === token &&
+                item.spenderAddress.toLowerCase() === spender
+              ),
+          ),
+        };
+      });
+    },
+    [],
+  );
 
   return {
     scanProgress,
@@ -301,5 +324,6 @@ export function useScan({
     suspiciousCount,
     scanLoading,
     handleRunDeepScan,
+    removeAllowanceLocally,
   };
 }

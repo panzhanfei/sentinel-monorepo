@@ -6,6 +6,7 @@ import { useMarketData } from "./useMarketData";
 import { usePortfolio } from "./usePortfolio";
 import { useScan } from "./useScan";
 import { useRevoke } from "./useRevoke";
+import { authFetch } from "@/app/src/utils/authFetch";
 
 export type { Address };
 export type {
@@ -49,13 +50,34 @@ export function useDashboardData() {
     suspiciousCount,
     scanLoading,
     handleRunDeepScan,
+    removeAllowanceLocally,
   } = useScan({
     enabled: isAccountReady,
     address: userAddress,
   });
 
   // 撤销授权
-  const { handleRevoke } = useRevoke({ onSuccess: handleRunDeepScan });
+  const { handleRevoke } = useRevoke({
+    onSuccess: async (tokenAddress, spenderAddress) => {
+      if (!userAddress) return;
+
+      const res = await authFetch("/api/scan/revoked", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          address: userAddress,
+          tokenAddress,
+          spenderAddress,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to persist revoked allowance");
+      }
+
+      removeAllowanceLocally(tokenAddress, spenderAddress);
+    },
+  });
 
   return {
     walletStatus,

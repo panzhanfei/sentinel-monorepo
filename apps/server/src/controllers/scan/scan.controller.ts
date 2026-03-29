@@ -149,3 +149,29 @@ export const handleAuditStream = async (req: Request, res: Response) => {
     }
   }
 };
+
+/**
+ * 记录用户已撤销的授权项，用于过滤 latest 快照中的旧风险数据。
+ */
+export const markRevokedAllowance = async (req: Request, res: Response) => {
+  const { address, tokenAddress, spenderAddress } = req.body as {
+    address?: string;
+    tokenAddress?: string;
+    spenderAddress?: string;
+  };
+
+  if (!address || !tokenAddress || !spenderAddress) {
+    throw new HttpError(
+      400,
+      'Address, tokenAddress and spenderAddress are required',
+      'INVALID_REVOKED_ALLOWANCE_INPUT'
+    );
+  }
+
+  if (!req.user || address.toLowerCase() !== req.user.sub.toLowerCase()) {
+    throw new HttpError(403, 'Forbidden: address mismatch', 'ADDRESS_MISMATCH');
+  }
+
+  await JobService.markAllowanceRevoked(address, tokenAddress, spenderAddress);
+  sendSuccess(res, { ok: true });
+};

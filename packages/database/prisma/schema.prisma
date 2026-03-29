@@ -14,6 +14,7 @@ model User {
   telegramChatId   String?   // Telegram 预警接收 Chat ID
   createdAt        DateTime  @default(now())
   jobs             Job[]
+  revokedAllowances RevokedAllowance[]
 }
 
 // 任务模型（核心：记录扫描状态与进度）
@@ -54,5 +55,17 @@ model ChatMessage {
   createdAt DateTime @default(now())
 
   @@index([threadId, createdAt])
+  @@index([userId, createdAt])
+}
+
+model RevokedAllowance {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenAddress   String
+  spenderAddress String
+  createdAt      DateTime @default(now())
+
+  @@unique([userId, tokenAddress, spenderAddress])
   @@index([userId, createdAt])
 }
