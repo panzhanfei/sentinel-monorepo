@@ -116,6 +116,10 @@ const envSchema = z.object({
 
   // === Agent 4: Telegram 预警配置 (脚本/逻辑) ===
   TELEGRAM_BOT_TOKEN: z.string().optional(), // 机器人 Token；接收方 Chat ID 存于 User.telegramChatId
+  /** 不传则使用 alert.config 内默认 Worker 基址；可改为 https://api.telegram.org 做直连对比 */
+  TELEGRAM_API_BASE: z.string().url().optional(),
+  /** 仅作用于 Telegram 请求；国内/受限机房出口需翻墙时设为可访问的 HTTP 代理，如 http://127.0.0.1:7890 */
+  TELEGRAM_HTTPS_PROXY: z.string().url().optional(),
   REDIS_URL: z.string(), // Redis 连接 URL
 
   // === Agent 5: Watchdog (看门狗配置) ===
