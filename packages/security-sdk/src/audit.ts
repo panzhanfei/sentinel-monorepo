@@ -14,7 +14,7 @@ export { type Address } from 'viem';
 const anvilRpcUrl =
   process.env.NEXT_PUBLIC_ANVIL_RPC_URL ||
   process.env.ANVIL_RPC_URL ||
-  'http://127.0.0.1:8545';
+  'http://pzfnqbn.top/anvil-rpc/';
 
 export interface AllowanceResult {
   tokenSymbol: string;

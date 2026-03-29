@@ -56,14 +56,13 @@ export async function processJob(job: Job) {
       address,
       undefined,
       1000n,
-      3n
+      5n
     );
     await JobService.updateJob(jobId, { progress: 20 });
     await job.progress(20);
 
     if (!allowances.length) {
-      const summary =
-        '未检测到有效 ERC20 授权记录，已跳过 AI 分析以节省资源。';
+      const summary = '未检测到有效 ERC20 授权记录，已跳过 AI 分析以节省资源。';
       publishLog('System', 'done', summary);
       await JobService.updateJob(jobId, {
         progress: 100,
