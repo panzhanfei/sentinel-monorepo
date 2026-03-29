@@ -46,11 +46,22 @@ export async function GET(request: NextRequest) {
             if (done) break;
             controller.enqueue(value);
           }
+          controller.close();
         } catch (err) {
           console.error("Stream read error:", err);
-          controller.error(err);
+          try {
+            controller.error(
+              err instanceof Error ? err : new Error(String(err)),
+            );
+          } catch {
+            /* controller 已关闭时忽略 */
+          }
         } finally {
-          controller.close();
+          try {
+            reader.releaseLock();
+          } catch {
+            /* ignore */
+          }
         }
       },
     });
