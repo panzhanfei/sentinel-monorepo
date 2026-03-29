@@ -131,6 +131,7 @@ export async function processJob(job: Job) {
       const telegramChatId =
         (jobWithUser?.user as { telegramChatId?: string | null } | undefined)
           ?.telegramChatId ?? null;
+      console.log('😀', telegramChatId);
       await sendTelegramAlert(
         `检测到高危地址: ${address}\n\n${finalReport}`,
         telegramChatId

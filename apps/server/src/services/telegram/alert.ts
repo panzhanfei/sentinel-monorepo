@@ -10,9 +10,7 @@ axiosRetry(telegramClient, {
   retries: 2,
   retryDelay: axiosRetry.exponentialDelay,
   retryCondition: (error) =>
-    axios.isAxiosError(error) &&
-    !error.response &&
-    !!error.request,
+    axios.isAxiosError(error) && !error.response && !!error.request,
 });
 
 function logTelegramFailure(err: unknown): void {
@@ -34,7 +32,8 @@ export async function sendTelegramAlert(
 ): Promise<void> {
   if (!alertConfig.telegramBotToken || !telegramChatId) return;
   const url = `https://api.telegram.org/bot${alertConfig.telegramBotToken}/sendMessage`;
-  console.log('😄', message);
+  console.log('😄 sendTelegramAlert', message);
+  console.log('😄 sendTelegramUrl', url);
   try {
     await telegramClient.post(url, {
       chat_id: telegramChatId,
