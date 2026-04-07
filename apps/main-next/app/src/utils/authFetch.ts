@@ -3,8 +3,16 @@
  */
 
 const REFRESH_PATH = "/api/auth/refresh";
+const AUTH_SESSION_INVALID_EVENT = "auth-session-invalid";
 
 let refreshInFlight: Promise<boolean> | null = null;
+
+function emitSessionInvalid(reason: string) {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(
+    new CustomEvent(AUTH_SESSION_INVALID_EVENT, { detail: { reason } }),
+  );
+}
 
 function parseErrorCode(body: unknown): string | undefined {
   if (!body || typeof body !== "object") return undefined;
@@ -65,14 +73,20 @@ export async function authFetch(
 
   const run = () => fetch(input, nextInit);
 
-  let res = await run();
+  const res = await run();
   if (res.status !== 401) return res;
 
-  const body = await res.clone().json().catch(() => null);
+  const body = await res
+    .clone()
+    .json()
+    .catch(() => null);
   if (!shouldAttemptRefresh(parseErrorCode(body))) return res;
 
   const refreshed = await tryRefreshSession();
-  if (!refreshed) return res;
+  if (!refreshed) {
+    emitSessionInvalid("refresh_failed");
+    return res;
+  }
 
   return run();
 }

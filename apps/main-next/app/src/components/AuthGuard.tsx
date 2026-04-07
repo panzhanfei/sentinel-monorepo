@@ -27,7 +27,14 @@ export const AuthGuard = () => {
       cleanup = () => bus.$off(AUTH_SESSION_INVALID_EVENT, handler);
     });
 
+    const onWindowEvent = (event: Event) => {
+      const payload = (event as CustomEvent<AuthSessionInvalidPayload>).detail;
+      void kickOut(payload?.reason ?? "bff_unauthorized");
+    };
+    window.addEventListener(AUTH_SESSION_INVALID_EVENT, onWindowEvent);
+
     return () => {
+      window.removeEventListener(AUTH_SESSION_INVALID_EVENT, onWindowEvent);
       cleanup?.();
     };
   }, [kickOut]);
