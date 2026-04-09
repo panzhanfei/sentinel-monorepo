@@ -90,7 +90,9 @@ pnpm --filter ./apps/main-next run build:release
 
 ### release-bot（或其它发布工具）配置要点
 
-将 **`artifactPath`** 设为 **`apps/main-next/.release`**；**`buildCmd`** 中调用上述 **`build:release`**，**不要**再用冗长的手工 `cp` 链从 `.next/standalone` 拼目录。完整说明与 PM2 / Caddy 关系见仓库根目录 **`README.md`** 中「生产部署：主站 Next.js」一节。
+将 **`artifactPath`** 设为 **`apps/main-next/.release`**；**`buildCmd`** 中调用上述 **`build:release`**，**不要**再用冗长的手工 `cp` 链从 `.next/standalone` 拼目录。根 **`README.md`** 同节附有 **`RELEASE_MODULES_JSON` 里 `main-next` 的 JSON 示例**，可直接合并进 release-bot。
+
+旧脚本里若包含 **`test -f apps/main-next/.release/server.js`**：在 **`outputFileTracingRoot`** 生效后，`server.js` 常在 **`.next/standalone/apps/main-next/`**，粗拷贝会得到 **`.release/apps/main-next/server.js`**，根目录 **`server.js` 不存在**，该 **`test` 失败会导致整条 `buildCmd` 非零退出**（release-bot 报 `Command failed`）。
 
 ## 测试
 

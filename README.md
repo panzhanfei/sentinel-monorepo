@@ -96,6 +96,24 @@ pnpm --filter ./apps/main-next run build:release
 
 不要使用仅 **`cp -R`（不跟 `-L`）** 从 `.next/standalone` 手工拼目录的旧方式，否则容易再次带上断链。
 
+**若 release-bot 仍使用早期的长串 `buildCmd`（`cp` + `Desktop/...` + `test -f .release/server.js`），请删掉并改为 `build:release`。** 在启用 **`outputFileTracingRoot`** 后，Next 的 standalone 布局通常是 **`.next/standalone/apps/main-next/server.js`**：旧写法把 `standalone/*` 拷进 `.release` 时，`server.js` 会落在 **`.release/apps/main-next/server.js`**，根目录的 **`test -f apps/main-next/.release/server.js` 恒为假**，整条 shell **以非零退出**，release-bot 会报 `Command failed`。同时旧脚本用 **`cp -R` 不跟 `-L`** 仍会把 pnpm 断链带到线上。
+
+下面 **`main-next` 键**可直接合并进 release-bot 的 **`RELEASE_MODULES_JSON`**（请按你的 `deployPath` / `remoteRestartCmd` 改路径；`remoteRestartCmd` 与下文示例一致时可原样使用）：
+
+```json
+"main-next": {
+  "repoSubdir": "",
+  "installCmd": "pnpm install --frozen-lockfile",
+  "buildCmd": "pnpm install --frozen-lockfile && pnpm --filter ./apps/main-next run build:release",
+  "artifactPath": "apps/main-next/.release",
+  "deployPath": "/root/srv/sentinel/main-next",
+  "remoteRestartCmd": "bash -lc \"export HOSTNAME=0.0.0.0 HOST=0.0.0.0 PORT=3000; pm2 delete sentinel-next 2>/dev/null || true; pm2 start /root/srv/sentinel/main-next/server.js --name sentinel-next --cwd /root/srv/sentinel/main-next\"",
+  "rsyncDelete": false
+}
+```
+
+若发布流程已在模块外执行过 **`pnpm install`**，可把 **`buildCmd`** 缩成：`pnpm --filter ./apps/main-next run build:release`。
+
 更细的目录与脚本说明见 **`apps/main-next/README.md`**。
 
 ---
