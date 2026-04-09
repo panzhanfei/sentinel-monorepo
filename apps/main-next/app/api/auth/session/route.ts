@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { JwtService } from "@sentinel/auth";
+import { validateDualSession } from "@/lib/authSession";
 
 /**
  * 供客户端调度主动续期：读取 access JWT 的 exp（不解签亦可用于计时；仅服务端可读 httpOnly）。
@@ -13,6 +14,14 @@ export async function GET() {
 
   if (!access || !refresh) {
     return NextResponse.json({ authenticated: false });
+  }
+
+  const validation = await validateDualSession({
+    accessToken: access,
+    refreshToken: refresh,
+  });
+  if (!validation.ok) {
+    return NextResponse.json({ authenticated: false, code: validation.code });
   }
 
   const secret = process.env.JWT_SECRET;

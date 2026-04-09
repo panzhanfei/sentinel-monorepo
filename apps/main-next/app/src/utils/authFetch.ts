@@ -28,7 +28,13 @@ function parseErrorCode(body: unknown): string | undefined {
 
 /** Access 失效但 Refresh 仍可能有效时尝试续期 */
 function shouldAttemptRefresh(code: string | undefined): boolean {
-  return code === "INVALID_TOKEN" || code === "TOKEN_SUBJECT_MISMATCH";
+  return (
+    code === "INVALID_TOKEN" ||
+    code === "TOKEN_SUBJECT_MISMATCH" ||
+    code === "TOKEN_BLACKLISTED" ||
+    code === "SESSION_REVOKED" ||
+    code === "TOKEN_SESSION_MISMATCH"
+  );
 }
 
 /**

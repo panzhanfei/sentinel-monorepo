@@ -8,7 +8,7 @@ import {
 
 export async function POST(request: NextRequest) {
   try {
-    const unauthorized = dualAuthUnauthorizedJson(request);
+    const unauthorized = await dualAuthUnauthorizedJson(request);
     if (unauthorized) return unauthorized;
 
     const body = await request.json();

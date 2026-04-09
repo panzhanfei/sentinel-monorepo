@@ -16,7 +16,7 @@ export async function GET(
       return NextResponse.json({ error: "Job ID required" }, { status: 400 });
     }
 
-    const unauthorized = dualAuthUnauthorizedJson(request);
+    const unauthorized = await dualAuthUnauthorizedJson(request);
     if (unauthorized) return unauthorized;
 
     const res = await fetch(`${NODE_SERVICE}/scan/${jobId}`, {

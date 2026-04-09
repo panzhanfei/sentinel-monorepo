@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   if (!sessionId) {
     return new Response("Missing sessionId ", { status: 400 });
   }
-  const unauthorized = dualAuthUnauthorizedJson(request);
+  const unauthorized = await dualAuthUnauthorizedJson(request);
   if (unauthorized) return unauthorized;
 
   try {

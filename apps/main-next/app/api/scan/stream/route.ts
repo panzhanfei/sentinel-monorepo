@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     return new Response("Missing address or jobId", { status: 400 });
   }
 
-  const unauthorized = dualAuthUnauthorizedJson(request);
+  const unauthorized = await dualAuthUnauthorizedJson(request);
   if (unauthorized) return unauthorized;
 
   try {

@@ -4,12 +4,9 @@ import chatRouter from './chat';
 import userRouter from './user';
 
 import { authMiddleware } from '@/middlewares';
-import { refreshTokens } from '@/controllers/auth/refresh.controller';
 import { sendSuccess } from '@/utils/apiResponse';
 
 const router = Router();
-
-router.post('/api/v1/auth/refresh', refreshTokens);
 
 router.get('/api/v1', (_req, res) => {
   sendSuccess(res, {

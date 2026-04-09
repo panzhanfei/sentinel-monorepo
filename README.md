@@ -39,7 +39,7 @@
 - **异步任务与实时日志**：**Bull** 处理扫描任务；Worker 通过 **Redis Pub/Sub** 向频道 `job:{jobId}:log` 推送结构化日志。
 - **高危告警**：最终评级为 `HIGH` 时，可经 **Telegram Bot** 向用户配置的 `telegramChatId` 推送摘要（需 `TELEGRAM_BOT_TOKEN` 与用户 Chat ID）。
 - **微前端**：主应用 **Next.js** 内嵌 **Vite + React**（审计面板，默认 `http://localhost:3001`）与 **Vite + Vue**（监控面板，默认 `http://localhost:3002`）。子应用入口与 **BFF `/api` 的 CORS 白名单** 由 `apps/main-next/lib/subAppOrigins.ts` 统一维护（默认本地 3001/3002，可通过 `NEXT_PUBLIC_WUJIE_*` 与 `NEXT_PUBLIC_WUJIE_EXTRA_ORIGINS` 覆盖）。
-- **鉴权与数据**：**双 JWT**（`DualJwtService`，`@sentinel/auth`）：登录后写入 HttpOnly Cookie **`accessToken`**（短期）与 **`refreshToken`**（长期），废弃旧单 Cookie `token`；Express 受保护路由从 **Authorization Bearer**、Cookie 或兼容字段读取 Access，Refresh 可从 Cookie、`X-Refresh-Token` 头或查询参数传入；Next 提供 **`/api/auth/refresh`** BFF 代理 Node 刷新接口并回写 Cookie。**Prisma + PostgreSQL**；Redis 用于队列、Pub/Sub、Nonce 限流与相关能力。
+- **鉴权与数据**：**双 JWT**（`DualJwtService`，`@sentinel/auth`）：登录后写入 HttpOnly Cookie **`accessToken`**（短期）与 **`refreshToken`**（长期），废弃旧单 Cookie `token`；Express 受保护路由从 **Authorization Bearer**、Cookie 或兼容字段读取 Access，Refresh 可从 Cookie、`X-Refresh-Token` 头或查询参数传入；Next 在 **BFF `/api/auth/refresh`** 完成本地续签并回写 Cookie，配合黑名单与单点登录控制。**Prisma + PostgreSQL**；Redis 用于队列、Pub/Sub、Nonce 限流与相关能力。
 
 ---
 

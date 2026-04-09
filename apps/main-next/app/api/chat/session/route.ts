@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
         { status: 400 },
       );
     }
-    const unauthorized = dualAuthUnauthorizedJson(request);
+    const unauthorized = await dualAuthUnauthorizedJson(request);
     if (unauthorized) return unauthorized;
 
     const res = await fetch(`${NODE_SERVICE}/chat/session`, {
@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const unauthorized = dualAuthUnauthorizedJson(request);
+    const unauthorized = await dualAuthUnauthorizedJson(request);
     if (unauthorized) return unauthorized;
 
     const body = await request.json();

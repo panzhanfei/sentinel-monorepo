@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import { validateDualSession } from "@/lib/authSession";
 
 /**
  * Access：Authorization Bearer → Cookie accessToken → 旧版 Cookie token → ?token=
@@ -26,16 +27,27 @@ export function resolveRefreshTokenCookie(
   return request.cookies.get("refreshToken")?.value ?? undefined;
 }
 
-/** BFF 侧与 Node 双令牌策略对齐：缺一则 401 */
-export function dualAuthUnauthorizedJson(
+/** BFF 侧会话前置校验：双 token + 黑名单 + 单点登录 */
+export async function dualAuthUnauthorizedJson(
   request: NextRequest,
-): NextResponse | null {
-  if (!resolveBearerToken(request) || !resolveRefreshTokenCookie(request)) {
+): Promise<NextResponse | null> {
+  const accessToken = resolveBearerToken(request);
+  const refreshToken = resolveRefreshTokenCookie(request);
+  if (!accessToken || !refreshToken) {
     return NextResponse.json(
       { error: "Unauthorized", code: "DUAL_TOKEN_REQUIRED" },
       { status: 401 },
     );
   }
+
+  const validation = await validateDualSession({ accessToken, refreshToken });
+  if (!validation.ok) {
+    return NextResponse.json(
+      { error: validation.message, code: validation.code },
+      { status: validation.status },
+    );
+  }
+
   return null;
 }
 

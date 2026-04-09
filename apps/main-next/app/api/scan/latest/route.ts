@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Address required" }, { status: 400 });
   }
 
-  const unauthorized = dualAuthUnauthorizedJson(request);
+  const unauthorized = await dualAuthUnauthorizedJson(request);
   if (unauthorized) return unauthorized;
 
   try {

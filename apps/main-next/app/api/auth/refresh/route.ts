@@ -1,13 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { NODE_SERVICE } from "@/app/src/config/node_service";
-import {
-  parseUpstreamJson,
-  proxyHeadersToNode,
-} from "@/app/src/utils/bffProxy";
-import {
-  getNodeApiData,
-  getNodeApiErrorMessage,
-} from "@/app/src/utils/nodeApiEnvelope";
+import { authCookieConfig, rotateTokens } from "@/lib/authSession";
 
 const cookieBase = {
   httpOnly: true,
@@ -18,46 +10,41 @@ const cookieBase = {
 
 export async function POST(request: NextRequest) {
   try {
-    const res = await fetch(`${NODE_SERVICE}/auth/refresh`, {
-      method: "POST",
-      headers: proxyHeadersToNode(request),
-    });
-
-    const body = await parseUpstreamJson(res);
-    const tokens = getNodeApiData<{
-      accessToken: string;
-      refreshToken: string;
-    }>(
-      body,
-      (d) =>
-        typeof d.accessToken === "string" && typeof d.refreshToken === "string",
-    );
-
-    if (!res.ok || !tokens) {
+    const accessToken = request.cookies.get("accessToken")?.value;
+    const refreshToken = request.cookies.get("refreshToken")?.value;
+    if (!accessToken || !refreshToken) {
       return NextResponse.json(
         {
-          error: getNodeApiErrorMessage(body) ?? "Refresh failed",
-          code: "REFRESH_FAILED",
+          error: "Missing tokens",
+          code: "DUAL_TOKEN_REQUIRED",
         },
-        { status: res.status >= 400 ? res.status : 401 },
+        { status: 401 },
+      );
+    }
+
+    const rotated = await rotateTokens({ accessToken, refreshToken });
+    if (!rotated.ok) {
+      return NextResponse.json(
+        { error: rotated.message, code: rotated.code },
+        { status: rotated.status },
       );
     }
 
     const out = NextResponse.json({ ok: true });
-    out.cookies.set("accessToken", tokens.accessToken, {
+    out.cookies.set("accessToken", rotated.accessToken, {
       ...cookieBase,
-      maxAge: 15 * 60,
+      maxAge: authCookieConfig.accessMaxAge,
     });
-    out.cookies.set("refreshToken", tokens.refreshToken, {
+    out.cookies.set("refreshToken", rotated.refreshToken, {
       ...cookieBase,
-      maxAge: 60 * 60 * 24 * 7,
+      maxAge: authCookieConfig.refreshMaxAge,
     });
     return out;
   } catch (error) {
-    console.error("BFF auth/refresh Error:", error);
+    console.error("BFF auth/refresh rotate Error:", error);
     return NextResponse.json(
-      { error: "Node Service Unreachable" },
-      { status: 502 },
+      { error: "Refresh failed", code: "REFRESH_FAILED" },
+      { status: 500 },
     );
   }
 }

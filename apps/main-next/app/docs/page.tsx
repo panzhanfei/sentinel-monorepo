@@ -44,7 +44,7 @@ const repoRows = [
 const bffRows = [
   [
     "POST /api/auth/refresh",
-    "将刷新请求代理到 Node `POST /auth/refresh`；按 `{ success, data }` 信封解析后写回 `accessToken` / `refreshToken` Cookie。",
+    "在 BFF 本地完成双 Token 校验与旋转续签，并写回 `accessToken` / `refreshToken` Cookie。",
   ],
   ["POST /api/scan", "创建扫描任务，双 JWT Cookie 转发至 Node `/scan`。"],
   ["GET /api/scan/stream", "SSE：`address`、`jobId` + Cookie，转发 Node 扫描日志流。"],

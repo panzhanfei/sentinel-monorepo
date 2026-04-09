@@ -1,26 +1,12 @@
 "use server";
 
 import { cookies } from "next/headers";
-import {
-  NonceService,
-  DualJwtService,
-  type DualJwtOptions,
-} from "@sentinel/auth";
+import { NonceService } from "@sentinel/auth";
 import { redis } from "@/lib/redis";
 import { revalidatePath } from "next/cache";
+import { authCookieConfig, issueLoginTokens, revokeSession } from "@/lib/authSession";
 
 const nonceService = new NonceService(redis, { prefix: "nonce", ttl: 300 });
-
-const dualJwtOptions: DualJwtOptions = {
-  accessSecret: process.env.JWT_SECRET!,
-  refreshSecret:
-    process.env.REFRESH_TOKEN_SECRET ??
-    "your-refresh-token-secret-different-from-jwt",
-  accessExpiresIn: (process.env.JWT_EXPIRES_IN ?? "15m") as DualJwtOptions["accessExpiresIn"],
-  refreshExpiresIn: (process.env.REFRESH_TOKEN_EXPIRES_IN ??
-    "7d") as DualJwtOptions["refreshExpiresIn"],
-};
-const dualJwt = new DualJwtService(dualJwtOptions);
 
 const cookieBase = {
   httpOnly: true,
@@ -62,22 +48,25 @@ export async function verifySignature(address: string, signature: string) {
     throw new Error("签名验证失败，疑似伪造请求");
   }
 
-  const { accessToken, refreshToken } = dualJwt.generatePair({
+  const cookieStore = await cookies();
+  const prevAccessToken = cookieStore.get("accessToken")?.value;
+  const prevRefreshToken = cookieStore.get("refreshToken")?.value;
+  const { accessToken, refreshToken } = await issueLoginTokens({
     sub: address.toLowerCase(),
     role: "user",
+    prevAccessToken,
+    prevRefreshToken,
   });
-
-  const cookieStore = await cookies();
 
   cookieStore.delete("token");
 
   cookieStore.set("accessToken", accessToken, {
     ...cookieBase,
-    maxAge: 15 * 60,
+    maxAge: authCookieConfig.accessMaxAge,
   });
   cookieStore.set("refreshToken", refreshToken, {
     ...cookieBase,
-    maxAge: 60 * 60 * 24 * 7,
+    maxAge: authCookieConfig.refreshMaxAge,
   });
 
   return { success: true };
@@ -85,6 +74,10 @@ export async function verifySignature(address: string, signature: string) {
 
 export async function logout() {
   const cookieStore = await cookies();
+  await revokeSession({
+    accessToken: cookieStore.get("accessToken")?.value,
+    refreshToken: cookieStore.get("refreshToken")?.value,
+  });
   cookieStore.delete("token");
   cookieStore.delete("accessToken");
   cookieStore.delete("refreshToken");

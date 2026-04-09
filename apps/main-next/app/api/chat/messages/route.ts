@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     if (!sessionId) {
       return NextResponse.json({ error: "sessionId required" }, { status: 400 });
     }
-    const unauthorized = dualAuthUnauthorizedJson(request);
+    const unauthorized = await dualAuthUnauthorizedJson(request);
     if (unauthorized) return unauthorized;
 
     const limit = searchParams.get("limit") ?? "5";
