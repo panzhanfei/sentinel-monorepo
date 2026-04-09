@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:release": "next build && bash ./scripts/pack-standalone.sh",
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run"

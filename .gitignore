@@ -22,6 +22,7 @@ coverage
 
 # Build Outputs
 .next/
+apps/main-next/.release/
 out/
 build
 dist

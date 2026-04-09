@@ -47,7 +47,7 @@
 
 | 路径                                                    | 说明                                                                                                                                        |
 | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| `apps/main-next`                                        | 主应用：**Next.js 16**（App Router）、RainbowKit / wagmi、Wujie 宿主、**BFF**（含 `/api/auth/refresh`）。`middleware` 以双 Cookie 判定登录并对 `/api` 做子应用 **CORS**。端口 **3000**。 |
+| `apps/main-next`                                        | 主应用：**Next.js 16**（App Router）、RainbowKit / wagmi、Wujie 宿主、**BFF**（含 `/api/auth/refresh`）。`middleware` 以双 Cookie 判定登录并对 `/api` 做子应用 **CORS**。端口 **3000**。生产为 **`output: "standalone"`**，发布产物经 **`pnpm --filter main-next run build:release`** 生成 **`apps/main-next/.release`**（见下文「生产部署：主站 Next.js」）。 |
 | `apps/sub-react`                                        | 审计子应用：**Vite + React 19**，端口 **3001**；开发环境下 `/api` 代理到 `http://localhost:3000`；逻辑与 API 分层并含 Vitest 用例。          |
 | `apps/sub-vue`                                          | 监控子应用：**Vite + Vue 3** + ECharts，端口 **3002**；监控逻辑拆分为 Store / Service / 图表模型与 Vitest 单测，视图以小组件组合。          |
 | `apps/server`                                           | **Express** API 与 **Bull Worker**；**双 Token** 校验中间件（Access+Refresh、`sub` 一致）。默认 **4000**，前缀见 `NODE_SERVICE`。          |
@@ -69,6 +69,34 @@
 4. 启动带边缘反代：`pnpm run infra:up:edge`（或 `docker compose --profile edge up -d`）。仅起数据库、不起 Caddy 时仍用 `pnpm run infra:up`。
 
 国内若拉取 `caddy` 镜像较慢，可在 `.env` 中增加 `CADDY_IMAGE=docker.m.daocloud.io/library/caddy:2-alpine`（与其它镜像变量方式一致）。大陆网络下 Let's Encrypt HTTP-01 偶发失败时，可改为云厂商托管证书并在 `caddy.d` 中配置 `tls` 指令，详见 [Caddy 文档](https://caddyserver.com/docs/caddyfile/directives/tls)。
+
+### 生产部署：主站 Next.js（standalone / PM2 / release-bot）
+
+主站对外由 **Caddy** 反代到宿主机 **Next 监听端口（常见 `3000`）**；若 PM2 里进程处于 **errored** 或本机无进程监听该端口，会出现 **502**。常见根因之一是：把 **pnpm** 在 monorepo 里生成的 **`node_modules` 符号链接**原样同步到服务器，standalone 的 `server.js` 会 `require('next')`，链接指向构建机上的 `.pnpm` 路径，在目标机上不存在即报错 **`Cannot find module 'next'`**。
+
+本仓库已做两件事：
+
+1. **`apps/main-next/next.config.ts`**：`output: "standalone"`，并设置 **`outputFileTracingRoot`** 为 monorepo 根目录，便于在 workspace 下正确追踪依赖、稳定 standalone 目录结构。
+2. **打包脚本**：`apps/main-next/scripts/pack-standalone.sh` 在 `next build` 之后，用 **`cp -R -L`** 将 standalone 应用目录、`static`、`public` 拷入 **`apps/main-next/.release`**（**跟随符号链接**，得到可 rsync 的真实文件树）。该目录已写入根目录 **`.gitignore`**，勿提交。
+
+**本地或 CI 打发布包**（在仓库根目录，需已 `pnpm install`）：
+
+```bash
+pnpm --filter ./apps/main-next run build:release
+```
+
+等价于 `next build` 后执行上述 shell。日常仅验证构建、不需要 `.release` 时仍可用 `pnpm --filter main-next build`。
+
+**配合 [release-bot](https://github.com/panzhanfei/release-bot) 等多模块发布工具时**，`main-next` 建议配置为：
+
+- **`installCmd`**：`pnpm install --frozen-lockfile`（与其它模块一致，在发布仓根执行）
+- **`buildCmd`**：`pnpm install --frozen-lockfile && pnpm --filter ./apps/main-next run build:release`（若发布流程已单独执行 install，可只保留 `pnpm --filter ./apps/main-next run build:release`）
+- **`artifactPath`**：`apps/main-next/.release`（上传该目录内容到服务器上的部署目录，例如 `/root/srv/sentinel/main-next`）
+- **`remoteRestartCmd`**：与现有 PM2 一致即可（例如以 `server.js` 为入口、`--cwd` 指向部署目录、`PORT=3000`）
+
+不要使用仅 **`cp -R`（不跟 `-L`）** 从 `.next/standalone` 手工拼目录的旧方式，否则容易再次带上断链。
+
+更细的目录与脚本说明见 **`apps/main-next/README.md`**。
 
 ---
 
@@ -228,6 +256,12 @@ pnpm run start:demo
 | `pnpm run test`                                   | Turbo 并行执行各包 `test`（Vitest，含 `auth`、`sub-react`、`sub-vue`、`main-next` 等） |
 | `pnpm run infra:up` / `infra:down` / `infra:logs` | Docker 基础设施（DB、Redis、Anvil 等） |
 | `pnpm run infra:up:edge`                          | 在上述基础上启动 **Caddy**（需配置 `SENTINEL_DOMAIN`） |
+
+主站生产打包（生成可 rsync 的 **`.release`**，见上文「生产部署：主站 Next.js」）：
+
+```bash
+pnpm --filter ./apps/main-next run build:release
+```
 
 ---
 
