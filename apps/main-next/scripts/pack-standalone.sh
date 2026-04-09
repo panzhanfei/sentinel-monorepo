@@ -42,4 +42,6 @@ if [[ ! -f .release/server.js ]]; then
   exit 1
 fi
 
-echo "pack-standalone: ok -> $ROOT/.release"
+cp -f "$ROOT/scripts/standalone-host.cjs" .release/standalone-host.cjs
+
+echo "pack-standalone: ok -> $ROOT/.release (PM2: server.js or node standalone-host.cjs)"

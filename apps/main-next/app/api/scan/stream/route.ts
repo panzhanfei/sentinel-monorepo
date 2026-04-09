@@ -42,13 +42,27 @@ export async function GET(request: NextRequest) {
     const stream = new ReadableStream({
       async start(controller) {
         const reader = nodeRes.body!.getReader();
+        const onAbort = () => {
+          reader.cancel().catch(() => {});
+        };
+        request.signal.addEventListener("abort", onAbort);
         try {
           while (true) {
             const { done, value } = await reader.read();
             if (done) break;
-            controller.enqueue(value);
+            if (request.signal.aborted) break;
+            try {
+              controller.enqueue(value);
+            } catch {
+              await reader.cancel().catch(() => {});
+              break;
+            }
           }
-          controller.close();
+          try {
+            controller.close();
+          } catch {
+            /* 客户端已断开时 controller 可能已关闭 */
+          }
         } catch (err) {
           console.error("Stream read error:", err);
           try {
@@ -59,6 +73,7 @@ export async function GET(request: NextRequest) {
             /* controller 已关闭时忽略 */
           }
         } finally {
+          request.signal.removeEventListener("abort", onAbort);
           try {
             reader.releaseLock();
           } catch {

@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:webpack": "next dev --webpack",
     "build": "next build",
     "build:release": "next build && bash ./scripts/pack-standalone.sh",
     "start": "next start",
