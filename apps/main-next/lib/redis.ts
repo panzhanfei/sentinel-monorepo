@@ -6,6 +6,8 @@ const redisConfig = {
   port: Number(process.env.REDIS_PORT) || 6379,
   password: process.env.REDIS_PASSWORD,
   keyPrefix: "sentinel-monorepo:",
+  // Avoid connecting during `next build` when route modules import this file but no Redis command runs.
+  lazyConnect: true,
 };
 
 // 获取单例（内部会自动处理 globalForRedis，防止热更新连接爆满）
