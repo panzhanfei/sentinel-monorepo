@@ -31,7 +31,7 @@ const navItems = [
 const repoRows = [
   [
     "apps/main-next",
-    "Next.js 16（App Router）、RainbowKit / wagmi、Wujie 宿主、BFF。httpOnly 双 JWT（accessToken + refreshToken）；middleware 校验受保护路由并对 /api 做子应用 Origin CORS（见 lib/subAppOrigins）。默认端口 3000。",
+    "Next.js 16（App Router）、RainbowKit / wagmi、Wujie 宿主、BFF。httpOnly 双 JWT（accessToken + refreshToken）；proxy.ts 校验受保护路由并对 /api 做子应用 Origin CORS（见 lib/subAppOrigins）。默认端口 3000。",
   ],
   ["apps/sub-react", "Vite + React 19 审计子应用，端口 3001；开发时 /api 代理到主应用。"],
   ["apps/sub-vue", "Vite + Vue 3 监控子应用，端口 3002。"],
@@ -175,7 +175,7 @@ export default function DocsPage() {
             >
               <h2 className="text-2xl font-black mb-6 flex items-center gap-3">
                 <KeyRound className="w-6 h-6 text-indigo-600" />
-                Session、中间件与 BFF CORS
+                Session、proxy 与 BFF CORS
               </h2>
               <p className="text-slate-600 leading-relaxed mb-6 text-lg">
                 登录态使用两个 <strong className="text-slate-800">httpOnly</strong>{" "}
@@ -186,10 +186,10 @@ export default function DocsPage() {
                 <code className="text-sm bg-slate-100 px-1.5 py-0.5 rounded">
                   refreshToken
                 </code>{" "}
-                （长期）。<code className="text-sm bg-slate-100 px-1.5 rounded">
-                  middleware.ts
+                （长期）。                <code className="text-sm bg-slate-100 px-1.5 rounded">
+                  proxy.ts
                 </code>{" "}
-                仅在二者同时存在时视为已登录；受保护前缀与{" "}
+                （Next.js 16 替代原 middleware）仅在二者同时存在时视为已登录；受保护前缀与{" "}
                 <code className="text-sm bg-slate-100 px-1.5 rounded">
                   lib/authRoutes.ts
                 </code>{" "}
@@ -202,7 +202,8 @@ export default function DocsPage() {
               <p className="text-slate-600 leading-relaxed mb-6">
                 对以{" "}
                 <code className="text-sm bg-slate-100 px-1.5 rounded">/api</code>{" "}
-                开头的请求，中间件按{" "}
+                开头的请求，<code className="text-sm bg-slate-100 px-1.5 rounded">proxy.ts</code>{" "}
+                按{" "}
                 <code className="text-sm bg-slate-100 px-1.5 rounded">
                   lib/subAppOrigins.ts
                 </code>{" "}

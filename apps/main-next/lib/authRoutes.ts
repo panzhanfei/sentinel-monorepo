@@ -1,4 +1,4 @@
-/** 与 middleware、AuthGuard 共用，避免受保护路由列表漂移 */
+/** 与 proxy、AuthGuard 共用，避免受保护路由列表漂移 */
 export const PROTECTED_ROUTE_PREFIXES = [
   "/dashboard",
   "/monitor",

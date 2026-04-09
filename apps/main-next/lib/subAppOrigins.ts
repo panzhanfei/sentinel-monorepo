@@ -26,7 +26,7 @@ export const WUJIE_SUB_APP_URL = {
   vue: envVue || "http://localhost:3002",
 } as const;
 
-/** 供 middleware CORS 校验：默认端口 + 环境覆盖的完整源列表 */
+/** 供 proxy（/api CORS）校验：默认端口 + 环境覆盖的完整源列表 */
 export const BFF_CORS_ORIGIN_SET = new Set<string>([
   ...DEFAULT_ORIGINS,
   ...(envReact ? [envReact] : []),

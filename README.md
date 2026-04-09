@@ -28,7 +28,7 @@
 - **清晰分层**：共享包（`security-sdk`、`auth`、`database`）与多应用（宿主、子应用、API/Worker）拆分，链上逻辑、鉴权与持久化可复用、便于测试与演进。
 - **长任务与实时 UI 解耦**：扫描走 **Bull**；Worker 经 **Redis Pub/Sub** 向 `job:{jobId}:log` 推送结构化日志，前端可 SSE/轮询展示进度与中间结果。
 - **可扩展的微前端**：宿主承担统一入口与部分 BFF，子应用技术栈独立构建部署，由 Wujie 嵌入，降低后续并行迭代成本。
-- **双 Token 与会话一致性**：Access + Refresh 分离签发与校验；受保护接口要求两者同时有效且 `sub` 一致；Next **middleware** 以双 Cookie 判定登录态，并配合 BFF 为子应用 Origin 开启 **CORS + credentials**，解决跨端口嵌入时的鉴权与刷新。
+- **双 Token 与会话一致性**：Access + Refresh 分离签发与校验；受保护接口要求两者同时有效且 `sub` 一致；Next **`proxy.ts`**（Next.js 16 替代原 middleware）以双 Cookie 判定登录态，并配合 BFF 为子应用 Origin 开启 **CORS + credentials**，解决跨端口嵌入时的鉴权与刷新。
 
 ---
 
@@ -47,7 +47,7 @@
 
 | 路径                                                    | 说明                                                                                                                                        |
 | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| `apps/main-next`                                        | 主应用：**Next.js 16**（App Router）、RainbowKit / wagmi、Wujie 宿主、**BFF**（含 `/api/auth/refresh`）。`middleware` 以双 Cookie 判定登录并对 `/api` 做子应用 **CORS**。端口 **3000**。生产为 **`output: "standalone"`**，发布产物经 **`pnpm --filter main-next run build:release`** 生成 **`apps/main-next/.release`**（见下文「生产部署：主站 Next.js」）。 |
+| `apps/main-next`                                        | 主应用：**Next.js 16**（App Router）、RainbowKit / wagmi、Wujie 宿主、**BFF**（含 `/api/auth/refresh`）。**`proxy.ts`** 以双 Cookie 判定登录并对 `/api` 做子应用 **CORS**。端口 **3000**。生产为 **`output: "standalone"`**，发布产物经 **`pnpm --filter main-next run build:release`** 生成 **`apps/main-next/.release`**（见下文「生产部署：主站 Next.js」）。 |
 | `apps/sub-react`                                        | 审计子应用：**Vite + React 19**，端口 **3001**；开发环境下 `/api` 代理到 `http://localhost:3000`；逻辑与 API 分层并含 Vitest 用例。          |
 | `apps/sub-vue`                                          | 监控子应用：**Vite + Vue 3** + ECharts，端口 **3002**；监控逻辑拆分为 Store / Service / 图表模型与 Vitest 单测，视图以小组件组合。          |
 | `apps/server`                                           | **Express** API 与 **Bull Worker**；**双 Token** 校验中间件（Access+Refresh、`sub` 一致）。默认 **4000**，前缀见 `NODE_SERVICE`。          |
@@ -218,7 +218,7 @@ Server 从 **`apps/server` 工作目录**加载 **`.env.development`**（或 `.e
 NODE_SERVICE=http://127.0.0.1:4000/api/v1
 ```
 
-微前端子应用 URL 默认与 `subAppOrigins` 一致（审计 `http://localhost:3001`，监控 `http://localhost:3002`）；部署或改端口时请同时设置 **`NEXT_PUBLIC_WUJIE_REACT_URL`**、**`NEXT_PUBLIC_WUJIE_VUE_URL`**（必要时 **`NEXT_PUBLIC_WUJIE_EXTRA_ORIGINS`**，逗号分隔），以便 Wujie 加载地址与 BFF CORS 白名单一致。`middleware` 对 `/api` 的 **OPTIONS** 预检与响应会按上述白名单返回 `Access-Control-Allow-Credentials: true`，便于子应用 `fetch` 宿主 BFF 时携带 Cookie。
+微前端子应用 URL 默认与 `subAppOrigins` 一致（审计 `http://localhost:3001`，监控 `http://localhost:3002`）；部署或改端口时请同时设置 **`NEXT_PUBLIC_WUJIE_REACT_URL`**、**`NEXT_PUBLIC_WUJIE_VUE_URL`**（必要时 **`NEXT_PUBLIC_WUJIE_EXTRA_ORIGINS`**，逗号分隔），以便 Wujie 加载地址与 BFF CORS 白名单一致。**`proxy.ts`** 对 `/api` 的 **OPTIONS** 预检与响应会按上述白名单返回 `Access-Control-Allow-Credentials: true`，便于子应用 `fetch` 宿主 BFF 时携带 Cookie。
 
 ### 7. 一键开发
 
