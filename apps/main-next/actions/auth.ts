@@ -4,16 +4,14 @@ import { cookies } from "next/headers";
 import { NonceService } from "@sentinel/auth";
 import { redis } from "@/lib/redis";
 import { revalidatePath } from "next/cache";
-import { authCookieConfig, issueLoginTokens, revokeSession } from "@/lib/authSession";
+import {
+  authCookieConfig,
+  getAuthCookieBase,
+  issueLoginTokens,
+  revokeSession,
+} from "@/lib/authSession";
 
 const nonceService = new NonceService(redis, { prefix: "nonce", ttl: 300 });
-
-const cookieBase = {
-  httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
-  sameSite: "lax" as const,
-  path: "/",
-};
 
 export async function getLoginNonce(address: string) {
   const now = Date.now();
@@ -60,6 +58,7 @@ export async function verifySignature(address: string, signature: string) {
 
   cookieStore.delete("token");
 
+  const cookieBase = getAuthCookieBase();
   cookieStore.set("accessToken", accessToken, {
     ...cookieBase,
     maxAge: authCookieConfig.accessMaxAge,

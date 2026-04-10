@@ -1,12 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { authCookieConfig, rotateTokens } from "@/lib/authSession";
-
-const cookieBase = {
-  httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
-  sameSite: "lax" as const,
-  path: "/",
-};
+import { authCookieConfig, getAuthCookieBase, rotateTokens } from "@/lib/authSession";
 
 export async function POST(request: NextRequest) {
   try {
@@ -30,6 +23,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const cookieBase = getAuthCookieBase();
     const out = NextResponse.json({ ok: true });
     out.cookies.set("accessToken", rotated.accessToken, {
       ...cookieBase,

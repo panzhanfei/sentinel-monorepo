@@ -256,3 +256,29 @@ export const authCookieConfig = {
   accessMaxAge: ACCESS_COOKIE_MAX_AGE_SEC,
   refreshMaxAge: REFRESH_COOKIE_MAX_AGE_SEC,
 };
+
+/**
+ * 登录 Cookie 的 SameSite / Secure。
+ * 子应用与主站不同源（如 react.xxx 嵌在 app.xxx）时，子应用内 fetch 主域 BFF 属于跨站请求，
+ * SameSite=Lax 下浏览器通常不带上主域 Cookie → 线上 401。此时在部署环境设置：
+ * AUTH_COOKIE_SAME_SITE=none（须 HTTPS，secure 会随之为 true）。
+ */
+export function getAuthCookieBase(): {
+  httpOnly: true;
+  secure: boolean;
+  sameSite: "lax" | "none";
+  path: "/";
+} {
+  const sameSite =
+    process.env.AUTH_COOKIE_SAME_SITE?.toLowerCase() === "none"
+      ? ("none" as const)
+      : ("lax" as const);
+  const secure =
+    process.env.NODE_ENV === "production" || sameSite === "none";
+  return {
+    httpOnly: true,
+    secure,
+    sameSite,
+    path: "/",
+  };
+}
