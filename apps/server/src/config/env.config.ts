@@ -9,24 +9,33 @@ import path from 'node:path';
 import { z } from 'zod';
 
 // 1. 加载 .env 到 process.env
-// 部署形态：① 扁平（server/config/*.js + server/.env.production）→ 向上一级即根；② dist（server/dist/config/*.js）→ 向上两级。
-// 按「该 env 文件是否存在」探测，避免扁平包被误算成 ../..（会指到 server 上一级，永远读不到 .env）。
-// override: true — 覆盖 PM2 里占位的 REDIS_URL 等
+// 部署形态：① 扁平 server/config/*.js；② dist/server/dist/config/*.js。用「任一常见 env 文件名」定位 server 根，避免只认 NODE_ENV 对应文件名时找不到（线上常只有 .env.production）。
+// 若 PM2 未设 NODE_ENV=production，会去找 .env.development；不存在时回退 .env.production，避免仍用 PM2 里占位的 redis://:password@...
+// override: true — 覆盖 PM2 注入的旧 REDIS_URL
 const envFile = `.env.${process.env.NODE_ENV || 'development'}`;
+const envNameHints = [envFile, '.env.production', '.env.development', '.env.local', '.env'];
+
 function resolveServerRootForEnv(): string {
-  const candidates = [path.resolve(__dirname, '..'), path.resolve(__dirname, '../..')];
-  for (const root of candidates) {
-    if (fs.existsSync(path.join(root, envFile))) {
-      return root;
+  const dirCandidates = [path.resolve(__dirname, '..'), path.resolve(__dirname, '../..')];
+  for (const root of dirCandidates) {
+    for (const name of envNameHints) {
+      if (fs.existsSync(path.join(root, name))) {
+        return root;
+      }
     }
   }
-  return candidates[0];
+  return dirCandidates[0];
 }
+
 const serverRoot = resolveServerRootForEnv();
-dotenv.config({
-  path: path.join(serverRoot, envFile),
-  override: true,
-});
+let envPath = path.join(serverRoot, envFile);
+if (!fs.existsSync(envPath)) {
+  const prodPath = path.join(serverRoot, '.env.production');
+  if (fs.existsSync(prodPath)) {
+    envPath = prodPath;
+  }
+}
+dotenv.config({ path: envPath, override: true });
 
 // 2. 定义环境变量模式（类型和验证规则）
 const envSchema = z.object({
