@@ -4,14 +4,25 @@
  */
 
 import dotenv from 'dotenv';
+import fs from 'node:fs';
 import path from 'node:path';
 import { z } from 'zod';
 
 // 1. 加载 .env 到 process.env
-// 使用本文件所在目录推算 apps/server 根（兼容 dist/config 与 src/config），避免 PM2 cwd 不是 server 根时读不到 .env.production
-// override: true — 覆盖 PM2 / 宿主机已注入的占位 REDIS_URL、空 DATABASE_URL 等
-const serverRoot = path.resolve(__dirname, '../..');
+// 部署形态：① 扁平（server/config/*.js + server/.env.production）→ 向上一级即根；② dist（server/dist/config/*.js）→ 向上两级。
+// 按「该 env 文件是否存在」探测，避免扁平包被误算成 ../..（会指到 server 上一级，永远读不到 .env）。
+// override: true — 覆盖 PM2 里占位的 REDIS_URL 等
 const envFile = `.env.${process.env.NODE_ENV || 'development'}`;
+function resolveServerRootForEnv(): string {
+  const candidates = [path.resolve(__dirname, '..'), path.resolve(__dirname, '../..')];
+  for (const root of candidates) {
+    if (fs.existsSync(path.join(root, envFile))) {
+      return root;
+    }
+  }
+  return candidates[0];
+}
+const serverRoot = resolveServerRootForEnv();
 dotenv.config({
   path: path.join(serverRoot, envFile),
   override: true,
