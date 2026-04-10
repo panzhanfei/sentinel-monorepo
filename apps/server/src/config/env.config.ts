@@ -8,10 +8,12 @@ import path from 'node:path';
 import { z } from 'zod';
 
 // 1. 加载 .env 到 process.env
-// override: true — PM2 / 宿主机若已注入占位 REDIS_URL、空 DATABASE_URL 等，默认 dotenv 不会覆盖，会导致线上仍用错配置
+// 使用本文件所在目录推算 apps/server 根（兼容 dist/config 与 src/config），避免 PM2 cwd 不是 server 根时读不到 .env.production
+// override: true — 覆盖 PM2 / 宿主机已注入的占位 REDIS_URL、空 DATABASE_URL 等
+const serverRoot = path.resolve(__dirname, '../..');
 const envFile = `.env.${process.env.NODE_ENV || 'development'}`;
 dotenv.config({
-  path: path.resolve(process.cwd(), envFile),
+  path: path.join(serverRoot, envFile),
   override: true,
 });
 
