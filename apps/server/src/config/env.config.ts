@@ -44,6 +44,11 @@ const envSchema = z.object({
     .enum(['development', 'production', 'test'])
     .default('development'),
   PORT: z.preprocess((val) => val ?? '4000', z.string().transform(Number)),
+  /** Node cluster worker 数量；未设置时由入口使用 os.availableParallelism() */
+  CLUSTER_WORKERS: z.preprocess(
+    (val) => (val === '' || val === undefined ? undefined : val),
+    z.coerce.number().int().positive().optional()
+  ),
 
   // // 数据库配置
   // DATABASE_URL: z.string().min(1, 'DATABASE_URL必须提供'),
