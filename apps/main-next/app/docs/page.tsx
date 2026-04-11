@@ -31,7 +31,7 @@ const navItems = [
 const repoRows = [
   [
     "apps/main-next",
-    "Next.js 16（App Router）、RainbowKit / wagmi、Wujie 宿主、BFF。httpOnly 双 JWT（accessToken + refreshToken）；proxy.ts 校验受保护路由并对 /api 做子应用 Origin CORS（见 lib/subAppOrigins）。默认端口 3000。",
+    "Next.js 16（App Router）、RainbowKit / wagmi、Wujie 宿主；仓库内全部 BFF 在本包 app/api。httpOnly 双 JWT（accessToken + refreshToken）；proxy.ts 校验受保护路由并对 /api 做子应用 Origin CORS（见 lib/subAppOrigins）。默认端口 3000。",
   ],
   ["apps/sub-react", "Vite + React 19 审计子应用，端口 3001；开发时 /api 代理到主应用。"],
   ["apps/sub-vue", "Vite + Vue 3 监控子应用，端口 3002。"],
@@ -129,8 +129,15 @@ export default function DocsPage() {
               </h2>
               <p className="text-slate-600 leading-relaxed mb-8 text-lg">
                 Sentinel 采用异步任务架构：浏览器访问{" "}
-                <strong className="text-slate-800">Next.js</strong> 主应用；扫描与
-                AI 流水线由{" "}
+                <strong className="text-slate-800">Next.js</strong> 主应用；
+                <strong className="text-slate-800"> 全部 BFF </strong>
+                （对浏览器与子应用的{" "}
+                <code className="text-sm bg-slate-100 px-1.5 py-0.5 rounded">/api</code>{" "}
+                入口）由主应用的{" "}
+                <code className="text-sm bg-slate-100 px-1.5 py-0.5 rounded">
+                  app/api
+                </code>{" "}
+                承担，再代理至 Node。扫描与 AI 流水线由{" "}
                 <strong className="text-slate-800">Express + Bull</strong>{" "}
                 处理，<strong className="text-slate-800">Redis</strong>{" "}
                 承载队列与 Pub/Sub（如{" "}
@@ -314,7 +321,9 @@ export default function DocsPage() {
                 Next.js BFF（app/api）
               </h2>
               <p className="text-slate-600 leading-relaxed mb-6">
-                主应用将多数请求代理到 Node 基地址{" "}
+                当前项目的全部 BFF 均由本仓库{" "}
+                <code className="text-sm bg-slate-100 px-1.5 rounded">apps/main-next</code>{" "}
+                的 Route Handlers 实现；这些路由将请求代理到 Node 基地址{" "}
                 <code className="text-sm bg-slate-100 px-1.5 rounded">
                   NODE_SERVICE
                 </code>
