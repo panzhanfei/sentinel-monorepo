@@ -5,6 +5,7 @@ import {
   sendTelegramAlert,
   auditQueue,
   pub,
+  sub,
   withHeartbeat,
   scanWithDeepSeek,
   auditWithDeepSeek,
@@ -168,4 +169,34 @@ export async function startScan() {
   });
 
   console.log('[Worker] 审计 Worker 已启动，等待任务...');
+}
+
+const ACTIVE_DRAIN_MS = 30_000;
+
+/** 暂停消费、尽量等当前任务结束后再关闭队列与 pub/sub（供进程优雅退出） */
+export async function stopScan(): Promise<void> {
+  try {
+    await auditQueue.pause(true);
+  } catch (e) {
+    console.warn('[Worker] 暂停队列失败（仍将尝试关闭）:', e);
+  }
+
+  const deadline = Date.now() + ACTIVE_DRAIN_MS;
+  try {
+    while (Date.now() < deadline) {
+      const active = await auditQueue.getActiveCount();
+      if (active === 0) break;
+      await new Promise((r) => setTimeout(r, 200));
+    }
+  } catch (e) {
+    console.warn('[Worker] 等待活跃任务结束失败:', e);
+  }
+
+  try {
+    await auditQueue.close();
+  } catch (e) {
+    console.warn('[Worker] 关闭队列失败:', e);
+  }
+
+  await Promise.allSettled([pub.quit(), sub.quit()]);
 }
