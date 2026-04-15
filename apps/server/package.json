@@ -7,7 +7,9 @@
     "dev": "cross-env NODE_ENV=development tsx watch -r module-alias/register src/index.ts",
     "start": "cross-env NODE_ENV=production node -r module-alias/register dist/index.js",
     "build": "tsc && tsc-alias -p tsconfig.json && pnpm build-alias",
-    "build-alias": "cp package.json dist/"
+    "build-alias": "cp package.json dist/",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "keywords": [],
   "author": "",
@@ -37,7 +39,8 @@
     "@types/node": "^25.1.0",
     "tsc-alias": "^1.8.16",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^3.0.5"
   },
   "pnpm": {
     "overrides": {

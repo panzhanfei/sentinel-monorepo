@@ -61,4 +61,57 @@ describe("useMonitorStore", () => {
     store.clearCustomTokens();
     expect(store.customTokens).toHaveLength(0);
   });
+
+  it("filteredTokens returns all when activeTab is all", () => {
+    const store = useMonitorStore();
+    store.activeTab = "all";
+    store.mergeScannedTokens([
+      {
+        id: "a-1",
+        chainId: 1,
+        chainName: "Ethereum",
+        address: "0x1",
+        symbol: "A",
+        balance: "1",
+        loading: false,
+      },
+      {
+        id: "b-2",
+        chainId: 2,
+        chainName: "Other",
+        address: "0x2",
+        symbol: "B",
+        balance: "2",
+        loading: false,
+      },
+    ]);
+    expect(store.filteredTokens).toHaveLength(2);
+  });
+
+  it("filteredTokens narrows by chain id tab", () => {
+    const store = useMonitorStore();
+    store.mergeScannedTokens([
+      {
+        id: "a-1",
+        chainId: 1,
+        chainName: "Ethereum",
+        address: "0x1",
+        symbol: "A",
+        balance: "1",
+        loading: false,
+      },
+      {
+        id: "b-2",
+        chainId: 42,
+        chainName: "Other",
+        address: "0x2",
+        symbol: "B",
+        balance: "2",
+        loading: false,
+      },
+    ]);
+    store.activeTab = 42;
+    expect(store.filteredTokens).toHaveLength(1);
+    expect(store.filteredTokens[0]?.id).toBe("b-2");
+  });
 });
