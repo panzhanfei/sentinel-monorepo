@@ -1,4 +1,3 @@
-import { useCallback } from "react";
 import { getBffBaseUrl } from "@/utils/bffOrigin";
 
 export class ChatSessionInitError extends Error {
@@ -37,13 +36,4 @@ export const initChatSession = async (address: string | undefined, bffBase: stri
     throw new Error("Session ID missing in response");
   }
   return body.data.sessionId;
-}
-
-export const useChatSessionInit = () => {
-  const run = useCallback(
-    (address: string | undefined, bffBase?: string) =>
-      initChatSession(address, bffBase),
-    [],
-  );
-  return { initChatSession: run };
 }

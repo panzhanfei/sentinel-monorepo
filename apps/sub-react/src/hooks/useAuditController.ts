@@ -6,19 +6,20 @@ import {
   useCallback,
 } from "react";
 import { useWujieStore } from "@/stores";
-import { publicClient } from "@/utils";
-import { useQuery } from "@tanstack/react-query";
-import { fetchFootprintAudit } from "@/api/audit";
 import {
+  buildChatStreamUrl,
+  ChatSessionInitError,
   fetchChatMessages,
   mapHistoryMessageToChatRow,
-} from "@/api/chatHistory";
+  useChatSessionInit,
+  useFootprintAudit,
+  useWalletTransactionCount,
+} from "@/services";
 import type { ChatRow } from "@/types/audit";
 import {
   emitAuditAiStreamToHost,
   emitAuthSessionInvalidToHost,
 } from "@/utils/wujieHost";
-import { getBffBaseUrl } from "@/utils/bffOrigin";
 import {
   buildFirstStreamRow,
   buildStreamErrorRow,
@@ -31,10 +32,6 @@ import {
   WELCOME_LEN,
   WELCOME_ROWS,
 } from "@/utils/auditChat";
-import {
-  ChatSessionInitError,
-  useChatSessionInit,
-} from "./useChatSessionInit";
 
 const idOpts = {
   newId: () => crypto.randomUUID(),
@@ -64,30 +61,9 @@ export const useAuditController = () => {
   const [hasMoreChatHistory, setHasMoreChatHistory] = useState(false);
   const [isLoadingOlderChat, setIsLoadingOlderChat] = useState(false);
 
-  const { data: txCount = 0 } = useQuery<number>({
-    queryKey: ["txCount", address],
-    enabled: Boolean(address),
-    queryFn: async () => {
-      const account = address as `0x${string}`;
-      const latestCount = await publicClient.getTransactionCount({
-        address: account,
-        blockTag: "latest",
-      });
-      return latestCount;
-    },
-    refetchInterval: 3_000,
-    refetchOnWindowFocus: true,
-  });
+  const { data: txCount = 0 } = useWalletTransactionCount(address);
 
-  const { data: footprintAudit, isLoading } = useQuery({
-    queryKey: ["footprintAudit", address],
-    queryFn: () =>
-      fetchFootprintAudit(publicClient, address!, {
-        limit: 10,
-        maxBlocks: 300,
-      }),
-    enabled: !!address,
-  });
+  const { data: footprintAudit, isLoading } = useFootprintAudit(address);
   const txList = footprintAudit?.transactions;
   const riskRelatedCount = footprintAudit?.riskRelatedCount ?? 0;
 
@@ -130,11 +106,10 @@ export const useAuditController = () => {
 
       markStreamingStarted();
 
-      const url = new URL("/api/chat/stream", getBffBaseUrl());
-      url.searchParams.set("sessionId", sessionId.current);
-      url.searchParams.set("message", message);
-
-      const es = new EventSource(url.toString(), { withCredentials: true });
+      const es = new EventSource(
+        buildChatStreamUrl(sessionId.current, message),
+        { withCredentials: true },
+      );
       eventSourceRef.current = es;
 
       let currentAgent = "";
