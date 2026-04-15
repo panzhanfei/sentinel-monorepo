@@ -1,10 +1,10 @@
 Object.defineProperty(Document.prototype, "adoptedStyleSheets", {
-  get() {
-    return [];
-  },
-  set() {
-    // noop
-  },
+  get: () => {
+        return [];
+      },
+  set: () => {
+        // noop
+      },
 });
 
 import { createApp } from "vue";

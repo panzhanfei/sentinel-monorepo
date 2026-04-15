@@ -2,13 +2,13 @@
 
 import { useEffect } from "react";
 
-export default function Error({
+const Error = ({
   error,
   reset,
 }: {
   error: Error & { digest?: string };
   reset: () => void;
-}) {
+}) => {
   useEffect(() => {
     // 实际项目中这里通常会接入 Sentry 等日志系统
     console.error("Sentinel 运行时错误:", error);
@@ -45,4 +45,5 @@ export default function Error({
       </button>
     </div>
   );
-}
+};
+export default Error

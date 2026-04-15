@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useChainId } from "wagmi";
 import { chainToCoinGeckoId } from "@/app/src/config";
 
-export function useMarketData() {
+export const useMarketData = () => {
   const currentChainId = useChainId();
   const [ethPrice, setEthPrice] = useState(0);
   const [priceChange, setPriceChange] = useState(0);

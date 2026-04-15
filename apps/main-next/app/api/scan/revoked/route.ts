@@ -6,7 +6,7 @@ import {
   parseUpstreamJson,
 } from "@/app/src/utils/bffProxy";
 
-export async function POST(request: NextRequest) {
+export const POST = async (request: NextRequest) => {
   try {
     const unauthorized = await dualAuthUnauthorizedJson(request);
     if (unauthorized) return unauthorized;

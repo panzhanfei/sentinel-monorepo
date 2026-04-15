@@ -16,7 +16,7 @@ export type {
   AgentMessage,
 } from "./types";
 
-export function useDashboardData() {
+export const useDashboardData = () => {
   const {
     address: userAddress,
     isConnected,

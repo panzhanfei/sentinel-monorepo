@@ -22,7 +22,7 @@ interface Props {
   onRunScan: () => void;
 }
 
-export function AISentinelPanel({
+export const AISentinelPanel = ({
   scanLoading,
   scanProgress,
   scanStatus,
@@ -30,7 +30,7 @@ export function AISentinelPanel({
   agentLogs,
   suspiciousCount,
   onRunScan,
-}: Props) {
+}: Props) => {
   const logContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

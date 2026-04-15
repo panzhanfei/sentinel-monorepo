@@ -11,7 +11,7 @@ import {
 
 import { ShieldAlert, Wallet } from "lucide-react";
 
-export default function DashboardContent() {
+const DashboardContent = () => {
   const {
     walletStatus,
     address,
@@ -149,4 +149,5 @@ export default function DashboardContent() {
       <div className="h-20" />
     </div>
   );
-}
+};
+export default DashboardContent

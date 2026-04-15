@@ -10,7 +10,7 @@ const fadeInUp = {
   transition: { duration: 0.6 },
 };
 
-export function HeroSection() {
+export const HeroSection = () => {
   return (
     <section className="relative pt-32 pb-20 md:pt-48 md:pb-32 overflow-hidden">
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-250 h-150 bg-indigo-600/10 blur-[120px] rounded-full -z-10"></div>

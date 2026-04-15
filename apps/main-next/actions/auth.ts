@@ -13,7 +13,7 @@ import {
 
 const nonceService = new NonceService(redis, { prefix: "nonce", ttl: 300 });
 
-export async function getLoginNonce(address: string) {
+export const getLoginNonce = async (address: string) => {
   const now = Date.now();
   const isAllowed = await redis.slidingWindowLimit(
     `rate_limit:nonce:${address.toLowerCase()}`,
@@ -29,7 +29,7 @@ export async function getLoginNonce(address: string) {
   return nonce;
 }
 
-export async function verifySignature(address: string, signature: string) {
+export const verifySignature = async (address: string, signature: string) => {
   const key = `nonce:login:${address.toLowerCase()}`;
   const savedNonce = await redis.get(key);
   if (!savedNonce) {
@@ -71,7 +71,7 @@ export async function verifySignature(address: string, signature: string) {
   return { success: true };
 }
 
-export async function logout() {
+export const logout = async () => {
   const cookieStore = await cookies();
   await revokeSession({
     accessToken: cookieStore.get("accessToken")?.value,

@@ -9,7 +9,7 @@ vi.mock('viem', () => ({
 
 const mockedVerifyMessage = vi.mocked(verifyMessage);
 
-function createMockRedis() {
+const createMockRedis = () => {
   const store = new Map<string, string>();
   return {
     set: vi.fn(

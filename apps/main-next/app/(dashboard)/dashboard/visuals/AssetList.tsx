@@ -15,7 +15,7 @@ interface Props {
   assets: Asset[];
 }
 
-export function AssetList({ assets }: Props) {
+export const AssetList = ({ assets }: Props) => {
   return (
     <div className="bg-slate-950/30 backdrop-blur-2xl p-10 rounded-[2.5rem] border border-white/5 shadow-2xl relative">
       <div className="flex justify-between items-center mb-10">

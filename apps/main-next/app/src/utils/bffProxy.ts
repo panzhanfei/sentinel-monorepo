@@ -2,10 +2,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { validateDualSession } from "@/lib/authSession";
 
-/**
- * Access：Authorization Bearer → Cookie accessToken → 旧版 Cookie token → ?token=
- */
-export function resolveBearerToken(request: NextRequest): string | undefined {
+const resolveBearerToken = (request: NextRequest) : string | undefined => {
   const auth = request.headers.get("authorization");
   if (auth?.startsWith("Bearer ")) {
     const t = auth.slice(7).trim();
@@ -21,16 +18,11 @@ export function resolveBearerToken(request: NextRequest): string | undefined {
   return request.nextUrl.searchParams.get("token") ?? undefined;
 }
 
-export function resolveRefreshTokenCookie(
-  request: NextRequest,
-): string | undefined {
+const resolveRefreshTokenCookie = (request: NextRequest) : string | undefined => {
   return request.cookies.get("refreshToken")?.value ?? undefined;
 }
 
-/** BFF 侧会话前置校验：双 token + 黑名单 + 单点登录 */
-export async function dualAuthUnauthorizedJson(
-  request: NextRequest,
-): Promise<NextResponse | null> {
+export const dualAuthUnauthorizedJson = async (request: NextRequest) : Promise<NextResponse | null> => {
   const accessToken = resolveBearerToken(request);
   const refreshToken = resolveRefreshTokenCookie(request);
   if (!accessToken || !refreshToken) {
@@ -51,16 +43,12 @@ export async function dualAuthUnauthorizedJson(
   return null;
 }
 
-export type ProxyToNodeHeadersOpts = {
+type ProxyToNodeHeadersOpts = {
   contentType?: string | false;
   accept?: string;
 };
 
-/** 转发 Authorization + 原始 Cookie（含 refreshToken），供 Node 双令牌校验 */
-export function proxyHeadersToNode(
-  request: NextRequest,
-  opts?: ProxyToNodeHeadersOpts,
-): HeadersInit {
+export const proxyHeadersToNode = (request: NextRequest, opts?: ProxyToNodeHeadersOpts) : HeadersInit => {
   const headers = new Headers();
   if (opts?.accept) {
     headers.set("Accept", opts.accept);
@@ -79,11 +67,11 @@ export function proxyHeadersToNode(
   return headers;
 }
 
-export function authHeadersForProxy(request: NextRequest): HeadersInit {
+export const authHeadersForProxy = (request: NextRequest) : HeadersInit => {
   return proxyHeadersToNode(request);
 }
 
-export async function parseUpstreamJson(res: Response): Promise<unknown> {
+export const parseUpstreamJson = async (res: Response) : Promise<unknown> => {
   const raw = await res.text();
   const trimmed = raw.trim();
 

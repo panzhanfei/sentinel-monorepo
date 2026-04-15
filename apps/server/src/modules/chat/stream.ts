@@ -9,10 +9,7 @@ const scan = withHeartbeat('Scanner', scanWithDeepSeek);
 const audit = withHeartbeat('Auditor', auditWithDeepSeek);
 const generate = withHeartbeat('Decision', generateFinalReport);
 
-export async function runChatAgents(
-  message: string,
-  publish: (agent: string, status: string, content: string) => void
-) {
+export const runChatAgents = async (message: string, publish: (agent: string, status: string, content: string) => void) => {
   // === Agent 1 ===
   publish('Scanner', 'thinking', 'Analyzing user input...');
   const r1 = await scan((chunk) => {

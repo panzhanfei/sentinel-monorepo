@@ -10,12 +10,12 @@ const RISK_APPROVAL_SELECTORS = new Set([
   "0xd505accf", // permit(...) EIP-2612
 ]);
 
-function selectorOfInput(input: `0x${string}` | undefined): string | null {
+const selectorOfInput = (input: `0x${string}` | undefined) : string | null => {
   if (!input || input.length < 10) return null;
   return input.slice(0, 10).toLowerCase();
 }
 
-function isRiskApprovalCalldata(input: `0x${string}` | undefined): boolean {
+const isRiskApprovalCalldata = (input: `0x${string}` | undefined) : boolean => {
   const sel = selectorOfInput(input);
   return sel != null && RISK_APPROVAL_SELECTORS.has(sel);
 }
@@ -26,14 +26,7 @@ export interface FootprintAuditResult {
   riskRelatedCount: number;
 }
 
-/**
- * 单次扫描：Footprint 列表（限量）+ 窗口内风险相关笔数（全量计数）。
- */
-export async function fetchFootprintAudit(
-  client: PublicClient,
-  address: string,
-  opts?: { maxBlocks?: number; limit?: number },
-): Promise<FootprintAuditResult> {
+export const fetchFootprintAudit = async (client: PublicClient, address: string, opts?: { maxBlocks?: number; limit?: number }) : Promise<FootprintAuditResult> => {
   const maxBlocks = opts?.maxBlocks ?? 300;
   const limit = opts?.limit ?? 10;
   const addr = getAddress(address);

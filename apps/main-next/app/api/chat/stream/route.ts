@@ -5,7 +5,7 @@ import {
   proxyHeadersToNode,
 } from "@/app/src/utils/bffProxy";
 
-export async function GET(request: NextRequest) {
+export const GET = async (request: NextRequest) => {
   const { searchParams } = new URL(request.url);
   const sessionId = searchParams.get("sessionId");
   const message = searchParams.get("message") ?? "";

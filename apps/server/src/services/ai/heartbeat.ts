@@ -8,22 +8,11 @@ export interface HeartbeatOptions {
   onRestart?: (reason: string, attempt: number) => void;
 }
 
-/**
- * 包装一个AI函数，使其具备心跳监控能力
- * @param name AI名称，用于日志
- * @param aiFunc 原始AI函数，签名为 (onChunk, signal, ...args) => Promise<string>
- * @param options 配置项
- * @returns 包装后的函数，签名与原函数相同（但不再需要传入signal）
- */
-export function withHeartbeat<Args extends unknown[]>(
-  name: string,
-  aiFunc: (
+export const withHeartbeat = <Args extends unknown[]>(name: string, aiFunc: (
     onChunk: (chunk: string) => void,
     signal: AbortSignal,
     ...args: Args
-  ) => Promise<string>,
-  options: HeartbeatOptions = {}
-): (onChunk: (chunk: string) => void, ...args: Args) => Promise<string> {
+  ) => Promise<string>, options: HeartbeatOptions = {}) : (onChunk: (chunk: string) => void, ...args: Args) => Promise<string> => {
   const { timeoutMs = 30000, maxRetries = 2, onRestart } = options;
 
   return async (

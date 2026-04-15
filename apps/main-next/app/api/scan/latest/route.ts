@@ -6,7 +6,7 @@ import {
   parseUpstreamJson,
 } from "@/app/src/utils/bffProxy";
 
-export async function GET(request: NextRequest) {
+export const GET = async (request: NextRequest) => {
   const { searchParams } = new URL(request.url);
   const address = searchParams.get("address");
   if (!address) {

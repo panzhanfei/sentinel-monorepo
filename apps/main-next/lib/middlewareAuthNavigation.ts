@@ -9,13 +9,10 @@ export type MiddlewareAuthNavigation =
       search?: Record<string, string>;
     };
 
-/**
- * 会话与路径对应的中间件导航决策（与 NextResponse 解耦，便于单测）。
- */
-export function getMiddlewareAuthNavigation(input: {
+export const getMiddlewareAuthNavigation = (input: {
   pathname: string;
   hasSession: boolean;
-}): MiddlewareAuthNavigation {
+}) : MiddlewareAuthNavigation => {
   const onProtectedRoute = isProtectedRoute(input.pathname);
   const isAuthRoute = input.pathname === "/login";
 

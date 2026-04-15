@@ -7,14 +7,14 @@ const AUTH_SESSION_INVALID_EVENT = "auth-session-invalid";
 
 let refreshInFlight: Promise<boolean> | null = null;
 
-function emitSessionInvalid(reason: string) {
+const emitSessionInvalid = (reason: string) => {
   if (typeof window === "undefined") return;
   window.dispatchEvent(
     new CustomEvent(AUTH_SESSION_INVALID_EVENT, { detail: { reason } }),
   );
 }
 
-function parseErrorCode(body: unknown): string | undefined {
+const parseErrorCode = (body: unknown) : string | undefined => {
   if (!body || typeof body !== "object") return undefined;
   const o = body as Record<string, unknown>;
   if (typeof o.code === "string") return o.code;
@@ -26,8 +26,7 @@ function parseErrorCode(body: unknown): string | undefined {
   return undefined;
 }
 
-/** Access 失效但 Refresh 仍可能有效时尝试续期 */
-function shouldAttemptRefresh(code: string | undefined): boolean {
+const shouldAttemptRefresh = (code: string | undefined) : boolean => {
   return (
     code === "INVALID_TOKEN" ||
     code === "TOKEN_SUBJECT_MISMATCH" ||
@@ -37,10 +36,7 @@ function shouldAttemptRefresh(code: string | undefined): boolean {
   );
 }
 
-/**
- * 并发去重：多个 401 同时到达时共用一个 refresh 请求。
- */
-export function tryRefreshSession(): Promise<boolean> {
+export const tryRefreshSession = () : Promise<boolean> => {
   if (refreshInFlight) return refreshInFlight;
 
   const p = fetch(REFRESH_PATH, {
@@ -57,10 +53,7 @@ export function tryRefreshSession(): Promise<boolean> {
   return p;
 }
 
-export async function authFetch(
-  input: RequestInfo | URL,
-  init?: RequestInit,
-): Promise<Response> {
+export const authFetch = async (input: RequestInfo | URL, init?: RequestInit) : Promise<Response> => {
   const nextInit: RequestInit = {
     ...init,
     credentials: init?.credentials ?? "include",

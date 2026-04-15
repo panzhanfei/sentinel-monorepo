@@ -33,7 +33,7 @@ const heartbeatGenerate = withHeartbeat('Generator', generateFinalReport, {
   maxRetries: 2,
 });
 
-export async function processJob(job: Job) {
+const processJob = async (job: Job) => {
   const { address, jobId } = job.data;
   console.log(`[Worker] 开始处理 jobId=${jobId}, address=${address}`);
 
@@ -157,7 +157,7 @@ export async function processJob(job: Job) {
 }
 
 // 启动 Worker
-export async function startScan() {
+export const startScan = async () => {
   auditQueue.process(async (job) => await processJob(job));
 
   auditQueue.on('failed', (job, err) => {
@@ -173,8 +173,7 @@ export async function startScan() {
 
 const ACTIVE_DRAIN_MS = 30_000;
 
-/** 暂停消费、尽量等当前任务结束后再关闭队列与 pub/sub（供进程优雅退出） */
-export async function stopScan(): Promise<void> {
+export const stopScan = async () : Promise<void> => {
   try {
     await auditQueue.pause(true);
   } catch (e) {

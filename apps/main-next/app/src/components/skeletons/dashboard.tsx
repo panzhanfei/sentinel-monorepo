@@ -1,4 +1,4 @@
-export function DashboardSkeleton() {
+export const DashboardSkeleton = () => {
   // 核心呼吸样式：深色底，极低透明度波动
   const pulseClass = "animate-pulse bg-zinc-900/50 border border-white/5";
   const innerBlock = "bg-zinc-800/40 rounded-lg";

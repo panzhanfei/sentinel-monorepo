@@ -3,7 +3,7 @@ import { useBalance, useReadContracts, useChainId } from "wagmi";
 import { erc20Abi, formatUnits, type Address } from "viem";
 import { TOKEN_WHITELIST } from "@/app/src/config";
 
-export function usePortfolio({
+export const usePortfolio = ({
   enabled,
   address,
   ethPrice,
@@ -11,7 +11,7 @@ export function usePortfolio({
   enabled: boolean;
   address?: Address;
   ethPrice: number;
-}) {
+}) => {
   const chainId = useChainId(); // ✅ 直接调用
   const config = TOKEN_WHITELIST[chainId] || TOKEN_WHITELIST[1]; // 降级到主网
 

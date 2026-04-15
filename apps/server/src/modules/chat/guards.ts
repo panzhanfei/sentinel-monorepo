@@ -9,12 +9,11 @@ const OFF_TOPIC_PREFIX =
 const OFF_TOPIC_CREATIVE =
   /(写一首|七律|宋词|leetcode|用python|用 js |javascript|帮我写作业|红楼梦|翻译全文|马云是谁|特朗普)/i;
 
-function hasEthAddress(text: string): boolean {
+const hasEthAddress = (text: string) : boolean => {
   return /0x[a-fA-F0-9]{40}\b/.test(text);
 }
 
-/** 明显闲聊、空输入或与场景无关的泛求助，不进入 AI */
-export function isClearlyOffTopicQuestion(message: string): boolean {
+export const isClearlyOffTopicQuestion = (message: string) : boolean => {
   const t = message.trim();
   if (!t) return true;
   if (hasEthAddress(t)) return false;
@@ -24,17 +23,13 @@ export function isClearlyOffTopicQuestion(message: string): boolean {
   return false;
 }
 
-export function getAllowancesFromJobResult(
-  result: unknown
-): unknown[] | null {
+export const getAllowancesFromJobResult = (result: unknown) : unknown[] | null => {
   if (!result || typeof result !== 'object') return null;
   const r = result as { allowances?: unknown };
   return Array.isArray(r.allowances) ? r.allowances : null;
 }
 
-export function hasCompletedScanWithData(
-  job: { status: string; result: unknown } | null
-): boolean {
+export const hasCompletedScanWithData = (job: { status: string; result: unknown } | null) : boolean => {
   if (!job || job.status !== 'COMPLETED') return false;
   const allowances = getAllowancesFromJobResult(job.result);
   return Array.isArray(allowances) && allowances.length > 0;

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Send } from "lucide-react";
 import { authFetch } from "@/app/src/utils/authFetch";
 
-export function TelegramChatIdSettings() {
+export const TelegramChatIdSettings = () => {
   const [panelOpen, setPanelOpen] = useState(false);
   const [value, setValue] = useState("");
   const [loading, setLoading] = useState(false);

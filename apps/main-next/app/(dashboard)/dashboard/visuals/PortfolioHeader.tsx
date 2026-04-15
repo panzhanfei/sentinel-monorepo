@@ -9,12 +9,12 @@ interface Props {
   scanStatus: string;
 }
 
-export function PortfolioHeader({
+export const PortfolioHeader = ({
   totalValue,
   priceChange,
   suspiciousCount,
   scanStatus,
-}: Props) {
+}: Props) => {
   const isPositive = priceChange >= 0;
 
   return (

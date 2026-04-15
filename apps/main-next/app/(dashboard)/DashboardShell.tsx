@@ -10,7 +10,7 @@ import {
 import { Menu, X } from "lucide-react";
 import { RiskProvider } from "@/app/context";
 
-export function DashboardShell({ children }: { children: React.ReactNode }) {
+export const DashboardShell = ({ children }: { children: React.ReactNode }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (

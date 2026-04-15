@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 
 export type LoginStatus = "idle" | "loading" | "signing" | "verifying";
 
-export function useLogin() {
+export const useLogin = () => {
   const router = useRouter();
   const { address, isConnected, status: accountStatus } = useAccount();
   const { signMessageAsync } = useSignMessage();

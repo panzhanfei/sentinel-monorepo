@@ -6,7 +6,7 @@ import type { ChainBalance, TokenBalance } from "@/types/monitor";
 
 export type GetClient = (chainId: number) => PublicClient | undefined;
 
-export function createInitialChainBalances(): ChainBalance[] {
+export const createInitialChainBalances = () : ChainBalance[] => {
   return SUPPORTED_CHAINS.map((c) => ({
     chainId: c.id,
     chainName: c.name,
@@ -18,11 +18,7 @@ export function createInitialChainBalances(): ChainBalance[] {
   }));
 }
 
-export async function refreshChainBalanceRow(
-  item: ChainBalance,
-  address: Address,
-  getClient: GetClient,
-): Promise<void> {
+export const refreshChainBalanceRow = async (item: ChainBalance, address: Address, getClient: GetClient) : Promise<void> => {
   const client = getClient(item.chainId);
   if (!client) return;
   item.loading = true;
@@ -42,23 +38,13 @@ export async function refreshChainBalanceRow(
   }
 }
 
-export async function refreshAllNativeBalances(
-  rows: ChainBalance[],
-  address: Address,
-  getClient: GetClient,
-): Promise<void> {
+export const refreshAllNativeBalances = async (rows: ChainBalance[], address: Address, getClient: GetClient) : Promise<void> => {
   await Promise.all(
     rows.map((item) => refreshChainBalanceRow(item, address, getClient)),
   );
 }
 
-export async function fetchErc20OnChain(
-  chainId: number,
-  chainName: string,
-  tokenAddr: Address,
-  userAddress: Address,
-  getClient: GetClient,
-): Promise<TokenBalance | null> {
+export const fetchErc20OnChain = async (chainId: number, chainName: string, tokenAddr: Address, userAddress: Address, getClient: GetClient) : Promise<TokenBalance | null> => {
   const client = getClient(chainId);
   if (!client) return null;
 
@@ -98,12 +84,7 @@ export async function fetchErc20OnChain(
   }
 }
 
-/** 全链扫描同一合约地址，返回在各链上解析成功的代币行 */
-export async function scanErc20AcrossChains(
-  tokenAddr: string,
-  userAddress: Address,
-  getClient: GetClient,
-): Promise<TokenBalance[]> {
+export const scanErc20AcrossChains = async (tokenAddr: string, userAddress: Address, getClient: GetClient) : Promise<TokenBalance[]> => {
   if (!isAddress(tokenAddr)) return [];
 
   const addr = tokenAddr as Address;

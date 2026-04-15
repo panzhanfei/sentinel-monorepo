@@ -54,13 +54,7 @@ export const publicClient = createPublicClient({
   transport: http(anvilRpcUrl),
 });
 
-/**
- * viem 对 `multicall({ contracts })` 会按 contracts 元组做极深返回类型推断；
- * 动态长度批次在部分 tsconfig 下触发 TS2589。经 unknown 收口为固定返回形状。
- */
-async function erc20ChunkMulticall(
-  contracts: readonly Erc20MulticallItem[]
-): Promise<readonly ViemMulticallRow[]> {
+const erc20ChunkMulticall = async (contracts: readonly Erc20MulticallItem[]) : Promise<readonly ViemMulticallRow[]> => {
   const call = publicClient.multicall as unknown as (params: {
     contracts: readonly Erc20MulticallItem[];
     allowFailure?: boolean;
@@ -68,19 +62,7 @@ async function erc20ChunkMulticall(
   return call({ contracts });
 }
 
-/**
- * 批量审计指定地址的所有有效授权
- * @param userAddress 要审计的地址
- * @param fromBlock 起始区块，默认自动计算最近 maxBlocksToScan 个块
- * @param maxBlocksToScan 最多扫描的区块数量，默认 10000
- * @param chunkSize 每次查询的区块范围大小，必须 ≤ RPC 限制（例如 QuickNode 免费版为 5）
- */
-export async function batchAuditAllowances(
-  userAddress: Address,
-  fromBlock?: BlockNumber,
-  maxBlocksToScan = 10000n,
-  chunkSize = 5n // ⚠️ 关键修改：将块范围限制在 5 以内
-): Promise<AllowanceResult[]> {
+export const batchAuditAllowances = async (userAddress: Address, fromBlock?: BlockNumber, maxBlocksToScan = 10000n, chunkSize = 5n) : Promise<AllowanceResult[]> => {
   const latestBlock = await publicClient.getBlockNumber();
   let startBlock: BlockNumber;
 

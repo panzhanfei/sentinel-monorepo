@@ -11,11 +11,7 @@ export const AUTH_SESSION_INVALID_EVENT = "auth-session-invalid";
 
 export type AuthSessionInvalidPayload = { reason?: string };
 
-/**
- * 统一踢出：清 httpOnly Cookie、断开钱包连接、跳转登录（受保护页带 from）。
- * 内置并发去重，避免钱包断开 + 子应用 401 重复执行。
- */
-export function useKickOutSession() {
+export const useKickOutSession = () => {
   const router = useRouter();
   const { disconnect } = useDisconnect();
   const inFlightRef = useRef(false);

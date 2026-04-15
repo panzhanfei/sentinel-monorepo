@@ -8,7 +8,7 @@ const REQUEST_TIMEOUT_MS = 12_000;
 const isProduction = process.env.NODE_ENV === "production";
 const PRICE_API_MODE = (process.env.PRICE_API_MODE || "mock").toLowerCase();
 
-function parseNoProxyList(raw: string | undefined): string[] {
+const parseNoProxyList = (raw: string | undefined) : string[] => {
   if (!raw?.trim()) return [];
   return raw
     .split(",")
@@ -16,7 +16,7 @@ function parseNoProxyList(raw: string | undefined): string[] {
     .filter(Boolean);
 }
 
-function shouldBypassProxy(hostname: string, noProxyRules: string[]): boolean {
+const shouldBypassProxy = (hostname: string, noProxyRules: string[]) : boolean => {
   const host = hostname.toLowerCase();
   for (const rule of noProxyRules) {
     if (rule === "*") return true;
@@ -36,12 +36,12 @@ function shouldBypassProxy(hostname: string, noProxyRules: string[]): boolean {
   return false;
 }
 
-function asErrorMessage(error: unknown): string {
+const asErrorMessage = (error: unknown) : string => {
   if (error instanceof Error && error.message) return error.message;
   return String(error);
 }
 
-function hashId(seed: string): number {
+const hashId = (seed: string) : number => {
   let hash = 0;
   for (let i = 0; i < seed.length; i++) {
     hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
@@ -49,7 +49,7 @@ function hashId(seed: string): number {
   return hash;
 }
 
-function buildMockPriceResponse(ids: string): Record<string, unknown> {
+const buildMockPriceResponse = (ids: string) : Record<string, unknown> => {
   const idList = ids
     .split(",")
     .map((s) => s.trim().toLowerCase())
@@ -69,7 +69,7 @@ function buildMockPriceResponse(ids: string): Record<string, unknown> {
   return data;
 }
 
-export async function GET(request: Request) {
+export const GET = async (request: Request) => {
   const { searchParams } = new URL(request.url);
   const ids = searchParams.get("ids") || "ethereum";
 

@@ -27,10 +27,7 @@ axiosRetry(telegramClient, {
       (!error.response && !!error.request)),
 });
 
-export async function sendTelegramAlert(
-  message: string,
-  telegramChatId: string | null | undefined
-): Promise<void> {
+export const sendTelegramAlert = async (message: string, telegramChatId: string | null | undefined) : Promise<void> => {
   if (!alertConfig.telegramBotToken || !telegramChatId) return;
 
   const url = `${alertConfig.telegramApiBase}/bot${alertConfig.telegramBotToken}/sendMessage`;

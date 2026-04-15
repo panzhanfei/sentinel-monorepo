@@ -21,15 +21,14 @@ export default defineConfig({
         target: "http://localhost:3000",
         changeOrigin: true,
         secure: false,
-        /** 浏览器打到子应用端口时带上 localhost Cookie，需原样转发给 Next */
-        configure(proxy) {
-          proxy.on("proxyReq", (proxyReq, req) => {
-            const cookie = req.headers.cookie;
-            if (cookie) {
-              proxyReq.setHeader("cookie", cookie);
-            }
-          });
-        },
+        configure: (proxy) => {
+                  proxy.on("proxyReq", (proxyReq, req) => {
+                    const cookie = req.headers.cookie;
+                    if (cookie) {
+                      proxyReq.setHeader("cookie", cookie);
+                    }
+                  });
+                },
       },
     },
   },

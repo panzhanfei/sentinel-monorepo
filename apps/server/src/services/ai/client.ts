@@ -66,20 +66,7 @@ axiosInstance.interceptors.response.use(
 const DEEPSEEK_BASE_URL = aiConfig.deepSeekApiUrl.replace(/\/$/, '');
 export const DEEPSEEK_API_URL = `${DEEPSEEK_BASE_URL}/v1`;
 
-/**
- * 通用流式调用 DeepSeek 函数（支持取消）
- * @param messages 消息列表
- * @param onChunk 收到每个内容块时的回调
- * @param systemPrompt 系统提示词
- * @param signal 可选的 AbortSignal 用于取消请求
- * @returns 完整响应文本
- */
-export async function streamDeepSeek(
-  messages: { role: string; content: string }[],
-  onChunk: (chunk: string) => void,
-  systemPrompt?: string,
-  signal?: AbortSignal
-): Promise<string> {
+export const streamDeepSeek = async (messages: { role: string; content: string }[], onChunk: (chunk: string) => void, systemPrompt?: string, signal?: AbortSignal) : Promise<string> => {
   const allMessages = systemPrompt
     ? [{ role: 'system', content: systemPrompt }, ...messages]
     : messages;

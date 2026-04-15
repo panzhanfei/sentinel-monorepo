@@ -4,7 +4,7 @@ import type { JwtPayload } from '@sentinel/auth';
 import { DualJwtService } from '@sentinel/auth';
 import { dualJwt } from '@/lib/dualJwt';
 
-function extractAccessToken(req: Request): string | undefined {
+const extractAccessToken = (req: Request) : string | undefined => {
   const fromAuth = DualJwtService.extractBearer(req.headers.authorization);
   if (fromAuth) return fromAuth;
 
@@ -20,7 +20,7 @@ function extractAccessToken(req: Request): string | undefined {
   return undefined;
 }
 
-function extractRefreshToken(req: Request): string | undefined {
+const extractRefreshToken = (req: Request) : string | undefined => {
   if (req.cookies?.refreshToken) return req.cookies.refreshToken;
 
   const hdr = req.headers['x-refresh-token'];
@@ -31,7 +31,7 @@ function extractRefreshToken(req: Request): string | undefined {
   return undefined;
 }
 
-function sameSubject(a: JwtPayload, b: JwtPayload): boolean {
+const sameSubject = (a: JwtPayload, b: JwtPayload) : boolean => {
   const sa = String(a.sub).toLowerCase();
   const sb = String(b.sub).toLowerCase();
   return sa === sb;

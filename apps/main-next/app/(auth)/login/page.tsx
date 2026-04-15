@@ -5,7 +5,7 @@ import { ShieldCheck, ShieldAlert, Loader2, LogOut } from "lucide-react";
 import { LoginSkeleton } from "@/app/src/components";
 import { useLogin } from "./hooks/useLogin";
 
-export default function LoginPage() {
+const LoginPage = () => {
   const {
     accountStatus,
     isConnected,
@@ -92,4 +92,5 @@ export default function LoginPage() {
       </div>
     </div>
   );
-}
+};
+export default LoginPage

@@ -10,10 +10,7 @@ type SessionJson = {
   accessExpiresAtSec?: number | null;
 };
 
-/**
- * 在 access 过期前主动 refresh；切回标签页时重新对齐定时器。
- */
-export function SessionRefreshScheduler() {
+export const SessionRefreshScheduler = () => {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const schedulingRef = useRef(false);
 

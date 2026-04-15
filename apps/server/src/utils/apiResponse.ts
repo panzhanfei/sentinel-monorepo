@@ -25,17 +25,12 @@ export class HttpError extends Error {
   }
 }
 
-export function sendSuccess<T>(res: Response, data: T, status = 200): void {
+export const sendSuccess = <T>(res: Response, data: T, status = 200) : void => {
   const body: ApiSuccessBody<T> = { success: true, data };
   res.status(status).json(body);
 }
 
-export function sendFailure(
-  res: Response,
-  status: number,
-  message: string,
-  code?: string
-): void {
+export const sendFailure = (res: Response, status: number, message: string, code?: string) : void => {
   const body: ApiErrorBody = {
     success: false,
     error: { message, ...(code ? { code } : {}) },

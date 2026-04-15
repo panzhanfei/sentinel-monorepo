@@ -1,9 +1,5 @@
 import { streamDeepSeek } from './client';
-export async function scanWithDeepSeek(
-  onChunk: (chunk: string) => void,
-  signal: AbortSignal,
-  data: string
-): Promise<string> {
+export const scanWithDeepSeek = async (onChunk: (chunk: string) => void, signal: AbortSignal, data: string) : Promise<string> => {
   console.log('🔍 [Agent 1] 开始流式调用 DeepSeek 初扫...');
   return streamDeepSeek(
     [
@@ -18,11 +14,7 @@ export async function scanWithDeepSeek(
   );
 }
 
-export async function auditWithDeepSeek(
-  onChunk: (chunk: string) => void,
-  signal: AbortSignal,
-  previousReport: string
-): Promise<string> {
+export const auditWithDeepSeek = async (onChunk: (chunk: string) => void, signal: AbortSignal, previousReport: string) : Promise<string> => {
   console.log('🔍 [Agent 2] 开始流式调用 DeepSeek 复核...');
   return streamDeepSeek(
     [
@@ -37,11 +29,7 @@ export async function auditWithDeepSeek(
   );
 }
 
-export async function generateFinalReport(
-  onChunk: (chunk: string) => void,
-  signal: AbortSignal,
-  refinedAudit: string
-): Promise<string> {
+export const generateFinalReport = async (onChunk: (chunk: string) => void, signal: AbortSignal, refinedAudit: string) : Promise<string> => {
   console.log('🔍 [Agent 3] 开始流式调用 DeepSeek 生成最终报告...');
   return streamDeepSeek(
     [{ role: 'user', content: `整理最终报告：\n${refinedAudit}` }],

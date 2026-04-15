@@ -1,6 +1,6 @@
 import { NavBar, HeroSection, FeaturesSection } from "@/app/src/components";
 
-export default function LandingPage() {
+const LandingPage = () => {
   const text =
     "© 2026 Sentinel Protocol. Disclaimer: Digital assets involve significant risk. Sentinel's AI-driven audits are supplementary tools and do not guarantee 100% security. Use at your own risk.";
 
@@ -21,4 +21,5 @@ export default function LandingPage() {
       </footer>
     </div>
   );
-}
+};
+export default LandingPage

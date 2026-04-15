@@ -4,7 +4,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { ShieldCheck, Zap, Globe } from "lucide-react";
 
-function FeatureCard({
+const FeatureCard = ({
   icon,
   title,
   description,
@@ -12,7 +12,7 @@ function FeatureCard({
   icon: React.ReactNode;
   title: string;
   description: string;
-}) {
+}) => {
   return (
     <motion.div
       whileHover={{ y: -5 }}
@@ -27,7 +27,7 @@ function FeatureCard({
   );
 }
 
-export function FeaturesSection() {
+export const FeaturesSection = () => {
   return (
     <section id="features" className="py-24 bg-slate-900/30">
       <div className="max-w-7xl mx-auto px-6">

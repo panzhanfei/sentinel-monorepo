@@ -1,6 +1,6 @@
 "use client";
 
-export function AuditSkeleton() {
+export const AuditSkeleton = () => {
   // 统一定义赛博脉动样式
   const pulseClass = "animate-pulse bg-zinc-900/50 border border-white/5";
   const blockClass = "bg-zinc-800/40 rounded-lg";

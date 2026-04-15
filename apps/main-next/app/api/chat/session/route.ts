@@ -6,8 +6,7 @@ import {
   parseUpstreamJson,
 } from "@/app/src/utils/bffProxy";
 
-/** GET：address 必填；鉴权为 Cookie（httpOnly token）或 Authorization / ?token= */
-export async function GET(request: NextRequest) {
+export const GET = async (request: NextRequest) => {
   try {
     const address = request.nextUrl.searchParams.get("address");
     if (!address) {
@@ -36,7 +35,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest) {
+export const POST = async (request: NextRequest) => {
   try {
     const unauthorized = await dualAuthUnauthorizedJson(request);
     if (unauthorized) return unauthorized;

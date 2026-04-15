@@ -1,4 +1,4 @@
-export function MonitorSkeleton() {
+export const MonitorSkeleton = () => {
   // 定义统一样式，方便维护
   const boxStyle = "bg-zinc-900/40 border border-white/5 animate-pulse";
   const innerBlockStyle = "bg-zinc-800/50 rounded";

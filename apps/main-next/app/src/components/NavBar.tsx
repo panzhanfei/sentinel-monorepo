@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Github } from "lucide-react";
 import { TOSModal } from "@/app/src/components"; // 假设 TOSModal 已经是客户端组件
 
-export function NavBar() {
+export const NavBar = () => {
   return (
     <nav className="fixed top-0 w-full z-50 border-b border-white/5 bg-slate-950/50 backdrop-blur-xl">
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">

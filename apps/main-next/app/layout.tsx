@@ -2,11 +2,11 @@ import { Web3Providers } from "@/app/src/components";
 
 import "./index.css";
 
-export default function RootLayout({
+const RootLayout = ({
   children,
 }: {
   children: React.ReactNode;
-}) {
+}) => {
   return (
     <html lang="zh-CN">
       <body className="bg-[#fafafa]">
@@ -14,4 +14,5 @@ export default function RootLayout({
       </body>
     </html>
   );
-}
+};
+export default RootLayout

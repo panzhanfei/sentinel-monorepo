@@ -5,7 +5,7 @@ interface Props {
   logs: AgentMessage[];
 }
 
-export function AgentLogs({ logs }: Props) {
+export const AgentLogs = ({ logs }: Props) => {
   return (
     <div className="font-mono text-[11px] leading-relaxed">
       {logs.map((log, i) => (

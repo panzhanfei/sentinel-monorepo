@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useMotionValue, useSpring, motion, useTransform } from "framer-motion";
 
-export function AnimatedNumber({ value }: { value: number }) {
+export const AnimatedNumber = ({ value }: { value: number }) => {
   const count = useMotionValue(value);
   // spring 配置让动画有弹性，不生硬
   const rounded = useSpring(count, { stiffness: 50, damping: 15 });

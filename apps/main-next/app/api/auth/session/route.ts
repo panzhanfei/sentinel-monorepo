@@ -3,10 +3,7 @@ import { cookies } from "next/headers";
 import { JwtService } from "@sentinel/auth";
 import { validateDualSession } from "@/lib/authSession";
 
-/**
- * 供客户端调度主动续期：读取 access JWT 的 exp（不解签亦可用于计时；仅服务端可读 httpOnly）。
- */
-export async function GET() {
+export const GET = async () => {
   const store = await cookies();
   const access =
     store.get("accessToken")?.value ?? store.get("token")?.value ?? undefined;

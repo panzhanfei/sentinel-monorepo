@@ -1,5 +1,5 @@
 // app/loading.tsx
-export default function Loading() {
+const Loading = () => {
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
       {/* 这里的动画效果符合 32K 岗位的审美：简洁、专业 */}
@@ -12,4 +12,5 @@ export default function Loading() {
       </p>
     </div>
   );
-}
+};
+export default Loading

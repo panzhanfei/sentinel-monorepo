@@ -12,7 +12,7 @@ import { useRisk } from "@/app/context";
 const LARGE_AMOUNT_WEI = 10n * 10n ** 18n;
 const MAX_UINT256 = 2n ** 256n - 1n;
 
-function parseWei(raw: string): bigint | null {
+const parseWei = (raw: string) : bigint | null => {
   try {
     return BigInt(raw);
   } catch {
@@ -20,20 +20,16 @@ function parseWei(raw: string): bigint | null {
   }
 }
 
-/** 转账：达到或超过阈值视为大额，背景变红 */
-function isLargeTransfer(valueWei: bigint): boolean {
+const isLargeTransfer = (valueWei: bigint) : boolean => {
   return valueWei >= LARGE_AMOUNT_WEI;
 }
 
-/**
- * 授权：大额额度、或常见「无限授权」（接近 uint256 最大值）视为高危
- */
-function isHighRiskApproval(valueWei: bigint): boolean {
+const isHighRiskApproval = (valueWei: bigint) : boolean => {
   if (valueWei >= LARGE_AMOUNT_WEI) return true;
   return valueWei > MAX_UINT256 / 2n;
 }
 
-function weiHint(wei: bigint): string {
+const weiHint = (wei: bigint) : string => {
   try {
     return `${formatEther(wei)}（按 18 位小数估算，具体代币请以合约 decimals 为准）`;
   } catch {

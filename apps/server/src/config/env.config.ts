@@ -15,7 +15,7 @@ import { z } from 'zod';
 const envFile = `.env.${process.env.NODE_ENV || 'development'}`;
 const envNameHints = [envFile, '.env.production', '.env.development', '.env.local', '.env'];
 
-function resolveServerRootForEnv(): string {
+const resolveServerRootForEnv = () : string => {
   const dirCandidates = [path.resolve(__dirname, '..'), path.resolve(__dirname, '../..')];
   for (const root of dirCandidates) {
     for (const name of envNameHints) {

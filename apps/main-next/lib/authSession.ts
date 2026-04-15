@@ -25,37 +25,34 @@ const dualJwtOptions: DualJwtOptions = {
 
 const dualJwt = new DualJwtService(dualJwtOptions);
 
-function tokenHash(token: string): string {
+const tokenHash = (token: string) : string => {
   return createHash("sha256").update(token).digest("hex");
 }
 
-function blacklistKey(token: string): string {
+const blacklistKey = (token: string) : string => {
   return `${BLACKLIST_PREFIX}:${tokenHash(token)}`;
 }
 
-function activeSessionKey(sub: string): string {
+const activeSessionKey = (sub: string) : string => {
   return `${ACTIVE_SESSION_PREFIX}:${sub.toLowerCase()}`;
 }
 
-function ttlFromClaims(payload?: SessionClaims): number {
+const ttlFromClaims = (payload?: SessionClaims) : number => {
   if (!payload?.exp || typeof payload.exp !== "number") return 1;
   const ttl = payload.exp - Math.floor(Date.now() / 1000);
   return ttl > 0 ? ttl : 1;
 }
 
-async function setBlacklist(token: string, payload?: SessionClaims): Promise<void> {
+const setBlacklist = async (token: string, payload?: SessionClaims) : Promise<void> => {
   await redis.set(blacklistKey(token), "1", "EX", ttlFromClaims(payload));
 }
 
-export async function isTokenBlacklisted(token: string): Promise<boolean> {
+const isTokenBlacklisted = async (token: string) : Promise<boolean> => {
   const exists = await redis.exists(blacklistKey(token));
   return exists === 1;
 }
 
-async function revokeToken(
-  token: string | undefined,
-  kind: "access" | "refresh",
-): Promise<SessionClaims | null> {
+const revokeToken = async (token: string | undefined, kind: "access" | "refresh") : Promise<SessionClaims | null> => {
   if (!token) return null;
   try {
     const payload =
@@ -69,12 +66,12 @@ async function revokeToken(
   }
 }
 
-export async function issueLoginTokens(params: {
+export const issueLoginTokens = async (params: {
   sub: string;
   role?: string;
   prevAccessToken?: string;
   prevRefreshToken?: string;
-}) {
+}) => {
   const sub = params.sub.toLowerCase();
   const sid = randomUUID();
 
@@ -94,10 +91,10 @@ export async function issueLoginTokens(params: {
   return { accessToken, refreshToken, sid };
 }
 
-export async function rotateTokens(params: {
+export const rotateTokens = async (params: {
   accessToken: string;
   refreshToken: string;
-}): Promise<
+}) : Promise<
   | {
       ok: true;
       accessToken: string;
@@ -109,7 +106,7 @@ export async function rotateTokens(params: {
       status: number;
       message: string;
     }
-> {
+> => {
   const result = await validateDualSession(params);
   if (!result.ok) return result;
 
@@ -133,10 +130,10 @@ export async function rotateTokens(params: {
   return { ok: true, accessToken, refreshToken };
 }
 
-export async function revokeSession(params: {
+export const revokeSession = async (params: {
   accessToken?: string;
   refreshToken?: string;
-}): Promise<void> {
+}) : Promise<void> => {
   const [accessPayload, refreshPayload] = await Promise.all([
     revokeToken(params.accessToken, "access"),
     revokeToken(params.refreshToken, "refresh"),
@@ -154,10 +151,10 @@ export async function revokeSession(params: {
   }
 }
 
-export async function validateDualSession(params: {
+export const validateDualSession = async (params: {
   accessToken: string;
   refreshToken: string;
-}): Promise<
+}) : Promise<
   | {
       ok: true;
       sub: string;
@@ -172,7 +169,7 @@ export async function validateDualSession(params: {
       status: number;
       message: string;
     }
-> {
+> => {
   if (!params.accessToken || !params.refreshToken) {
     return {
       ok: false,
@@ -257,18 +254,12 @@ export const authCookieConfig = {
   refreshMaxAge: REFRESH_COOKIE_MAX_AGE_SEC,
 };
 
-/**
- * 登录 Cookie 的 SameSite / Secure。
- * 子应用与主站不同源（如 react.xxx 嵌在 app.xxx）时，子应用内 fetch 主域 BFF 属于跨站请求，
- * SameSite=Lax 下浏览器通常不带上主域 Cookie → 线上 401。此时在部署环境设置：
- * AUTH_COOKIE_SAME_SITE=none（须 HTTPS，secure 会随之为 true）。
- */
-export function getAuthCookieBase(): {
+export const getAuthCookieBase = () : {
   httpOnly: true;
   secure: boolean;
   sameSite: "lax" | "none";
   path: "/";
-} {
+} => {
   const sameSite =
     process.env.AUTH_COOKIE_SAME_SITE?.toLowerCase() === "none"
       ? ("none" as const)

@@ -61,7 +61,7 @@ const bffRows = [
   ["GET/PATCH /api/user/telegram-chat-id", "读写用户 Telegram Chat ID，双 JWT Cookie。"],
 ] as const;
 
-export default function DocsPage() {
+const DocsPage = () => {
   return (
     <div className="min-h-screen bg-white text-slate-900 selection:bg-indigo-100 font-sans scroll-smooth">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row">
@@ -650,4 +650,5 @@ REFRESH_TOKEN_SECRET=...   # 建议与 JWT_SECRET 不同
       </div>
     </div>
   );
-}
+};
+export default DocsPage

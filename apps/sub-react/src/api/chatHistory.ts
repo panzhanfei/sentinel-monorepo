@@ -11,14 +11,11 @@ export type ChatHistoryMessage = {
   createdAt: string;
 };
 
-export async function fetchChatMessages(
-  sessionId: string,
-  options: {
+export const fetchChatMessages = async (sessionId: string, options: {
     limit: number;
     /** 当前已展示数据中最早一条的 createdAt（ISO），拉取严格更早的一页 */
     beforeCreatedAt?: string;
-  },
-): Promise<{ messages: ChatHistoryMessage[]; hasMore: boolean }> {
+  }) : Promise<{ messages: ChatHistoryMessage[]; hasMore: boolean }> => {
   const url = new URL("/api/chat/messages", getBffBaseUrl());
   url.searchParams.set("sessionId", sessionId);
   url.searchParams.set("limit", String(options.limit));
@@ -50,7 +47,7 @@ export async function fetchChatMessages(
   };
 }
 
-export function mapHistoryMessageToChatRow(m: ChatHistoryMessage): ChatRow {
+export const mapHistoryMessageToChatRow = (m: ChatHistoryMessage) : ChatRow => {
   let entry: LogEntry;
   if (m.role === "user") {
     entry = { agent: "YOU", msg: m.content, type: "user" };

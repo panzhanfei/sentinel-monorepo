@@ -4,13 +4,13 @@ import { useRisk } from "@/app/context";
 import { authFetch } from "@/app/src/utils/authFetch";
 import type { ScanStatus, ScanResultData, AgentMessage } from "./types";
 
-export function useScan({
+export const useScan = ({
   enabled,
   address,
 }: {
   enabled: boolean;
   address?: Address;
-}) {
+}) => {
   const [scanProgress, setScanProgress] = useState(0);
   const [scanStatus, setScanStatus] = useState<ScanStatus>("IDLE");
   const [scanResult, setScanResult] = useState<ScanResultData | null>(null);

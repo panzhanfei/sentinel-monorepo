@@ -9,7 +9,7 @@ interface Props {
   onRevoke: (token: Address, spender: Address) => Promise<unknown> | void;
 }
 
-export function RiskList({ allowances, onRevoke }: Props) {
+export const RiskList = ({ allowances, onRevoke }: Props) => {
   const [pendingRevokeKey, setPendingRevokeKey] = useState<string | null>(null);
 
   const getRevokeKey = (token: Address, spender: Address) =>

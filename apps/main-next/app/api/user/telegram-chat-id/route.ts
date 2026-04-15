@@ -6,7 +6,7 @@ import {
   parseUpstreamJson,
 } from "@/app/src/utils/bffProxy";
 
-export async function GET(request: NextRequest) {
+export const GET = async (request: NextRequest) => {
   try {
     const unauthorized = await dualAuthUnauthorizedJson(request);
     if (unauthorized) return unauthorized;
@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function PATCH(request: NextRequest) {
+export const PATCH = async (request: NextRequest) => {
   try {
     const unauthorized = await dualAuthUnauthorizedJson(request);
     if (unauthorized) return unauthorized;

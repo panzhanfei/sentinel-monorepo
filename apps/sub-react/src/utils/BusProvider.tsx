@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useWujieStore, type WujieWeb3Date } from "@/stores";
 
-export function BusProvider({ children }: { children: React.ReactNode }) {
+export const BusProvider = ({ children }: { children: React.ReactNode }) => {
   const updateWujieState = useWujieStore((state) => state.updateWujieState);
 
   useEffect(() => {

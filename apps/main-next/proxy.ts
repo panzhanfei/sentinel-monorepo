@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getMiddlewareAuthNavigation } from "@/lib/middlewareAuthNavigation";
 import { BFF_CORS_ORIGIN_SET } from "@/lib/subAppOrigins";
 
-function applyApiCors(request: NextRequest, response: NextResponse) {
+const applyApiCors = (request: NextRequest, response: NextResponse) => {
   const origin = request.headers.get("origin");
   if (origin && BFF_CORS_ORIGIN_SET.has(origin)) {
     response.headers.set("Access-Control-Allow-Origin", origin);
@@ -12,7 +12,7 @@ function applyApiCors(request: NextRequest, response: NextResponse) {
   return response;
 }
 
-function apiCorsPreflight(request: NextRequest) {
+const apiCorsPreflight = (request: NextRequest) => {
   const origin = request.headers.get("origin");
   if (!origin || !BFF_CORS_ORIGIN_SET.has(origin)) {
     return new NextResponse(null, { status: 204 });
@@ -33,7 +33,7 @@ function apiCorsPreflight(request: NextRequest) {
   });
 }
 
-export function proxy(request: NextRequest) {
+export const proxy = (request: NextRequest) => {
   const { pathname } = request.nextUrl;
 
   if (pathname.startsWith("/api")) {

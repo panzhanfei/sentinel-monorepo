@@ -8,7 +8,7 @@ const DEFAULT_ORIGINS = [
   "http://127.0.0.1:3002",
 ] as const;
 
-function parseExtraOrigins(raw: string | undefined): string[] {
+const parseExtraOrigins = (raw: string | undefined) : string[] => {
   if (!raw?.trim()) return [];
   return raw
     .split(",")

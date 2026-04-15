@@ -4,7 +4,7 @@ import { prisma } from '@sentinel/database';
 /** 每线程一条，等价于原 ChatSession 头；列表/展示时需排除 */
 export const CHAT_THREAD_ANCHOR_AGENT = '__thread__';
 
-function normUserId(userId: string) {
+const normUserId = (userId: string) => {
   return userId.toLowerCase();
 }
 

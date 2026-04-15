@@ -6,10 +6,7 @@ import {
   parseUpstreamJson,
 } from "@/app/src/utils/bffProxy";
 
-export async function GET(
-  request: NextRequest,
-  context: { params: Promise<{ jobId: string }> },
-) {
+export const GET = async (request: NextRequest, context: { params: Promise<{ jobId: string }> }) => {
   try {
     const { jobId } = await context.params;
     if (!jobId) {

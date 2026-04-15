@@ -2,7 +2,7 @@ import type { Redis } from 'ioredis';
 import { describe, expect, it, vi } from 'vitest';
 import { IdempotencyService } from './idempotencyService';
 
-function createMockRedis() {
+const createMockRedis = () => {
   const store = new Map<string, string>();
   return {
     set: vi.fn(
