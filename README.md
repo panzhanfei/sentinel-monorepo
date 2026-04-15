@@ -50,12 +50,14 @@
 | `apps/main-next`                                        | 主应用：**Next.js 16**（App Router）、RainbowKit / wagmi、Wujie 宿主；**全部 BFF** 在本包 **`app/api`**（含 `/api/auth/refresh`）。**`proxy.ts`** 以双 Cookie 判定登录并对 `/api` 做子应用 **CORS**。端口 **3000**。生产为 **`output: "standalone"`**，发布产物经 **`pnpm --filter main-next run build:release`** 生成 **`apps/main-next/.release`**（见下文「生产部署：主站 Next.js」）。 |
 | `apps/sub-react`                                        | 审计子应用：**Vite + React 19**，端口 **3001**；开发环境下 `/api` 代理到 `http://localhost:3000`；逻辑与 API 分层并含 Vitest 用例。          |
 | `apps/sub-vue`                                          | 监控子应用：**Vite + Vue 3** + ECharts，端口 **3002**；监控逻辑拆分为 Store / Service / 图表模型与 Vitest 单测，视图以小组件组合。          |
-| `apps/server`                                           | **Express** API 与 **Bull Worker**；**双 Token** 校验中间件（Access+Refresh、`sub` 一致）。默认 **4000**，前缀见 `NODE_SERVICE`。          |
+| `apps/server`                                           | **Express** API 与 **Bull Worker**；**双 Token** 校验中间件（Access+Refresh、`sub` 一致）。默认 **4000**，前缀见 `NODE_SERVICE`。详见 **`apps/server/README.md`**。          |
 | `packages/database`                                     | **Prisma** schema（PostgreSQL）、`@prisma/client` 与 Redis 客户端封装。                                                                     |
 | `packages/auth`                                         | 鉴权工具：**Nonce**、**DualJwtService**（Access/Refresh 签发与校验）、幂等等；含 **Vitest** 单测。                                          |
 | `packages/security-sdk`                                 | 链上扫描与授权审计逻辑（`viem`）。                                                                                                          |
 | `packages/ui`                                           | 共享 UI（`@repo/ui`）。                                                                                                                     |
 | `packages/eslint-config` / `packages/typescript-config` | 共享 ESLint 与 TS 配置（`@repo/*`）。                                                                                                       |
+
+**架构拓扑、BFF 与 Express 端点索引**见 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)（含 Mermaid 示意图，可与本 README 对照阅读）。
 
 根目录 `docker-compose.yml` 提供 **PostgreSQL 15**、**Redis 7**、**RedisInsight**（默认映射 `8001:5540`）、可选 **Foundry Anvil**（仅 **JSON-RPC**，默认 `127.0.0.1:8545`→容器 `8545`；宿主机端口可用 `ANVIL_RPC_HOST_PORT` 覆盖；当前 `foundry` 镜像无独立 Web UI 端口），以及可选 **Caddy**（`--profile edge`）用于 **HTTPS 反代**。
 

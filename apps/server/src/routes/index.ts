@@ -15,9 +15,11 @@ router.get('/api/v1', (_req, res) => {
     status: 'running',
     timestamp: new Date().toISOString(),
     endpoints: {
-      auth: '/api/v1/auth',
-      docs: '/api/v1/docs',
+      scan: '/api/v1/scan',
+      chat: '/api/v1/chat',
+      user: '/api/v1/user',
     },
+    note: 'Auth (nonce, session cookies) is implemented on the Next.js BFF under /api/auth/*; Express routes require dual JWT on /api/v1/*.',
   });
 });
 
