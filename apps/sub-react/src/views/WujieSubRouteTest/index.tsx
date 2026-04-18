@@ -1,7 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 
 /** 用于在 Wujie 宿主下验证子应用 history 子路由是否同步、刷新是否正常 */
-export const WujieSubRouteTest = () => {
+const WujieSubRouteTest = () => {
   const { pathname, search, hash } = useLocation();
 
   return (
@@ -41,3 +41,6 @@ export const WujieSubRouteTest = () => {
     </div>
   );
 };
+
+export { WujieSubRouteTest };
+export default WujieSubRouteTest;

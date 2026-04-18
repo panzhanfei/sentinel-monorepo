@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useAppData } from "./useData";
 
 /** 审计首页：保留原有 useAppData（含 Wujie afterMount 与 audit 数据流），仅挂载在此路由 */
-export const AuditHome = () => {
+const AuditHome = () => {
   const props = useAppData();
   return (
     <>
@@ -19,3 +19,6 @@ export const AuditHome = () => {
     </>
   );
 };
+
+export { AuditHome };
+export default AuditHome;

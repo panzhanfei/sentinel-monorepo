@@ -85,7 +85,7 @@ export const WujieClient = ({
 
   const web3Data = useMemo(
     () => ({ address, chain, isConnected }),
-    [address, isConnected, chain?.id, chain?.name],
+    [address, chain, isConnected],
   );
 
   const wujieProps = useMemo(
