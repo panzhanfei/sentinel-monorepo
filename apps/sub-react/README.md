@@ -2,6 +2,8 @@
 
 Sentinel **审计子应用**：**React 19** + **Vite 7** + **Tailwind CSS 4**，默认端口 **3001**。由主应用 **Wujie** 嵌入；负责审计看板、任务与对话流展示，通过 **主域 BFF**（`/api`）访问后端。
 
+全仓库开发约定、类型 `I` 前缀、`interface.ts`、聚合导出与 **React 19 优化优先级**见 [docs/DEVELOPMENT.md](../../docs/DEVELOPMENT.md) 及 [`.cursor/rules/sub-react-app.mdc`](../../.cursor/rules/sub-react-app.mdc)。
+
 ---
 
 ## 职责

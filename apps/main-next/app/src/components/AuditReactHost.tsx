@@ -7,10 +7,10 @@ import { AuditSkeleton } from "./skeletons/audit";
 import {
   AUDIT_REACT_HOST_SYNC_EVENT,
   REACT_SUB_NAVIGATE_EVENT,
-  WUJIE_SUB_APP_URL,
   hostPathToReactSubPath,
   reactSubPathToIframeHref,
-} from "@/lib";
+} from "@/lib/wujieAuditBus";
+import { WUJIE_SUB_APP_URL } from "@/lib/subAppOrigins";
 
 /**
  * Next `/audit` 与 `/audit/**` 驱动子应用路由；保活模式下子应用 url 变更不生效，故用 Wujie bus 同步。

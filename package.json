@@ -12,6 +12,8 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types",
     "test": "turbo run test",
+    "e2e": "pnpm --filter e2e test",
+    "e2e:ui": "pnpm --filter e2e test:ui",
     "node:fork": "export $(grep -v '^#' .env | grep -v '^$' | xargs) && anvil --fork-url $QUICKNODE_RPC_URL --chain-id 31337",
     "start:demo": "pnpm run node:fork & sleep 5 && pnpm run dev",
     "pm2:start": "pm2 start ecosystem.config.cjs",

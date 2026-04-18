@@ -36,11 +36,11 @@ alwaysApply: false
 | **`app/api/`** | **Route Handlers**：会话/鉴权代理、chat、scan、events、user 等与后端或上游的 BFF；保持「收请求 → 校验/转发 → 返回」清晰，可调用 `lib/*` 与 `app/src/utils` 中适合服务端的工具。 |
 | **`app/src/components`** | 可复用 UI 与壳层组件（含 Wujie 宿主、骨架屏等）。 |
 | **`app/src/hooks`** | 仅与主壳/页面相关的 React hooks。 |
-| **`app/src/utils`** | 浏览器或服务端皆可用的纯工具、请求封装（如 `authFetch`、`bffProxy`）；与具体页面强绑定的可放在对应路由目录下的 `hooks`。对外从 **`app/src/utils/index.ts`** 聚合导出。 |
+| **`app/src/utils`** | 浏览器或服务端皆可用的纯工具、请求封装（如 `authFetch`、`bffProxy`）；与具体页面强绑定的可放在对应路由目录下的 `hooks`。Route Handler 等**纯服务端**可从 **`app/src/utils/index.ts`** 聚合导入；**`"use client"`** 代码须从 **`@/app/src/utils/authFetch`** 等具体文件导入，**禁止** `import … from "@/app/src/utils"`，否则会经 `bffProxy` 拉入 `authSession`/Redis 导致客户端打包失败。 |
 | **`app/src/config`** | 前端运行时配置（如 wagmi、contracts、node_service 等），按能力分文件并在 `config/index` 聚合。 |
 | **`app/src/types`** | 本应用专用类型与 `*.d.ts` 扩展。 |
 | **`app/context`** | React Context（如全局风险状态）。 |
-| **`lib/`** | **偏服务端/中间件/会话存储**：如 `authSession`、`redis`、鉴权相关路由表、**Wujie 与主壳通信的 bus**（`wujieAuditBus`、`wujieMonitorBus`）、`subAppOrigins` 等；避免在 `lib` 里写大块页面 UI。对外统一从 **`lib/index.ts`** 导出；`lib` **内部**文件互引可继续用 `@/lib/<模块>`，避免经 `index` 产生不必要耦合。 |
+| **`lib/`** | **偏服务端/中间件/会话存储**：如 `authSession`、`redis`、鉴权相关路由表、**Wujie 与主壳通信的 bus**（`wujieAuditBus`、`wujieMonitorBus`）、`subAppOrigins` 等；避免在 `lib` 里写大块页面 UI。服务端/Route Handler/Server Action 可从 **`lib/index.ts`** 聚合导入；**`"use client"` 组件与仅浏览器运行的代码禁止 `import … from "@/lib"`**，须使用 **`@/lib/wujieAuditBus`**、**`@/lib/authRoutes`** 等具体子路径，否则会把 `redis`/ioredis 等打进客户端包并导致构建失败。`lib` 内部互引仍可用 `@/lib/<模块>`。 |
 | **`actions/`** | Server Actions（如 `auth.ts`）；与 `app/api` 二选一时保持团队一致，避免同一流程两处重复实现。 |
 
 ## 协作约定

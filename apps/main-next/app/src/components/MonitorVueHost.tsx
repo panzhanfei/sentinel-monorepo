@@ -9,8 +9,8 @@ import {
   VUE_SUB_NAVIGATE_EVENT,
   hostPathToVueSubPath,
   vueSubPathToIframeHref,
-  WUJIE_SUB_APP_URL,
-} from "@/lib";
+} from "@/lib/wujieMonitorBus";
+import { WUJIE_SUB_APP_URL } from "@/lib/subAppOrigins";
 
 /**
  * Next `/monitor` 与 `/monitor/**` 驱动 Vue 子应用路由；保活 + bus，sync=false。

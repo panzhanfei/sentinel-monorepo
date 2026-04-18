@@ -56,8 +56,11 @@
 | `packages/security-sdk`                                 | 链上扫描与授权审计逻辑（`viem`）。                                                                                                          |
 | `packages/ui`                                           | 共享 UI（`@repo/ui`）。                                                                                                                     |
 | `packages/eslint-config` / `packages/typescript-config` | 共享 ESLint 与 TS 配置（`@repo/*`）。                                                                                                       |
+| `e2e` | **Playwright** 端到端测试包：默认自动启动 `main-next` 后访问首页、`/login` 等冒烟用例；详见 [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) 第 5.2 节。 |
 
-**架构拓扑、BFF 与 Express 端点索引**见 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)（含 Mermaid 示意图，可与本 README 对照阅读）。**Wujie 子应用子路由与主站 Next.js App Router（`/audit/**`、`/monitor/**`）的协同方式、bus 事件名、layout 与骨架屏注意点**见同文档 **第 7 节**；`apps/main-next`、`sub-react`、`sub-vue` 的 README 中有对应摘要与文件索引。
+**架构拓扑、BFF 与 Express 端点索引**见 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)（含 Mermaid 示意图，可与本 README 对照阅读）。**日常开发约定、类型与 barrel 规则、E2E 命令**见 [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)。**Wujie 子应用子路由与主站 Next.js App Router（`/audit/**`、`/monitor/**`）的协同方式、bus 事件名、layout 与骨架屏注意点**见架构文档 **第 7 节**；`apps/main-next`、`sub-react`、`sub-vue` 的 README 中有对应摘要与文件索引。
+
+团队使用 **Cursor** 时，持久化 AI 规则位于 **`.cursor/rules/*.mdc`**（与 `DEVELOPMENT.md` 第一节索引一致）。
 
 根目录 `docker-compose.yml` 提供 **PostgreSQL 15**、**Redis 7**、**RedisInsight**（默认映射 `8001:5540`）、可选 **Foundry Anvil**（仅 **JSON-RPC**，默认 `127.0.0.1:8545`→容器 `8545`；宿主机端口可用 `ANVIL_RPC_HOST_PORT` 覆盖；当前 `foundry` 镜像无独立 Web UI 端口），以及可选 **Caddy**（`--profile edge`）用于 **HTTPS 反代**。
 
@@ -274,6 +277,8 @@ pnpm run start:demo
 | `pnpm run check-types`                            | TypeScript 检查                   |
 | `pnpm run format`                                 | Prettier 格式化 `*.ts,*.tsx,*.md` |
 | `pnpm run test`                                   | Turbo 并行执行各包 `test`（Vitest，含 `auth`、`sub-react`、`sub-vue`、`main-next` 等） |
+| `pnpm run e2e`                                    | Playwright 端到端（`e2e/`）；首次需 `pnpm --filter e2e install:browsers` 安装 Chromium |
+| `pnpm run e2e:ui`                                 | Playwright 带 UI 调试 |
 | `pnpm run infra:up` / `infra:down` / `infra:logs` | Docker 基础设施（DB、Redis、Anvil 等） |
 | `pnpm run infra:up:edge`                          | 在上述基础上启动 **Caddy**（需配置 `SENTINEL_DOMAIN`） |
 
@@ -312,7 +317,11 @@ pnpm --filter ./apps/main-next run build:release
 
 代码风格与类型检查以各包内 ESLint / `tsc` 配置为准。修改 Prisma schema 后请重新执行 `db:generate`，并按环境选择 `db:push`（本地快速迭代）或迁移流程（生产）。
 
+**约定与测试索引**（类型 `I` 前缀、`interface.ts`、barrel、各应用分层、`main-next` 客户端禁止聚合导入 `lib`/`utils`、Playwright 环境变量等）：见 **[docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)**。
+
 **单元测试**：根目录执行 `pnpm run test` 会通过 Turbo 跑通已声明 `test` 脚本的包；`@sentinel/auth` 与各微前端子包使用 **Vitest**，配置见各目录下的 `vitest.config.ts`。
+
+**端到端测试**：`pnpm run e2e`（详见 `docs/DEVELOPMENT.md` 与 `e2e/playwright.config.ts`）。
 
 ---
 

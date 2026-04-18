@@ -2,6 +2,8 @@
 
 Sentinel 的 **Express 5** API 与 **Bull** 扫描 Worker：对外前缀 **`/api/v1`**，与 **Next.js BFF**（`apps/main-next/app/api`）配合；浏览器不直连本服务写 Cookie，通常由 BFF 代理并转发 Cookie / 头。
 
+分层与目录约定见 [docs/DEVELOPMENT.md](../../docs/DEVELOPMENT.md) 及 [`.cursor/rules/server-app.mdc`](../../.cursor/rules/server-app.mdc)。
+
 ---
 
 ## 职责

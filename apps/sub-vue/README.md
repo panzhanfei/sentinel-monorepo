@@ -2,6 +2,8 @@
 
 Sentinel **监控子应用**：**Vue 3** + **Vite 7** + **Pinia** + **ECharts** + **Tailwind CSS 4**，默认端口 **3002**。由主应用 **Wujie** 嵌入；链上数据以 **viem** 只读查询为主（余额、多链 ERC20 扫描等）。
 
+全仓库开发约定、类型 `I` 前缀、`interface.ts`、聚合导出与 **Vue 3.5 优化优先级**见 [docs/DEVELOPMENT.md](../../docs/DEVELOPMENT.md) 及 [`.cursor/rules/sub-vue-app.mdc`](../../.cursor/rules/sub-vue-app.mdc)。
+
 ---
 
 ## 职责与数据流

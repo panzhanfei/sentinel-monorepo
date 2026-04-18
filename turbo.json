@@ -16,6 +16,10 @@
     "test": {
       "inputs": ["$TURBO_DEFAULT$", "**/vitest.config.ts"]
     },
+    "e2e": {
+      "cache": false,
+      "inputs": ["$TURBO_DEFAULT$", "e2e/**"]
+    },
     "dev": {
       "cache": false,
       "persistent": true

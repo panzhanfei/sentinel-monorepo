@@ -114,11 +114,35 @@ pnpm --filter ./apps/main-next run build:release
 
 ## 测试
 
+### Vitest（本包）
+
 ```bash
 pnpm --filter main-next test
 ```
 
 `lib/middlewareAuthNavigation` 等逻辑配有 Vitest 用例时可在此目录下运行。
+
+### 端到端（仓库 `e2e/`）
+
+全仓库 Playwright 用例默认针对 **`http://127.0.0.1:3000`** 拉起本应用。在 monorepo 根目录：
+
+```bash
+pnpm --filter e2e install:browsers   # 首次或 CI
+pnpm e2e
+```
+
+环境变量 `E2E_SKIP_WEB_SERVER=1` 时不会自动起服务（需已手动 `pnpm --filter main-next dev`）。详见根目录 [docs/DEVELOPMENT.md](../../docs/DEVELOPMENT.md)。
+
+### 客户端模块导入（避免 Redis 进入浏览器打包）
+
+**`"use client"` 组件**（及仅浏览器运行的代码）**不要**使用：
+
+- `import … from "@/lib"`（请用 `@/lib/wujieAuditBus`、`@/lib/subAppOrigins`、`@/lib/authRoutes` 等具体路径）
+- `import … from "@/app/src/utils"`（请用 `@/app/src/utils/authFetch` 等具体路径）
+
+否则可能将 `authSession` / **ioredis** 拉入客户端依赖图，导致构建报错（如无法解析 Node 内置模块 `tls`）。**Route Handlers（`app/api/*`）** 仍可从 `@/app/src/utils` 聚合导入 `bffProxy` 等。
+
+约定与 Cursor 规则见 [docs/DEVELOPMENT.md](../../docs/DEVELOPMENT.md) 与 [`.cursor/rules/main-next-app.mdc`](../../.cursor/rules/main-next-app.mdc)。
 
 ---
 

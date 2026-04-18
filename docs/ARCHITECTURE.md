@@ -2,6 +2,8 @@
 
 本文档补充根目录 [README.md](../README.md) 中的产品背景与运维细节，从**运行时拓扑**与**请求路径**角度归纳各包职责，便于新成员与二次开发时快速对齐。
 
+**编码规范、目录分层、客户端导入限制、Vitest 与 Playwright**：见 [docs/DEVELOPMENT.md](./DEVELOPMENT.md)。
+
 ---
 
 ## 1. 运行时拓扑
