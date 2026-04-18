@@ -8,7 +8,7 @@ import {
   LegendComponent,
 } from "echarts/components";
 import { CanvasRenderer } from "echarts/renderers";
-import type { IProps } from "./interface";
+import type { IEChartsSectionProps } from "./interface";
 
 echarts.use([
   CanvasRenderer,
@@ -19,12 +19,12 @@ echarts.use([
   LegendComponent,
 ]);
 
-const eChartsSectionPropsOptions: ComponentObjectPropsOptions<IProps> = {
-  distributionData: Array as PropType<NonNullable<IProps["distributionData"]>>,
-  trendData: Object as PropType<NonNullable<IProps["trendData"]>>,
+const eChartsSectionPropsOptions: ComponentObjectPropsOptions<IEChartsSectionProps> = {
+  distributionData: Array as PropType<NonNullable<IEChartsSectionProps["distributionData"]>>,
+  trendData: Object as PropType<NonNullable<IEChartsSectionProps["trendData"]>>,
 };
 
-export const useEChartsSectionData = (props: IProps) => {
+export const useEChartsSectionData = (props: IEChartsSectionProps) => {
   const pieChartRef = ref<HTMLElement>();
   const lineChartRef = ref<HTMLElement>();
 

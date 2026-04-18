@@ -1,3 +1,5 @@
-export default function AuditPage() {
+const AuditPage = () => {
   return null;
-}
+};
+
+export default AuditPage;

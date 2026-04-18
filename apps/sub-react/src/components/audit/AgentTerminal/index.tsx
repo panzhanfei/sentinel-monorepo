@@ -1,5 +1,5 @@
 import type { ChatRow } from "@/types/audit";
-import type { AgentTerminalProps } from "./interface";
+import type { IAgentTerminalProps } from "./interface";
 import { useAgentTerminalData } from "./useData";
 
 const ChatRowView = ({ row }: { row: ChatRow }) => {
@@ -53,7 +53,7 @@ export const AgentTerminal = ({
   hasMoreChatHistory = false,
   isLoadingOlderChat = false,
   onRequestOlderChat,
-}: AgentTerminalProps) => {
+}: IAgentTerminalProps) => {
   const {
     inputValue,
     setInputValue,

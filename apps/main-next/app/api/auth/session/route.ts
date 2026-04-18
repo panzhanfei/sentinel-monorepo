@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { JwtService } from "@sentinel/auth";
-import { validateDualSession } from "@/lib/authSession";
+import { validateDualSession } from "@/lib";
 
 export const GET = async () => {
   const store = await cookies();

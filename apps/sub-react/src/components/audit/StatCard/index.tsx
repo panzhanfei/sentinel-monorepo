@@ -1,4 +1,4 @@
-import type { StatCardProps } from "./interface";
+import type { IStatCardProps } from "./interface";
 
 export const StatCard = ({
   label,
@@ -6,7 +6,7 @@ export const StatCard = ({
   valueClassName = "text-white",
   footer,
   decoration,
-}: StatCardProps) => {
+}: IStatCardProps) => {
   return (
     <div className="bg-zinc-900/50 backdrop-blur-xl p-8 rounded-[2.5rem] border border-white/5 relative overflow-hidden group">
       {decoration}

@@ -1,17 +1,17 @@
 import type { ComponentObjectPropsOptions } from "vue";
-import type { IEmits, IProps } from "./interface";
+import type { ISentinelTokenFormEmits, ISentinelTokenFormProps } from "./interface";
 
-type IEmitsValidators = {
-  [K in keyof IEmits]: (...args: IEmits[K]) => boolean;
+type SentinelTokenFormEmitsValidators = {
+  [K in keyof ISentinelTokenFormEmits]: (...args: ISentinelTokenFormEmits[K]) => boolean;
 };
 
-const sentinelTokenFormPropsOptions: ComponentObjectPropsOptions<IProps> =
+const sentinelTokenFormPropsOptions: ComponentObjectPropsOptions<ISentinelTokenFormProps> =
   {
     modelValue: { type: String, required: true },
     disabled: { type: Boolean, default: false },
   };
 
-const sentinelTokenFormEmitsOptions: IEmitsValidators = {
+const sentinelTokenFormEmitsOptions: SentinelTokenFormEmitsValidators = {
   "update:modelValue": (_value: string) => true,
   submit: () => true,
 };

@@ -1,6 +1,6 @@
 import type { ChatRow } from "@/types/audit";
 
-export interface AgentTerminalProps {
+export interface IAgentTerminalProps {
   chatRows: ChatRow[];
   onSendMessage: (msg: string) => void;
   isStreaming?: boolean;

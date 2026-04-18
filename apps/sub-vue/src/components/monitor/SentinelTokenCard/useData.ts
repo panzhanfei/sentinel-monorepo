@@ -1,16 +1,16 @@
 import type { ComponentObjectPropsOptions, PropType } from "vue";
-import type { IEmits, IProps } from "./interface";
+import type { ISentinelTokenCardEmits, ISentinelTokenCardProps } from "./interface";
 
-type IEmitsValidators = {
-  [K in keyof IEmits]: (...args: IEmits[K]) => boolean;
+type SentinelTokenCardEmitsValidators = {
+  [K in keyof ISentinelTokenCardEmits]: (...args: ISentinelTokenCardEmits[K]) => boolean;
 };
 
-const sentinelTokenCardPropsOptions: ComponentObjectPropsOptions<IProps> =
+const sentinelTokenCardPropsOptions: ComponentObjectPropsOptions<ISentinelTokenCardProps> =
   {
-    token: { type: Object as PropType<IProps["token"]>, required: true },
+    token: { type: Object as PropType<ISentinelTokenCardProps["token"]>, required: true },
   };
 
-const sentinelTokenCardEmitsOptions: IEmitsValidators = {
+const sentinelTokenCardEmitsOptions: SentinelTokenCardEmitsValidators = {
   remove: (_id: string) => true,
 };
 

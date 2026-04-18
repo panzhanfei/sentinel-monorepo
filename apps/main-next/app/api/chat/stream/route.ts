@@ -3,7 +3,7 @@ import { NODE_SERVICE } from "@/app/src/config/node_service";
 import {
   dualAuthUnauthorizedJson,
   proxyHeadersToNode,
-} from "@/app/src/utils/bffProxy";
+} from "@/app/src/utils";
 
 export const GET = async (request: NextRequest) => {
   const { searchParams } = new URL(request.url);

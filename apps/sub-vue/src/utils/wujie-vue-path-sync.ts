@@ -7,7 +7,7 @@ import {
 /**
  * 宿主 Next `/monitor/**` ↔ 子应用 vue-router；需在应用挂载后调用（保证 window.$wujie.bus 可用）。
  */
-export function initWujieVuePathSync(router: Router): () => void {
+export const initWujieVuePathSync = (router: Router): (() => void) => {
   const onHostNavigate = (path: unknown) => {
     const p = typeof path === "string" ? path : "/";
     if (p === router.currentRoute.value.path) return;
@@ -44,4 +44,4 @@ export function initWujieVuePathSync(router: Router): () => void {
     if (retryId !== undefined) window.clearTimeout(retryId);
     detach?.();
   };
-}
+};

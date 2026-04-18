@@ -1,6 +1,6 @@
 import type { ChainBalance, TokenBalance } from "@/types/monitor";
 
-export interface AssetCardProps {
+export interface IAssetCardProps {
   record: ChainBalance | TokenBalance;
   isRemovable?: boolean;
   className?: string;

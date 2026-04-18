@@ -1,9 +1,9 @@
-export interface IProps {
+export interface ISentinelTokenFormProps {
   modelValue: string;
   disabled?: boolean;
 }
 
-export type IEmits = {
+export type ISentinelTokenFormEmits = {
   "update:modelValue": [value: string];
   submit: [];
 };

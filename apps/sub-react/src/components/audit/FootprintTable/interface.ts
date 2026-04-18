@@ -1,6 +1,6 @@
 import type { Transaction } from "@/types/audit";
 
-export interface FootprintTableProps {
+export interface IFootprintTableProps {
   txList?: Transaction[];
   isLoading: boolean;
   hasWallet: boolean;

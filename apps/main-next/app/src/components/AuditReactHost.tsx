@@ -7,16 +7,16 @@ import { AuditSkeleton } from "./skeletons/audit";
 import {
   AUDIT_REACT_HOST_SYNC_EVENT,
   REACT_SUB_NAVIGATE_EVENT,
+  WUJIE_SUB_APP_URL,
   hostPathToReactSubPath,
   reactSubPathToIframeHref,
-} from "@/lib/wujieAuditBus";
-import { WUJIE_SUB_APP_URL } from "@/lib/subAppOrigins";
+} from "@/lib";
 
 /**
  * Next `/audit` 与 `/audit/**` 驱动子应用路由；保活模式下子应用 url 变更不生效，故用 Wujie bus 同步。
  * 关闭 Wujie sync，避免子路由被写入 `?react19=` 查询串，与 App Router 路径冲突。
  */
-export function AuditReactHost() {
+export const AuditReactHost = () => {
   const pathname = usePathname();
   const router = useRouter();
   const subPath = hostPathToReactSubPath(pathname);
@@ -81,4 +81,4 @@ export function AuditReactHost() {
       />
     </div>
   );
-}
+};

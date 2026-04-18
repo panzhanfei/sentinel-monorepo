@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { authCookieConfig, getAuthCookieBase, rotateTokens } from "@/lib/authSession";
+import { authCookieConfig, getAuthCookieBase, rotateTokens } from "@/lib";
 
 export const POST = async (request: NextRequest) => {
   try {

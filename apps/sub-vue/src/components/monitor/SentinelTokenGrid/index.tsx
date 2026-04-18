@@ -1,12 +1,12 @@
 import { defineComponent } from "vue";
 import SentinelTokenCard from "../SentinelTokenCard";
-import type { IProps } from "./interface";
+import type { ISentinelTokenGridProps } from "./interface";
 import { useSentinelTokenGridData } from "./useData";
 
 export default defineComponent({
   name: "SentinelTokenGrid",
   ...useSentinelTokenGridData(),
-  setup: (props: IProps, { emit }) => {
+  setup: (props: ISentinelTokenGridProps, { emit }) => {
       return () => (
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
           {props.tokens.map((token) => (

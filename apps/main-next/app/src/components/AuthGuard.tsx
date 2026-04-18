@@ -8,7 +8,7 @@ import {
   type AuthSessionInvalidPayload,
   useKickOutSession,
 } from "@/app/src/hooks/useKickOutSession";
-import { isProtectedRoute } from "@/lib/authRoutes";
+import { isProtectedRoute } from "@/lib";
 
 export const AuthGuard = () => {
   const { status } = useAccount();

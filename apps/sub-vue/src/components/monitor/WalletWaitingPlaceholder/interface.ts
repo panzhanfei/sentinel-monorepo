@@ -1,3 +1,3 @@
-export interface IProps {
+export interface IWalletWaitingPlaceholderProps {
   visible: boolean;
 }

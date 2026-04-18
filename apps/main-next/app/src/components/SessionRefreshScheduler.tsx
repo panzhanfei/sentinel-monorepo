@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { tryRefreshSession } from "@/app/src/utils/authFetch";
+import { tryRefreshSession } from "@/app/src/utils";
 
 const LEAD_MS = 2 * 60 * 1000;
 

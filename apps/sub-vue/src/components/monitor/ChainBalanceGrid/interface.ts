@@ -1,5 +1,5 @@
 import type { ChainBalance } from "@/types/monitor";
 
-export interface IProps {
+export interface IChainBalanceGridProps {
   chains: readonly ChainBalance[];
 }

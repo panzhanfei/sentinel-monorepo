@@ -3,5 +3,5 @@ export { default as MonitorHome } from "./MonitorHome";
 export { default as WujieSubRouteTest } from "./WujieSubRouteTest";
 export { default as NoSubRouteMatch } from "./NoSubRouteMatch";
 export { TokenManager } from "./TokenManager";
-export type { MonitorDashboardViewProps } from "./MonitorDashboard/interface";
-export type { TokenManagerViewProps } from "./TokenManager/interface";
+export type { IMonitorDashboardViewProps } from "./MonitorDashboard/interface";
+export type { ITokenManagerViewProps } from "./TokenManager/interface";

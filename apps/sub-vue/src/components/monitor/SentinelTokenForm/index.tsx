@@ -1,11 +1,11 @@
 import { defineComponent } from "vue";
-import type { IProps } from "./interface";
+import type { ISentinelTokenFormProps } from "./interface";
 import { useSentinelTokenFormData } from "./useData";
 
 export default defineComponent({
   name: "SentinelTokenForm",
   ...useSentinelTokenFormData(),
-  setup: (props: IProps, { emit }) => {
+  setup: (props: ISentinelTokenFormProps, { emit }) => {
       return () => (
         <div class="flex gap-4">
           <input

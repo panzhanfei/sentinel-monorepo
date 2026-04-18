@@ -1,9 +1,9 @@
 import type { TokenBalance } from "@/types/monitor";
 
-export interface IProps {
+export interface ISentinelTokenGridProps {
   tokens: readonly TokenBalance[];
 }
 
-export type IEmits = {
+export type ISentinelTokenGridEmits = {
   remove: [id: string];
 };

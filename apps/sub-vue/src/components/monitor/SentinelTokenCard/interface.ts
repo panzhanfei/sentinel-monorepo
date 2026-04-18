@@ -1,9 +1,9 @@
 import type { TokenBalance } from "@/types/monitor";
 
-export interface IProps {
+export interface ISentinelTokenCardProps {
   token: TokenBalance;
 }
 
-export type IEmits = {
+export type ISentinelTokenCardEmits = {
   remove: [id: string];
 };

@@ -1,5 +1,5 @@
 import { StatCard } from "../StatCard";
-import type { OverviewCardsProps } from "./interface";
+import type { IOverviewCardsProps } from "./interface";
 
 const IntensityIcon = () => {
   return (
@@ -14,7 +14,7 @@ const IntensityIcon = () => {
 export const OverviewCards = ({
   txCount,
   riskCount = 0,
-}: OverviewCardsProps) => {
+}: IOverviewCardsProps) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <StatCard

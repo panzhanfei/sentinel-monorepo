@@ -1,11 +1,11 @@
 import { defineComponent } from "vue";
-import type { IProps } from "./interface";
+import type { IEChartsSectionProps } from "./interface";
 import { useEChartsSectionData, useEChartsSectionOptionsData } from "./useData";
 
 export const EChartsSection = defineComponent({
   name: "EChartsSection",
   ...useEChartsSectionOptionsData(),
-  setup: (props: IProps) => {
+  setup: (props: IEChartsSectionProps) => {
       const { pieChartRef, lineChartRef } = useEChartsSectionData(props);
 
       return () => (

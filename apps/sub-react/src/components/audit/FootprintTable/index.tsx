@@ -1,8 +1,8 @@
 import { formatWeiToEth, truncateHash } from "@/utils/format";
-import type { FootprintTableProps } from "./interface";
+import type { IFootprintTableProps } from "./interface";
 import { useFootprintTableData } from "./useData";
 
-export const FootprintTable = (props: FootprintTableProps) => {
+export const FootprintTable = (props: IFootprintTableProps) => {
   const {
     rows,
     showEmpty,

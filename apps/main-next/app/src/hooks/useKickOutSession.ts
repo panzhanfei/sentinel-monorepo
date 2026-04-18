@@ -4,7 +4,7 @@ import { useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useDisconnect } from "wagmi";
 import { logout } from "@/actions/auth";
-import { isProtectedRoute } from "@/lib/authRoutes";
+import { isProtectedRoute } from "@/lib";
 
 /** 与微前端子应用约定：BFF 401 时子应用向宿主发此事件 */
 export const AUTH_SESSION_INVALID_EVENT = "auth-session-invalid";

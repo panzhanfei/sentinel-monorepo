@@ -5,17 +5,17 @@ export const REACT_SUB_NAVIGATE_EVENT = "react-sub-navigate";
 export const AUDIT_REACT_HOST_SYNC_EVENT = "audit-react-sync-host";
 
 /** 主站 pathname → sub-react BrowserRouter 的 pathname */
-export function hostPathToReactSubPath(pathname: string): string {
+export const hostPathToReactSubPath = (pathname: string): string => {
   const rest = pathname.replace(/^\/audit(?=\/|$)/, "");
   if (rest === "" || rest === "/") return "/";
   return rest.startsWith("/") ? rest : `/${rest}`;
-}
+};
 
 /** sub-react 路由 → Wujie 入口 url（Vite history fallback） */
-export function reactSubPathToIframeHref(
+export const reactSubPathToIframeHref = (
   subPath: string,
   reactOrigin: string,
-): string {
+): string => {
   const base = reactOrigin.replace(/\/$/, "");
   return subPath === "/" ? `${base}/` : `${base}${subPath}`;
-}
+};

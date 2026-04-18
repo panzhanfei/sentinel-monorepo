@@ -1,7 +1,7 @@
 import type { ComponentObjectPropsOptions } from "vue";
-import type { IProps } from "./interface";
+import type { IWalletWaitingPlaceholderProps } from "./interface";
 
-const walletWaitingPlaceholderPropsOptions: ComponentObjectPropsOptions<IProps> =
+const walletWaitingPlaceholderPropsOptions: ComponentObjectPropsOptions<IWalletWaitingPlaceholderProps> =
   {
     visible: { type: Boolean, required: true },
   };

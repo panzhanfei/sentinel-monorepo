@@ -3,7 +3,7 @@ import type { ChatRow, Transaction } from "@/types/audit";
 /** 纯展示层 props，与数据获取解耦 */
 export type { Transaction };
 
-export interface AuditDashboardViewProps {
+export interface IAuditDashboardViewProps {
   address?: string;
   txCount?: number;
   /** 最近扫描窗口内，当前地址发起的授权 / 许可类交易笔数 */

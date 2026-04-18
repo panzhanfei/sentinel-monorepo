@@ -4,7 +4,7 @@ import {
   authHeadersForProxy,
   dualAuthUnauthorizedJson,
   parseUpstreamJson,
-} from "@/app/src/utils/bffProxy";
+} from "@/app/src/utils";
 
 export const POST = async (request: NextRequest) => {
   try {

@@ -2,14 +2,14 @@
 
 import { cookies } from "next/headers";
 import { NonceService } from "@sentinel/auth";
-import { redis } from "@/lib/redis";
 import { revalidatePath } from "next/cache";
 import {
   authCookieConfig,
   getAuthCookieBase,
   issueLoginTokens,
+  redis,
   revokeSession,
-} from "@/lib/authSession";
+} from "@/lib";
 
 const nonceService = new NonceService(redis, { prefix: "nonce", ttl: 300 });
 
@@ -27,7 +27,7 @@ export const getLoginNonce = async (address: string) => {
 
   const nonce = await nonceService.generate(address, "login");
   return nonce;
-}
+};
 
 export const verifySignature = async (address: string, signature: string) => {
   const key = `nonce:login:${address.toLowerCase()}`;
@@ -69,7 +69,7 @@ export const verifySignature = async (address: string, signature: string) => {
   });
 
   return { success: true };
-}
+};
 
 export const logout = async () => {
   const cookieStore = await cookies();
@@ -81,4 +81,4 @@ export const logout = async () => {
   cookieStore.delete("accessToken");
   cookieStore.delete("refreshToken");
   revalidatePath("/", "layout");
-}
+};

@@ -1,4 +1,4 @@
-export interface OverviewCardsProps {
+export interface IOverviewCardsProps {
   txCount?: number;
   riskCount?: number;
 }

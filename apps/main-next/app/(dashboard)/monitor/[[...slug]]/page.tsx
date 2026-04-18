@@ -1,3 +1,5 @@
-export default function MonitorPage() {
+const MonitorPage = () => {
   return null;
-}
+};
+
+export default MonitorPage;

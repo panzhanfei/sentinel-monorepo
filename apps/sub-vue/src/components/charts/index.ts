@@ -1,2 +1,2 @@
 export * from "./EChartsSection";
-export type { IProps as EChartsSectionProps } from "./EChartsSection/interface";
+export type { IEChartsSectionProps } from "./EChartsSection/interface";

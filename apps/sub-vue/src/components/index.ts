@@ -1,4 +1,4 @@
 export * from "./AssetCard";
-export type { AssetCardProps } from "./AssetCard/interface";
+export type { IAssetCardProps } from "./AssetCard/interface";
 export * from "./charts";
 export * from "./monitor";

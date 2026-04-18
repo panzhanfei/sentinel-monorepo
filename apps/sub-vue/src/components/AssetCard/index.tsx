@@ -1,7 +1,7 @@
-import type { AssetCardProps } from "./interface";
+import type { IAssetCardProps } from "./interface";
 import { useAssetCardData } from "./useData";
 
-export const AssetCard = (props: AssetCardProps) => {
+export const AssetCard = (props: IAssetCardProps) => {
   useAssetCardData();
   const { record } = props;
   const { loading, isError, chainName, balance, symbol } = record;

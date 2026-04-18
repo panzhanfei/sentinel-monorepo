@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getMiddlewareAuthNavigation } from "@/lib/middlewareAuthNavigation";
-import { BFF_CORS_ORIGIN_SET } from "@/lib/subAppOrigins";
+import { BFF_CORS_ORIGIN_SET, getMiddlewareAuthNavigation } from "@/lib";
 
 const applyApiCors = (request: NextRequest, response: NextResponse) => {
   const origin = request.headers.get("origin");

@@ -1,11 +1,11 @@
 import { defineComponent } from "vue";
-import type { IProps } from "./interface";
+import type { ISentinelTokenCardProps } from "./interface";
 import { useSentinelTokenCardData } from "./useData";
 
 export default defineComponent({
   name: "SentinelTokenCard",
   ...useSentinelTokenCardData(),
-  setup: (props: IProps, { emit }) => {
+  setup: (props: ISentinelTokenCardProps, { emit }) => {
       return () => (
         <div class="group relative p-5 bg-white/5 rounded-3xl border border-white/5 hover:border-indigo-500/50 transition-all overflow-hidden">
           <div class="absolute top-3 right-3 px-2 py-0.5 bg-white/10 rounded text-[8px] font-bold text-zinc-400 uppercase tracking-tighter border border-white/5">

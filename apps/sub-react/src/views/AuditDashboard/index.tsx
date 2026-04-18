@@ -1,4 +1,4 @@
-import type { AuditDashboardViewProps } from "./interface";
+import type { IAuditDashboardViewProps } from "./interface";
 import { AgentTerminal, FootprintTable, OverviewCards } from "@/components/audit";
 
 export const AuditDashboard = ({
@@ -14,7 +14,7 @@ export const AuditDashboard = ({
   isLoadingOlderChat,
   onRequestOlderChat,
   onSendMessage,
-}: AuditDashboardViewProps) => {
+}: IAuditDashboardViewProps) => {
   const hasWallet = Boolean(address);
 
   return (

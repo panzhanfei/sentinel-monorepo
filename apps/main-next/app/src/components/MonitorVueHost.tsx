@@ -9,13 +9,13 @@ import {
   VUE_SUB_NAVIGATE_EVENT,
   hostPathToVueSubPath,
   vueSubPathToIframeHref,
-} from "@/lib/wujieMonitorBus";
-import { WUJIE_SUB_APP_URL } from "@/lib/subAppOrigins";
+  WUJIE_SUB_APP_URL,
+} from "@/lib";
 
 /**
  * Next `/monitor` 与 `/monitor/**` 驱动 Vue 子应用路由；保活 + bus，sync=false。
  */
-export function MonitorVueHost() {
+export const MonitorVueHost = () => {
   const pathname = usePathname();
   const router = useRouter();
   const subPath = hostPathToVueSubPath(pathname);
@@ -79,4 +79,4 @@ export function MonitorVueHost() {
       />
     </div>
   );
-}
+};

@@ -1,16 +1,16 @@
 import type { ComponentObjectPropsOptions, PropType } from "vue";
-import type { IEmits, IProps } from "./interface";
+import type { ISentinelTokenGridEmits, ISentinelTokenGridProps } from "./interface";
 
-type IEmitsValidators = {
-  [K in keyof IEmits]: (...args: IEmits[K]) => boolean;
+type SentinelTokenGridEmitsValidators = {
+  [K in keyof ISentinelTokenGridEmits]: (...args: ISentinelTokenGridEmits[K]) => boolean;
 };
 
-const sentinelTokenGridPropsOptions: ComponentObjectPropsOptions<IProps> =
+const sentinelTokenGridPropsOptions: ComponentObjectPropsOptions<ISentinelTokenGridProps> =
   {
-    tokens: { type: Array as PropType<IProps["tokens"]>, required: true },
+    tokens: { type: Array as PropType<ISentinelTokenGridProps["tokens"]>, required: true },
   };
 
-const sentinelTokenGridEmitsOptions: IEmitsValidators = {
+const sentinelTokenGridEmitsOptions: SentinelTokenGridEmitsValidators = {
   remove: (_id: string) => true,
 };
 

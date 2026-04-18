@@ -1,6 +1,6 @@
 import { useRef } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import type { FootprintTableProps } from "./interface";
+import type { IFootprintTableProps } from "./interface";
 
 const ROW_H = 56;
 
@@ -8,7 +8,7 @@ export const useFootprintTableData = ({
   txList,
   isLoading,
   hasWallet,
-}: FootprintTableProps) => {
+}: IFootprintTableProps) => {
   const rows = txList ?? [];
   const showEmpty = hasWallet && !isLoading && rows.length === 0;
   const parentRef = useRef<HTMLDivElement>(null);

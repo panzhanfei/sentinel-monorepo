@@ -6,7 +6,7 @@ import {
   type FormEvent,
 } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import type { AgentTerminalProps } from "./interface";
+import type { IAgentTerminalProps } from "./interface";
 
 export const useAgentTerminalData = ({
   chatRows,
@@ -15,7 +15,7 @@ export const useAgentTerminalData = ({
   hasMoreChatHistory = false,
   isLoadingOlderChat = false,
   onRequestOlderChat,
-}: AgentTerminalProps) => {
+}: IAgentTerminalProps) => {
   const [inputValue, setInputValue] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const stickToBottomRef = useRef(true);

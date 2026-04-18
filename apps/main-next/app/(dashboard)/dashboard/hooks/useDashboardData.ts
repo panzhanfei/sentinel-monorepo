@@ -6,7 +6,7 @@ import { useMarketData } from "./useMarketData";
 import { usePortfolio } from "./usePortfolio";
 import { useScan } from "./useScan";
 import { useRevoke } from "./useRevoke";
-import { authFetch } from "@/app/src/utils/authFetch";
+import { authFetch } from "@/app/src/utils";
 
 export type { Address };
 export type {
