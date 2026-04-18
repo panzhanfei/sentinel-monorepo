@@ -1,6 +1,7 @@
 export * from "./Web3Providers";
 export * from "./WujieWrapper";
 export * from "./AuditReactHost";
+export * from "./MonitorVueHost";
 export * from "./Web3ConnectKitButton";
 export * from "./TelegramChatIdSettings";
 export * from "./SidebarNav";
