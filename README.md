@@ -57,7 +57,7 @@
 | `packages/ui`                                           | 共享 UI（`@repo/ui`）。                                                                                                                     |
 | `packages/eslint-config` / `packages/typescript-config` | 共享 ESLint 与 TS 配置（`@repo/*`）。                                                                                                       |
 
-**架构拓扑、BFF 与 Express 端点索引**见 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)（含 Mermaid 示意图，可与本 README 对照阅读）。
+**架构拓扑、BFF 与 Express 端点索引**见 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)（含 Mermaid 示意图，可与本 README 对照阅读）。**Wujie 子应用子路由与主站 Next.js App Router（`/audit/**`、`/monitor/**`）的协同方式、bus 事件名、layout 与骨架屏注意点**见同文档 **第 7 节**；`apps/main-next`、`sub-react`、`sub-vue` 的 README 中有对应摘要与文件索引。
 
 根目录 `docker-compose.yml` 提供 **PostgreSQL 15**、**Redis 7**、**RedisInsight**（默认映射 `8001:5540`）、可选 **Foundry Anvil**（仅 **JSON-RPC**，默认 `127.0.0.1:8545`→容器 `8545`；宿主机端口可用 `ANVIL_RPC_HOST_PORT` 覆盖；当前 `foundry` 镜像无独立 Web UI 端口），以及可选 **Caddy**（`--profile edge`）用于 **HTTPS 反代**。
 
