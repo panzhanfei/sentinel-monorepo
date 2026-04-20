@@ -1,0 +1,19 @@
+import { AuditReactHost } from "@/wujie/AuditReactHost";
+
+/**
+ * 布局在 /audit 与 /audit/** 之间切换时不卸载，避免 Wujie 与骨架层随 page 重挂载而闪烁。
+ */
+const AuditLayout = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
+  return (
+    <div className="relative h-full w-full">
+      <AuditReactHost />
+      {children}
+    </div>
+  );
+};
+
+export default AuditLayout;

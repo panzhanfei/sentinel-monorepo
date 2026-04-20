@@ -1,8 +1,10 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { AUDIT_REACT_HOST_PAGE_MODAL_OPEN_EVENT } from "@/constants/wujieAuditBus";
 import {
   AUTH_SESSION_INVALID_EVENT,
   emitAuditAiStreamToHost,
+  emitAuditHostPageModalToHost,
   emitAuthSessionInvalidToHost,
 } from "./wujieHost";
 
@@ -17,6 +19,16 @@ describe("wujieHost bus helpers", () => {
       { bus: { $emit } };
     emitAuditAiStreamToHost(true);
     expect($emit).toHaveBeenCalledWith("audit-ai-stream", { active: true });
+  });
+
+  it("emitAuditHostPageModalToHost emits AUDIT_REACT_HOST_PAGE_MODAL_OPEN_EVENT", () => {
+    const $emit = vi.fn();
+    (window as unknown as { $wujie?: { bus?: { $emit: typeof $emit } } }).$wujie =
+      { bus: { $emit } };
+    emitAuditHostPageModalToHost({ title: "t" });
+    expect($emit).toHaveBeenCalledWith(AUDIT_REACT_HOST_PAGE_MODAL_OPEN_EVENT, {
+      title: "t",
+    });
   });
 
   it("emitAuthSessionInvalidToHost uses AUTH_SESSION_INVALID_EVENT", () => {

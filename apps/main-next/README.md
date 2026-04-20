@@ -1,6 +1,6 @@
 # main-next
 
-Sentinel 主应用：基于 **Next.js App Router** 的壳层；**当前仓库内全部 BFF** 均由本包 **`app/api`** 承担（登录态、受保护路由、对 Node 服务的 API 代理），并通过 **Wujie** 嵌入 React / Vue 子应用。
+Sentinel 主应用：基于 **Next.js App Router** 的壳层；源码在 **`src/`**（**`src/app`** 为路由与 BFF）。**当前仓库内全部 BFF** 由 **`src/app/api`** 承担（登录态、受保护路由、对 Node 服务的 API 代理），并通过 **Wujie** 嵌入 React / Vue 子应用。路径别名 **`@/*` → `src/*`**。
 
 ## 技术栈
 
@@ -15,55 +15,58 @@ Sentinel 主应用：基于 **Next.js App Router** 的壳层；**当前仓库内
 | ------------------------------------- | ------------------------------------------------------------------- |
 | `next.config.ts`                      | `output: "standalone"`；`outputFileTracingRoot` 指向 monorepo 根，便于 workspace 依赖追踪 |
 | `scripts/pack-standalone.sh`         | `next build` 后将 standalone + `static` + `public` 解引用拷贝到 **`.release/`**（避免 pnpm 符号链接在部署机断裂） |
-| `proxy.ts`                            | Next.js 16 请求代理（原 middleware）：`/api` 的 CORS；页面会话检查与登录重定向 |
-| `lib/middlewareAuthNavigation.ts`     | 中间件导航决策（与 `NextResponse` 解耦，便于单测）                  |
-| `lib/authRoutes.ts`                   | 受保护路由前缀（与 AuthGuard 共用）                                 |
-| `lib/subAppOrigins.ts`                | 子应用入口 URL 与 BFF CORS 白名单（单一数据源）                     |
-| `actions/auth.ts`                     | Server Actions：nonce、签名登录、写 Cookie、登出                    |
-| `app/api/**`                          | Route Handlers（BFF），含本地 `auth/refresh` 续签与会话校验          |
-| `app/src/utils/nodeApiEnvelope.ts`    | 解析 Node `/api/v1` 风格 `{ success, data }` / `{ success, error }` |
-| `app/(dashboard)/DashboardShell.tsx`  | 控制台壳（侧栏、Risk/Alert、Telegram 设置等，Client Component）     |
-| `app/(dashboard)/layout.tsx`          | 薄布局，仅挂载 `DashboardShell`                                     |
-| `app/src/components/WujieWrapper.tsx` | 动态加载 Wujie，向子应用注入 `bffOrigin`、`web3Data` 等             |
-| `app/src/components/AuditReactHost.tsx` | 审计子应用壳：`/audit/**` 与 sub-react 路由、Wujie bus 协同（`sync=false`、固定首次 `wujieEntryUrl`） |
-| `app/src/components/MonitorVueHost.tsx` | 监控子应用壳：同上，前缀 `/monitor/**` 与 sub-vue |
-| `lib/wujieAuditBus.ts` | 审计子应用：路径解析 + `react-sub-navigate` / `audit-react-sync-host` 事件名（须与 sub-react 常量一致） |
-| `lib/wujieMonitorBus.ts` | 监控子应用：`vue-sub-navigate` / `monitor-vue-sync-host`（须与 sub-vue 常量一致） |
-| `app/(dashboard)/audit/layout.tsx`、`monitor/layout.tsx` | 持久挂载对应 Host，避免切换子路由时 page 重挂载导致骨架屏闪烁 |
-| `app/(dashboard)/audit/[[...slug]]/page.tsx`、`monitor/[[...slug]]/page.tsx` | 占位页（`return null`），承接 `/audit/*`、`/monitor/*` |
+| `src/proxy.ts`                        | **Next 16 约定**：请求拦截入口（原 `middleware.ts`）；实现见 **`src/proxy/runProxy.ts`**；`config.matcher` 须在本文件字面量导出 |
+| `src/proxy/middlewareAuthNavigation.ts` | 导航决策（与 `NextResponse` 解耦，便于单测） |
+| `src/proxy/authRoutes.ts`             | 受保护路由前缀（与 AuthGuard、`runProxy` 共用） |
+| `src/wujie/subAppOrigins.ts`          | 子应用入口 URL 与 BFF CORS 白名单 |
+| `src/app/actions/auth.ts`             | Server Actions（`"use server"`）：nonce、签名登录、写 Cookie、登出 |
+| `src/app/api/**`                      | Route Handlers（BFF），含本地 `auth/refresh` 续签与会话校验 |
+| `src/lib/bffProxy.ts`                 | BFF：双 Token 校验、转发头、`parseUpstreamJson`（仅服务端引用） |
+| `src/utils/authFetch.ts`              | 浏览器同源 BFF 请求（401 可刷新重试） |
+| `src/config/`                         | `NODE_SERVICE`、`wagmi`、`contracts` 等 |
+| `src/components/`、`src/hooks/`       | 跨路由 **`"use client"`** 组件与 hook |
+| `src/app/(dashboard)/DashboardShell.tsx` | 控制台壳（侧栏、Risk/Alert、Telegram 设置等） |
+| `src/app/(dashboard)/layout.tsx`      | 薄布局，仅挂载 `DashboardShell` |
+| `src/wujie/WujieWrapper.tsx`          | 动态加载 Wujie，向子应用注入 `bffOrigin`、`web3Data` 等 |
+| `src/wujie/AuditReactHost.tsx`        | 审计子应用壳：`/audit/**` |
+| `src/wujie/MonitorVueHost.tsx`        | 监控子应用壳：`/monitor/**` |
+| `src/wujie/wujieAuditBus.ts`          | 审计：路径解析 + bus 事件名（与 sub-react 一致） |
+| `src/wujie/wujieMonitorBus.ts`        | 监控：同上（与 sub-vue 一致） |
+| `src/app/(dashboard)/audit/layout.tsx`、`monitor/layout.tsx` | 持久挂载对应 Host |
+| `src/app/(dashboard)/audit/[[...slug]]/page.tsx` 等 | 占位页，承接 `/audit/*`、`/monitor/*` |
 
 ## 环境变量
 
-与子应用地址和跨域相关的变量在 `lib/subAppOrigins.ts` 中集中使用：
+与子应用地址和跨域相关的变量在 `src/wujie/subAppOrigins.ts` 中集中使用：
 
 - `NEXT_PUBLIC_WUJIE_REACT_URL`：React 子应用完整源（默认 `http://localhost:3001`）
 - `NEXT_PUBLIC_WUJIE_VUE_URL`：Vue 子应用完整源（默认 `http://localhost:3002`）
 - `NEXT_PUBLIC_WUJIE_EXTRA_ORIGINS`：额外允许的源，逗号分隔（并入 CORS 白名单）
 
-登录与 JWT（见 `actions/auth.ts`）：
+登录与 JWT（见 `src/app/actions/auth.ts`）：
 
 - `JWT_SECRET`、`REFRESH_TOKEN_SECRET`（可选，有默认值仅用于开发）
 - `JWT_EXPIRES_IN`、`REFRESH_TOKEN_EXPIRES_IN`（可选）
 
-Node BFF 上游地址见 `app/src/config/node_service`（`NODE_SERVICE` 等）。
+Node BFF 上游地址见 `src/config/node_service.ts`（`NODE_SERVICE` 等）。
 
 ## 认证与会话
 
-- 会话以 **httpOnly Cookie** 保存：`accessToken`（短期）与 `refreshToken`（长期）。**`proxy.ts`** 将 **两者同时存在** 视为已登录。
+- 会话以 **httpOnly Cookie** 保存：`accessToken`（短期）与 `refreshToken`（长期）。**`src/proxy.ts`** 将 **两者同时存在** 视为已登录。
 - 登录成功后 Server Action 会删除旧版单 Cookie `token`，避免混用。
-- 受保护路径前缀定义在 `lib/authRoutes.ts`（如 `/dashboard`、`/monitor`、`/audit`）。未登录访问会重定向到 `/login`，并带 `from` 查询参数便于回跳；已登录访问 `/login` 会重定向到 `/dashboard`。
+- 受保护路径前缀定义在 `src/proxy/authRoutes.ts`（如 `/dashboard`、`/monitor`、`/audit`）。未登录访问会重定向到 `/login`，并带 `from` 查询参数便于回跳；已登录访问 `/login` 会重定向到 `/dashboard`。
 
 ## BFF 与 Node 服务
 
 子应用与浏览器侧 **不实现 BFF**：统一走主域 **`/api/*`**（本包 Route Handlers），再转发至 Express（`NODE_SERVICE`）。
 
-- `app/api/auth/refresh/route.ts` 在 BFF 内完成双 Token 校验与旋转续签，刷新两个 Cookie 的 `maxAge`（与登录策略一致）。
-- 其他 BFF 路由应复用 `parseUpstreamJson`、`proxyHeadersToNode` 等与 Node 的约定（见 `app/src/utils/bffProxy.ts`）。
+- `src/app/api/auth/refresh/route.ts` 在 BFF 内完成双 Token 校验与旋转续签，刷新两个 Cookie 的 `maxAge`（与登录策略一致）。
+- 其他 BFF 路由应复用 `parseUpstreamJson`、`proxyHeadersToNode` 等与 Node 的约定（见 `src/lib/bffProxy.ts`）。
 
 ## 微前端与跨域
 
 - 子应用 iframe 入口使用 `WUJIE_SUB_APP_URL`（`subAppOrigins.ts`），与 CORS 白名单 `BFF_CORS_ORIGIN_SET` 同源配置，避免多处硬编码不一致。
-- **`proxy.ts`** 对 `/api` 请求：非白名单 Origin 的 `OPTIONS` 返回 204 且无 CORS 头；白名单来源则允许 `credentials`，便于子应用携带 Cookie 调用主域 BFF。
+- **`src/proxy.ts`** 对 `/api` 请求：非白名单 Origin 的 `OPTIONS` 返回 204 且无 CORS 头；白名单来源则允许 `credentials`，便于子应用携带 Cookie 调用主域 BFF。
 - `WujieClient` 通过 props 传入 `bffOrigin`（当前页 `window.location.origin`），子应用可据此构造同源 BFF 请求；`useWeb3Sync`（`wujieHooks.tsx`）通过 Wujie `bus` 广播 `web3-data-change`，与子应用联动。
 
 ### 主子路由协同（Wujie 子应用 vs Next App Router）
@@ -120,7 +123,7 @@ pnpm --filter ./apps/main-next run build:release
 pnpm --filter main-next test
 ```
 
-`lib/middlewareAuthNavigation` 等逻辑配有 Vitest 用例时可在此目录下运行。
+`src/proxy/*`、`src/wujie/*`、`src/lib/*.test.ts` 等可在本包 Vitest 中运行。
 
 ### 端到端（仓库 `e2e/`）
 
@@ -137,10 +140,9 @@ pnpm e2e
 
 **`"use client"` 组件**（及仅浏览器运行的代码）**不要**使用：
 
-- `import … from "@/lib"`（请用 `@/lib/wujieAuditBus`、`@/lib/subAppOrigins`、`@/lib/authRoutes` 等具体路径）
-- `import … from "@/app/src/utils"`（请用 `@/app/src/utils/authFetch` 等具体路径）
+- `import … from "@/lib"`（会打入 Redis；请用 **`@/utils/authFetch`**、**`@/components`**、**`@/hooks/...`**、**`@/wujie/*`**、**`@/proxy/authRoutes`** 等具体路径）
 
-否则可能将 `authSession` / **ioredis** 拉入客户端依赖图，导致构建报错（如无法解析 Node 内置模块 `tls`）。**Route Handlers（`app/api/*`）** 仍可从 `@/app/src/utils` 聚合导入 `bffProxy` 等。
+否则可能将 `authSession` / **ioredis** 拉入客户端依赖图。**Route Handlers（`src/app/api/*`）** 从 **`@/lib/bffProxy`** 导入 `dualAuthUnauthorizedJson`、`parseUpstreamJson` 等。
 
 约定与 Cursor 规则见 [docs/DEVELOPMENT.md](../../docs/DEVELOPMENT.md) 与 [`.cursor/rules/main-next-app.mdc`](../../.cursor/rules/main-next-app.mdc)。
 

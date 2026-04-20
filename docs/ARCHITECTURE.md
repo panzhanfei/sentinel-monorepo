@@ -42,7 +42,7 @@ flowchart LR
   Worker --> TG
 ```
 
-- **唯一 BFF**：浏览器与子应用调用的受保护 HTTP API 以 **`apps/main-next/app/api`** 为入口，再代理到 **`apps/server`** 的 `NODE_SERVICE`（默认 `http://127.0.0.1:4000/api/v1`）。
+- **唯一 BFF**：浏览器与子应用调用的受保护 HTTP API 以 **`apps/main-next/src/app/api`** 为入口，再代理到 **`apps/server`** 的 `NODE_SERVICE`（默认 `http://127.0.0.1:4000/api/v1`）。
 - **Express**：在 `/api/v1` 下提供扫描任务、聊天流、用户设置等；**生产环境**可对 HTTP 层使用 **Node cluster**（见 `apps/server/src/bootstrap.ts`），与 **Bull Worker** 同进程启动于每个 worker。
 - **子应用**：`sub-react` 开发模式下将 `/api` 代理到主站，便于携带 Cookie；`sub-vue` 以链上只读（viem）为主，仍通过 Wujie 接收宿主注入的 Web3 状态。
 
@@ -52,8 +52,8 @@ flowchart LR
 
 | 层级 | 职责 |
 |------|------|
-| **Next `proxy.ts`** | 以 **accessToken + refreshToken** 双 Cookie 判定页面会话；对 `/api` 按 `lib/subAppOrigins.ts` 做 **CORS + credentials**。 |
-| **Next `app/api/auth/*`** | 会话、续签（如 `auth/refresh`）、与钱包登录相关的 Server Actions（见 `actions/auth.ts`）。 |
+| **Next `src/proxy.ts`** | 以 **accessToken + refreshToken** 双 Cookie 判定页面会话；对 `/api` 按 `apps/main-next/src/wujie/subAppOrigins.ts` 做 **CORS + credentials**（逻辑在 `src/proxy/runProxy.ts`）。 |
+| **Next `src/app/api/auth/*`** | 会话、续签（如 `auth/refresh`）、与钱包登录相关的 Server Actions（见 `src/app/actions/auth.ts`）。 |
 | **Express `authMiddleware`** | 受保护路由需 **同时** 有效的 Access 与 Refresh，且 **`sub` 一致**（见 `apps/server/src/middlewares/auth.ts`）。 |
 
 子应用请求 BFF 时应使用宿主注入的 **`bffOrigin`**（与当前主域一致），避免写死端口。
@@ -149,19 +149,19 @@ flowchart LR
 
 | 子应用 | 主站 → 子（宿主推子路由） | 子 → 主站（子应用推主路由） | 主站路径前缀 |
 |--------|---------------------------|------------------------------|--------------|
-| **sub-react** | `react-sub-navigate`（`apps/main-next/lib/wujieAuditBus.ts` ↔ `apps/sub-react/src/constants/wujieAuditBus.ts`） | `audit-react-sync-host` | `/audit` |
-| **sub-vue** | `vue-sub-navigate`（`apps/main-next/lib/wujieMonitorBus.ts` ↔ `apps/sub-vue/src/constants/wujieMonitorBus.ts`） | `monitor-vue-sync-host` | `/monitor` |
+| **sub-react** | `react-sub-navigate`（`apps/main-next/src/wujie/wujieAuditBus.ts` ↔ `apps/sub-react/src/constants/wujieAuditBus.ts`） | `audit-react-sync-host` | `/audit` |
+| **sub-vue** | `vue-sub-navigate`（`apps/main-next/src/wujie/wujieMonitorBus.ts` ↔ `apps/sub-vue/src/constants/wujieMonitorBus.ts`） | `monitor-vue-sync-host` | `/monitor` |
 
 ### 7.4 主站侧实现要点
 
 1. **可选 catch-all 页面**  
-   - `apps/main-next/app/(dashboard)/audit/[[...slug]]/page.tsx`  
-   - `apps/main-next/app/(dashboard)/monitor/[[...slug]]/page.tsx`  
+   - `apps/main-next/src/app/(dashboard)/audit/[[...slug]]/page.tsx`  
+   - `apps/main-next/src/app/(dashboard)/monitor/[[...slug]]/page.tsx`  
    二者仅 `return null`，用于让 **`/audit`、`/audit/*` 与 `/monitor`、`/monitor/*`** 落在同一套路由下。
 
 2. **持久布局（避免骨架闪烁）**  
-   - `apps/main-next/app/(dashboard)/audit/layout.tsx` → 挂载 **`AuditReactHost`**  
-   - `apps/main-next/app/(dashboard)/monitor/layout.tsx` → 挂载 **`MonitorVueHost`**  
+   - `apps/main-next/src/app/(dashboard)/audit/layout.tsx` → 挂载 **`AuditReactHost`**  
+   - `apps/main-next/src/app/(dashboard)/monitor/layout.tsx` → 挂载 **`MonitorVueHost`**  
    **Layout 在同级子路径之间切换不会卸载**，避免 `WujieClient` 因 page 重挂载而重置加载态。若把 Host 写在 `[[...slug]]/page.tsx` 里，slug 变化会导致 **page 重挂载**，从而再次出现骨架屏。
 
 3. **Host 组件**（`AuditReactHost.tsx`、`MonitorVueHost.tsx`）  
@@ -171,8 +171,8 @@ flowchart LR
    - 监听 **`audit-react-sync-host` / `monitor-vue-sync-host`**，将 `{ path }` 映射为 **`/audit...` / `/monitor...`** 后 `router.push`。
 
 4. **路径解析工具**  
-   - `lib/wujieAuditBus.ts`：`hostPathToReactSubPath`、`reactSubPathToIframeHref`  
-   - `lib/wujieMonitorBus.ts`：`hostPathToVueSubPath`、`vueSubPathToIframeHref`  
+   - `src/wujie/wujieAuditBus.ts`：`hostPathToReactSubPath`、`reactSubPathToIframeHref`  
+   - `src/wujie/wujieMonitorBus.ts`：`hostPathToVueSubPath`、`vueSubPathToIframeHref`  
 
 ### 7.5 sub-react 侧要点
 

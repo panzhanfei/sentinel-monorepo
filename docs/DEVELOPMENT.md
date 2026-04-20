@@ -10,7 +10,7 @@
 |------|------|
 | [`project-conventions.mdc`](../.cursor/rules/project-conventions.mdc) | 全仓库：`alwaysApply`。箭头函数、显式类型、`interface.ts` 与 **`I` + PascalCase** 命名、聚合导出（`index.ts`）、测试文件不进 barrel、新增业务前先查复用、`packages/` 共享能力。 |
 | [`server-app.mdc`](../.cursor/rules/server-app.mdc) | `apps/server`：MVC 式分层（`routes` / `controllers` / `services` / `config` / `client` / `middlewares` / `modules` 等）。 |
-| [`main-next-app.mdc`](../.cursor/rules/main-next-app.mdc) | `apps/main-next`：App Router、BFF、`lib/` 与 `app/src/*`；**Next 16 渲染策略**与 **React 19 主壳侧**优化要点。 |
+| [`main-next-app.mdc`](../.cursor/rules/main-next-app.mdc) | `apps/main-next`：**`src/app`**（路由与 BFF）、**`src/*`** 共享模块、**`src/lib`**；**Next 16 渲染策略**与 **React 19 主壳侧**优化要点。 |
 | [`sub-react-app.mdc`](../.cursor/rules/sub-react-app.mdc) | `apps/sub-react`：**React 19** 子应用；**懒加载、虚拟列表、transition** 等优先级说明。 |
 | [`sub-vue-app.mdc`](../.cursor/rules/sub-vue-app.mdc) | `apps/sub-vue`：**Vue 3.5** 子应用；组合式 API、异步组件、性能相关约定；**hooks barrel 与 views 的循环依赖**注意点。 |
 
@@ -30,26 +30,21 @@
 
 ## 3. `apps/main-next`：客户端导入限制（重要）
 
-Next 将 **`lib/index.ts`**、**`app/src/utils/index.ts`** 设计为服务端与 Route Handler 便于聚合导入；若在 **`"use client"`** 组件或仅浏览器运行的代码中写：
-
-- `import … from "@/lib"`
-- `import … from "@/app/src/utils"`
-
-会把 **`bffProxy` → `authSession` → `redis`（ioredis）** 等打进客户端依赖图，引发 **`Can't resolve 'tls'`** 等构建错误。
+**`lib/index.ts`**（**`redis`**、**`authSession`**）与 **`lib/bffProxy.ts`**（依赖 **`authSession`**）属于**服务端 / BFF**；若在 **`"use client"`** 组件或仅浏览器运行的代码中写 **`import … from "@/lib"`**，易把 **ioredis** 等打进客户端依赖图，引发 **`Can't resolve 'tls'`** 等构建错误。
 
 **正确做法**：
 
-- 客户端从 **`@/lib/wujieAuditBus`**、**`@/lib/subAppOrigins`**、**`@/lib/authRoutes`** 等**具体文件**导入。
-- 客户端仅从 **`@/app/src/utils/authFetch`** 等**具体文件**导入；**`app/api/*` Route Handler** 仍可使用 `@/app/src/utils` barrel（含 `bffProxy`）。
+- 客户端从 **`@/utils/authFetch`**、**`@/components`**、**`@/hooks/...`**、**`@/config/...`**、**`@/proxy/authRoutes`**、**`@/wujie/...`** 等**具体路径**导入。
+- **`app/api/*` Route Handler** 从 **`@/lib/bffProxy`** 使用 `dualAuthUnauthorizedJson`、`parseUpstreamJson` 等。
 
-细节与表格见 [`main-next-app.mdc`](../.cursor/rules/main-next-app.mdc) 中 **`lib/`** 与 **`app/src/utils`** 行。
+细节见 [`main-next-app.mdc`](../.cursor/rules/main-next-app.mdc)。
 
 ---
 
 ## 4. 各应用目录分层（速查）
 
 - **`apps/server`**：`routes` → `controllers` → `services`；`config` / `client` / `middlewares` / `workers` / `modules` 等见 `server-app.mdc` 与 [apps/server/README.md](../apps/server/README.md)。
-- **`apps/main-next`**：`app/` 路由与 `app/api` BFF；`app/src/components` / `hooks` / `utils` / `config`；`lib/` 偏服务端与会话；详见 [apps/main-next/README.md](../apps/main-next/README.md)。
+- **`apps/main-next`**：**`src/app`**（路由、`api` BFF、`actions`）；**`src/components`、`src/hooks`、`src/utils`、`src/types`**；**`src/config`**（`NODE_SERVICE`、`wagmi`、`contracts`）；**`src/wujie`**、**`src/proxy`**、**`src/proxy.ts`**（Next 入口）；**`src/lib`**（`authSession` / `redis` / **`bffProxy`**）；详见 [apps/main-next/README.md](../apps/main-next/README.md)。
 - **`apps/sub-react`**：`views`、`components`、`hooks`、`services`、`stores`；`src/api` 为预留目录。
 - **`apps/sub-vue`**：`views`、`components`、`router`、`stores`、`hooks`、`services`。
 

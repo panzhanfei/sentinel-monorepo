@@ -27,7 +27,7 @@
 
 - **清晰分层**：共享包（`security-sdk`、`auth`、`database`）与多应用（宿主、子应用、API/Worker）拆分，链上逻辑、鉴权与持久化可复用、便于测试与演进。
 - **长任务与实时 UI 解耦**：扫描走 **Bull**；Worker 经 **Redis Pub/Sub** 向 `job:{jobId}:log` 推送结构化日志，前端可 SSE/轮询展示进度与中间结果。
-- **可扩展的微前端**：宿主承担统一入口；**全部 BFF** 由 **`apps/main-next`（Next）** 的 `app/api` 承担，子应用技术栈独立构建部署，由 Wujie 嵌入，降低后续并行迭代成本。
+- **可扩展的微前端**：宿主承担统一入口；**全部 BFF** 由 **`apps/main-next`（Next）** 的 **`src/app/api`** 承担，子应用技术栈独立构建部署，由 Wujie 嵌入，降低后续并行迭代成本。
 - **双 Token 与会话一致性**：Access + Refresh 分离签发与校验；受保护接口要求两者同时有效且 `sub` 一致；Next **`proxy.ts`**（Next.js 16 替代原 middleware）以双 Cookie 判定登录态，并配合 BFF 为子应用 Origin 开启 **CORS + credentials**，解决跨端口嵌入时的鉴权与刷新。
 
 ---
@@ -38,7 +38,7 @@
 - **多阶段 AI 流水线**：扫描（Scanner）→ 复核（Auditor）→ 决策与 Markdown 报告（Decision）；三阶段均使用 **DeepSeek** 流式输出；单阶段超时由心跳包装器监控并可自动重试。
 - **异步任务与实时日志**：**Bull** 处理扫描任务；Worker 通过 **Redis Pub/Sub** 向频道 `job:{jobId}:log` 推送结构化日志。
 - **高危告警**：最终评级为 `HIGH` 时，可经 **Telegram Bot** 向用户配置的 `telegramChatId` 推送摘要（需 `TELEGRAM_BOT_TOKEN` 与用户 Chat ID）。
-- **微前端**：主应用 **Next.js** 内嵌 **Vite + React**（审计面板，默认 `http://localhost:3001`）与 **Vite + Vue**（监控面板，默认 `http://localhost:3002`）。子应用入口与 **BFF `/api` 的 CORS 白名单** 由 `apps/main-next/lib/subAppOrigins.ts` 统一维护（默认本地 3001/3002，可通过 `NEXT_PUBLIC_WUJIE_*` 与 `NEXT_PUBLIC_WUJIE_EXTRA_ORIGINS` 覆盖）。
+- **微前端**：主应用 **Next.js** 内嵌 **Vite + React**（审计面板，默认 `http://localhost:3001`）与 **Vite + Vue**（监控面板，默认 `http://localhost:3002`）。子应用入口与 **BFF `/api` 的 CORS 白名单** 由 `apps/main-next/src/wujie/subAppOrigins.ts` 统一维护（默认本地 3001/3002，可通过 `NEXT_PUBLIC_WUJIE_*` 与 `NEXT_PUBLIC_WUJIE_EXTRA_ORIGINS` 覆盖）。
 - **鉴权与数据**：**双 JWT**（`DualJwtService`，`@sentinel/auth`）：登录后写入 HttpOnly Cookie **`accessToken`**（短期）与 **`refreshToken`**（长期），废弃旧单 Cookie `token`；Express 受保护路由从 **Authorization Bearer**、Cookie 或兼容字段读取 Access，Refresh 可从 Cookie、`X-Refresh-Token` 头或查询参数传入；Next 在 **BFF `/api/auth/refresh`** 完成本地续签并回写 Cookie，配合黑名单与单点登录控制。**Prisma + PostgreSQL**；Redis 用于队列、Pub/Sub、Nonce 限流与相关能力。
 
 ---
@@ -47,7 +47,7 @@
 
 | 路径                                                    | 说明                                                                                                                                        |
 | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| `apps/main-next`                                        | 主应用：**Next.js 16**（App Router）、RainbowKit / wagmi、Wujie 宿主；**全部 BFF** 在本包 **`app/api`**（含 `/api/auth/refresh`）。**`proxy.ts`** 以双 Cookie 判定登录并对 `/api` 做子应用 **CORS**。端口 **3000**。生产为 **`output: "standalone"`**，发布产物经 **`pnpm --filter main-next run build:release`** 生成 **`apps/main-next/.release`**（见下文「生产部署：主站 Next.js」）。 |
+| `apps/main-next`                                        | 主应用：**Next.js 16**（**`src/app`** App Router）、RainbowKit / wagmi、Wujie 宿主；**全部 BFF** 在 **`src/app/api`**（含 `/api/auth/refresh`）。**`src/proxy.ts`** 以双 Cookie 判定登录并对 `/api` 做子应用 **CORS**。端口 **3000**。生产为 **`output: "standalone"`**，发布产物经 **`pnpm --filter main-next run build:release`** 生成 **`apps/main-next/.release`**（见下文「生产部署：主站 Next.js」）。 |
 | `apps/sub-react`                                        | 审计子应用：**Vite + React 19**，端口 **3001**；开发环境下 `/api` 代理到 `http://localhost:3000`；逻辑与 API 分层并含 Vitest 用例。          |
 | `apps/sub-vue`                                          | 监控子应用：**Vite + Vue 3** + ECharts，端口 **3002**；监控逻辑拆分为 Store / Service / 图表模型与 Vitest 单测，视图以小组件组合。          |
 | `apps/server`                                           | **Express** API 与 **Bull Worker**；**双 Token** 校验中间件（Access+Refresh、`sub` 一致）。默认 **4000**，前缀见 `NODE_SERVICE`。详见 **`apps/server/README.md`**。          |

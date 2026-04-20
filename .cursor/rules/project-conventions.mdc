@@ -53,4 +53,4 @@ export function buildUser(id: string) { ... }
 - **路由（后端）**：新路由文件除在子目录注册外，须在 **`routes/index.ts`**（或同级汇总）中挂载。
 - **`packages/*`**：遵循各包入口与 `package.json` `exports`，公开符号从包根或 `src/index.ts` 统一导出。
 
-各应用具体目录（如 `app/src/hooks/index.ts`、`src/components/index.ts`）以对应应用的 Cursor 规则为准。
+各应用具体目录（如 **main-next** 的 `src/components/index.ts`、`src/app/...`）以对应应用的 Cursor 规则为准。

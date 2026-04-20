@@ -6,7 +6,7 @@ alwaysApply: false
 
 # apps/main-next 结构与分层
 
-本应用为 **Next.js 16** + **React 19**、**App Router** 主壳：页面路由、**BFF（`app/api`）**、与 **Wujie 子应用** 集成。
+本应用为 **Next.js 16** + **React 19**、**App Router**，采用官方常见的 **`src/` 目录**：**`src/app`** 为路由与 BFF（**`src/app/api`**），其余模块与 **`src/app` 同级**，别名 **`@/*` → `src/*`**。
 
 ## Next 16 / App Router：渲染与缓存（相对优先级）
 
@@ -14,38 +14,41 @@ alwaysApply: false
 |--------|------|------|
 | **高** | **Server Components 默认** | 无 `"use client"` 的 `page`/`layout` 尽量保持服务端组件：**敏感逻辑、大数据拼装、纯展示** 放服务端，减少下发 JS。 |
 | **高** | **CSR 边界** | 仅交互、浏览器 API、Wagmi/Wujie 等必须 **`"use client"`**；客户端树尽量**小**、靠下，避免整页客户端化。 |
-| **高** | **Route Handlers（`app/api`）** | BFF 与 cookie/头转发已在此；保持**薄代理 + 校验**，重业务在 `apps/server` 或共享包。 |
+| **高** | **Route Handlers（`src/app/api`）** | BFF 与 cookie/头转发已在此；保持**薄代理 + 校验**，重业务在 `apps/server` 或共享包。 |
 | **高** | **`loading.tsx` / `error.tsx`** | 路由级加载与错误 UI 优于页面内零散 spin；可与 Suspense 配合改善感知性能。 |
-| **中** | **动态 vs 静态** | `export const dynamic = 'force-dynamic' | 'force-static' | 'auto'`、`revalidate`、**`fetch` 缓存选项** 按路由明确意图；需要实时会话/鉴权的路由通常 **dynamic**。 |
-| **中** | **类 ISR：`revalidate`（秒）** | 对**可短暂过期**的只读数据（如文档、价格展示）可用 **ISR 式重新验证**；**用户私有数据、审计结果**慎用，避免错误缓存。 |
-| **中** | **流式与 PPR** | 关注官方 **Partial Prerendering** 与流式 HTML 能力是否在配置中启用；新页面设计时预留 **Suspense 边界**。 |
-| **低** | **SSR 细节** | App Router 下 SSR 由服务端组件与动态渲染共同完成；避免在服务端组件引用仅客户端模块。 |
-| **低** | **Turbopack** | 开发构建以当前 `next dev` 默认为准；不在业务代码依赖特定打包器行为。 |
+| **中** | **动态 vs 静态** | `export const dynamic`、**`fetch` 缓存** 按路由明确意图；需会话/鉴权的路由通常 **dynamic**。 |
+| **低** | **Turbopack** | 开发构建以 `next dev` 默认为准。 |
 
-**微前端**：`/audit`、`/monitor` 等以 Wujie 嵌入子应用为主，**宿主页本身可保持轻量**；重列表若在子应用内，虚拟列表规则见 **`sub-react-app`** / **`sub-vue-app`**。
+**微前端**：`/audit`、`/monitor` 以 Wujie 嵌入子应用；虚拟列表规则见 **`sub-react-app`** / **`sub-vue-app`**。
 
 ## React 19（主壳 `"use client"` 区域）
 
-与 **sub-react** 共用版本：在 **Wujie 包装、Dashboard 可视化、Web3 Provider** 等客户端组件中，优先 **`useTransition`/`startTransition`** 处理非紧急更新；长列表若在主壳渲染可复用 **TanStack Virtual**（若引入）。细节与 **`use()`** 注意点见 **`sub-react-app`**，避免重复赘述。
+在 **Wujie、Dashboard、Web3 Provider** 等客户端组件中，优先 **`startTransition`**；细节见 **`sub-react-app`**。
 
-## 顶层目录职责
+## `src/app/*`：路由、页面、Server Actions、BFF
 
 | 路径 | 职责 |
 |------|------|
-| **`app/`** | App Router：路由组 `(auth)`、`(dashboard)`、`page.tsx`、`layout.tsx`、`loading.tsx`、`error.tsx` 等；尽量少写大块业务，复杂 UI 抽到 `app/src/components`。 |
-| **`app/api/`** | **Route Handlers**：会话/鉴权代理、chat、scan、events、user 等与后端或上游的 BFF；保持「收请求 → 校验/转发 → 返回」清晰，可调用 `lib/*` 与 `app/src/utils` 中适合服务端的工具。 |
-| **`app/src/components`** | 可复用 UI 与壳层组件（含 Wujie 宿主、骨架屏等）。 |
-| **`app/src/hooks`** | 仅与主壳/页面相关的 React hooks。 |
-| **`app/src/utils`** | 浏览器或服务端皆可用的纯工具、请求封装（如 `authFetch`、`bffProxy`）；与具体页面强绑定的可放在对应路由目录下的 `hooks`。Route Handler 等**纯服务端**可从 **`app/src/utils/index.ts`** 聚合导入；**`"use client"`** 代码须从 **`@/app/src/utils/authFetch`** 等具体文件导入，**禁止** `import … from "@/app/src/utils"`，否则会经 `bffProxy` 拉入 `authSession`/Redis 导致客户端打包失败。 |
-| **`app/src/config`** | 前端运行时配置（如 wagmi、contracts、node_service 等），按能力分文件并在 `config/index` 聚合。 |
-| **`app/src/types`** | 本应用专用类型与 `*.d.ts` 扩展。 |
-| **`app/context`** | React Context（如全局风险状态）。 |
-| **`lib/`** | **偏服务端/中间件/会话存储**：如 `authSession`、`redis`、鉴权相关路由表、**Wujie 与主壳通信的 bus**（`wujieAuditBus`、`wujieMonitorBus`）、`subAppOrigins` 等；避免在 `lib` 里写大块页面 UI。服务端/Route Handler/Server Action 可从 **`lib/index.ts`** 聚合导入；**`"use client"` 组件与仅浏览器运行的代码禁止 `import … from "@/lib"`**，须使用 **`@/lib/wujieAuditBus`**、**`@/lib/authRoutes`** 等具体子路径，否则会把 `redis`/ioredis 等打进客户端包并导致构建失败。`lib` 内部互引仍可用 `@/lib/<模块>`。 |
-| **`actions/`** | Server Actions（如 `auth.ts`）；与 `app/api` 二选一时保持团队一致，避免同一流程两处重复实现。 |
+| **`src/app/`** | **App Router**：`page`、`layout`、`loading`、`error`、`context` 等。 |
+| **`src/app/api/`** | **Route Handlers（BFF）**。 |
+| **`src/app/actions/`** | **Server Actions**（`"use server"`；客户端 **`@/app/actions/...`** 按文件引用）。 |
+
+## `src/*`（与 `app` 同级）：共享模块
+
+| 路径 | 职责 |
+|------|------|
+| **`src/proxy.ts`** | **Next 16 约定**：请求拦截入口（原 `middleware`）；**字面量导出 `config.matcher`**；实现委托 **`src/proxy/runProxy.ts`**。 |
+| **`src/proxy/`** | **`runProxy`**、**`authRoutes`**、**`middlewareAuthNavigation`**（与 **`NextResponse`** 解耦，便于单测）。 |
+| **`src/wujie/`** | **微前端宿主**、bus、**`subAppOrigins`**、骨架屏等；**`@/wujie/...`**。 |
+| **`src/config/`** | **`node_service`**（`NODE_SERVICE`，BFF 上游）、**`wagmi`**、**`contracts`** 等；按需 **`@/config/...`** 或具体文件，避免客户端误拉不需要的模块时优先细粒度路径。 |
+| **`src/components/`** | **`"use client"`** 通用 UI。**`@/components`**。 |
+| **`src/hooks/`** | 仅浏览器运行的 hook。**`@/hooks/...`**。 |
+| **`src/utils/`** | 浏览器工具（如 **`authFetch.ts`**）。**`@/utils/authFetch`**；勿做会间接依赖 **`@/lib`** 的宽泛 barrel。 |
+| **`src/types/`** | 补充类型、**`fetch.d.ts`**；**`typeRoots`** 含 **`./src/types`**、**`./src/wujie/types`**。 |
+| **`src/lib/`** | **`authSession`**、**`redis`**、**`bffProxy.ts`**（仅 BFF）。**`lib/index.ts`** 只导出 **`redis` / `authSession`**，**不**导出 **`bffProxy`**。**客户端禁止** **`import … from "@/lib"`**。 |
 
 ## 协作约定
 
-- **BFF 与 `apps/server`**：对外 API 形态以现有 `app/api` 与后端约定为准；新增接口优先在 `app/api` 下按资源分子目录。
-- **子应用**：子路由与微前端通信逻辑优先使用现有 `lib/wujie*.ts` 与 `app/src/components/*Host.tsx` 模式，避免在页面里散落魔法字符串。
-- 跨应用可复用的纯逻辑，按仓库根目录 **`packages/`** 约定上浮，而不是在 `main-next` 内堆叠。
-- **聚合导出**：新增通用组件、hooks、`app/src/config` 配置、`app/context` 聚合导出等时，维护对应目录下的 **`index.ts`**（如 `app/src/components/index.ts`、`app/src/hooks/index.ts`、`app/src/config/index.ts`、`app/context/index.ts`、`app/src/utils/index.ts`、`lib/index.ts`）。`bffProxy` 等对 `@/lib/authSession` 的 **直接路径** 导入可保留，以便 Vitest `vi.mock` 与 `index` 解耦（见根目录规则）。
+- **BFF**：新增接口优先 **`src/app/api`**。
+- **子应用通信**：优先 **`src/wujie`** 与 Host 模式，避免魔法字符串。
+- **聚合导出**：维护 **`src/components/index.ts`**、**`src/hooks/index.ts`**、**`src/wujie/index.ts`**、**`src/proxy/index.ts`**、**`src/lib/index.ts`**（仅服务端安全符号）等；**`src/app/actions/*`** 按 **`"use server"` 文件**引用。**`bffProxy`** 对 **`@/lib/authSession`** 的直引可保留以便 Vitest mock。
