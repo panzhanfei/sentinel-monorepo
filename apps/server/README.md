@@ -49,10 +49,13 @@ pnpm --filter server test
 | `NODE_ENV` | `production` 时启用 cluster |
 | `CLUSTER_WORKERS` | 可选，worker 数量；默认 `os.availableParallelism()` |
 | `REDIS_URL` | Redis（Bull + Pub/Sub） |
-| `JWT_SECRET` / `REFRESH_TOKEN_SECRET` | 与 BFF/登录一致，用于校验双 Token |
+| `JWT_SECRET` / `REFRESH_TOKEN_SECRET` | 与 BFF/登录一致；**生产**不得使用开发占位默认值（启动会校验失败） |
 | `DEEPSEEK_API_KEY` | 审计流水线必填 |
 | `DEEPSEEK_API_URL` | 可选 API 基地址 |
-| `CORS_ORIGIN` | 默认可配合宿主调试 |
+| `CORS_ORIGIN` | 逗号分隔的 Origin 白名单（须含协议）；配合 `credentials` |
+| `TRUST_PROXY_HOPS` | 反代层数；生产在 Caddy 后建议 `1`，用于限流取真实 IP |
+| `JSON_BODY_LIMIT` | `express.json` 单请求体上限，默认 `1mb` |
+| `RATE_LIMIT_ENABLED` / `RATE_LIMIT_*` | 全局限流；计数在 Redis，与 cluster 兼容 |
 | `TELEGRAM_BOT_TOKEN` | 可选，高危告警 |
 
 数据库连接字符串由 **`@sentinel/database`** / Prisma 使用，通常通过 `DATABASE_URL` 注入。

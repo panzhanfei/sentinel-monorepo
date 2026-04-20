@@ -8,6 +8,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { z } from 'zod';
 
+/** 与 schema 默认值一致；生产环境禁止使用这些占位（见 envSchema.superRefine） */
+export const DEV_PLACEHOLDER_JWT_SECRET =
+  'your-super-secret-jwt-key-change-in-production-2024';
+export const DEV_PLACEHOLDER_REFRESH_SECRET =
+  'your-refresh-token-secret-different-from-jwt';
+
 // 1. 加载 .env 到 process.env
 // 部署形态：① 扁平 server/config/*.js；② dist/server/dist/config/*.js。用「任一常见 env 文件名」定位 server 根，避免只认 NODE_ENV 对应文件名时找不到（线上常只有 .env.production）。
 // 若 PM2 未设 NODE_ENV=production，会去找 .env.development；不存在时回退 .env.production，避免仍用 PM2 里占位的 redis://:password@...
@@ -57,18 +63,23 @@ const envSchema = z.object({
   JWT_SECRET: z
     .string()
     .min(32)
-    .default('your-super-secret-jwt-key-change-in-production-2024'),
+    .default(DEV_PLACEHOLDER_JWT_SECRET),
   JWT_EXPIRES_IN: z.string().default('15m'),
 
   // 刷新令牌独立配置
   REFRESH_TOKEN_SECRET: z
     .string()
     .min(32)
-    .default('your-refresh-token-secret-different-from-jwt'),
+    .default(DEV_PLACEHOLDER_REFRESH_SECRET),
   REFRESH_TOKEN_EXPIRES_IN: z.string().default('7d'),
 
   // CORS & Rate Limit
+  /** 逗号分隔多个 Origin；须含协议与主机（无尾斜杠），如 https://app.example.com */
   CORS_ORIGIN: z.string().default('http://localhost:3000'),
+  RATE_LIMIT_ENABLED: z
+    .string()
+    .default('true')
+    .transform((v) => v !== 'false'),
   RATE_LIMIT_WINDOW_MS: z.preprocess(
     (val) => val ?? '900000',
     z.string().transform(Number)
@@ -77,6 +88,12 @@ const envSchema = z.object({
     (val) => val ?? '100',
     z.string().transform(Number)
   ),
+
+  /** 反代层数（如仅 Caddy 一层则设为 1），用于限流取真实 IP 与 Express trust proxy */
+  TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(10).default(0),
+
+  /** express.json 单请求体上限，如 512kb、1mb、2mb */
+  JSON_BODY_LIMIT: z.string().default('1mb'),
 
   // REDIS 配置
   REDIS_HOST: z.string().default('localhost'),
@@ -157,6 +174,32 @@ const envSchema = z.object({
   WATCHDOG_INTERVAL_MS: z
     .preprocess((val) => val ?? '30000', z.string().transform(Number))
     .default('30000'),
+}).superRefine((data, ctx) => {
+  if (data.NODE_ENV !== 'production') return;
+
+  if (data.JWT_SECRET === DEV_PLACEHOLDER_JWT_SECRET) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message:
+        '生产环境禁止使用 JWT_SECRET 占位默认值，请在环境变量中设置强随机密钥（≥32 字符）',
+      path: ['JWT_SECRET'],
+    });
+  }
+  if (data.REFRESH_TOKEN_SECRET === DEV_PLACEHOLDER_REFRESH_SECRET) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message:
+        '生产环境禁止使用 REFRESH_TOKEN_SECRET 占位默认值，请设置与 JWT_SECRET 不同的强随机密钥',
+      path: ['REFRESH_TOKEN_SECRET'],
+    });
+  }
+  if (data.JWT_SECRET === data.REFRESH_TOKEN_SECRET) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'JWT_SECRET 与 REFRESH_TOKEN_SECRET 不得相同',
+      path: ['REFRESH_TOKEN_SECRET'],
+    });
+  }
 });
 
 // 4. 解析并验证环境变量

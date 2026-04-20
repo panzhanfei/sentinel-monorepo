@@ -1,22 +1,30 @@
 import cluster from 'node:cluster';
 import os from 'node:os';
 import express from 'express';
-import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { env } from '@/config';
 import { redis } from '@/client';
 import { prisma } from '@/client/prisma.client';
 import { startScan, stopScan } from '@/workers/scanner';
 import router from '@/routes';
-import { errorHandler } from '@/middlewares';
+import {
+  buildCorsMiddleware,
+  buildHelmetMiddleware,
+  buildRateLimiter,
+  errorHandler,
+} from '@/middlewares';
 
 const PORT = env.PORT;
 
 const startWorker = (mode: 'standalone' | 'cluster-worker' = 'standalone') => {
   const app = express();
-  app.use(cors());
-  app.use(express.json());
-  app.use(cookieParser());
+  if (env.TRUST_PROXY_HOPS > 0) {
+    app.set('trust proxy', env.TRUST_PROXY_HOPS);
+  }
+  app.use(buildHelmetMiddleware());
+  app.use(buildCorsMiddleware());
+  app.use(buildRateLimiter());
+  app.use(express.json({ limit: env.JSON_BODY_LIMIT }));
   app.use(router);
   app.use(errorHandler);
 

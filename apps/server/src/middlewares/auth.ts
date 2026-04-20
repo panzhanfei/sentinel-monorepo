@@ -1,8 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
+import { env } from '@/config';
 import { sendFailure } from '@/utils/apiResponse';
 import type { JwtPayload } from '@sentinel/auth';
 import { DualJwtService } from '@sentinel/auth';
 import { dualJwt } from '@/lib/dualJwt';
+
+const allowTokenInQueryOrBody = env.NODE_ENV !== 'production';
 
 const extractAccessToken = (req: Request) : string | undefined => {
   const fromAuth = DualJwtService.extractBearer(req.headers.authorization);
@@ -13,9 +16,12 @@ const extractAccessToken = (req: Request) : string | undefined => {
     req.cookies?.token; // 旧版单 cookie，仅作 access 兼容
   if (fromCookie) return fromCookie;
 
-  if (typeof req.body?.token === 'string') return req.body.token;
-  if (typeof req.query?.token === 'string') return req.query.token;
-  if (typeof req.query?.access_token === 'string') return req.query.access_token;
+  if (allowTokenInQueryOrBody) {
+    if (typeof req.body?.token === 'string') return req.body.token;
+    if (typeof req.query?.token === 'string') return req.query.token;
+    if (typeof req.query?.access_token === 'string')
+      return req.query.access_token;
+  }
 
   return undefined;
 }
@@ -26,7 +32,10 @@ const extractRefreshToken = (req: Request) : string | undefined => {
   const hdr = req.headers['x-refresh-token'];
   if (typeof hdr === 'string') return hdr;
 
-  if (typeof req.query?.refresh_token === 'string') return req.query.refresh_token;
+  if (allowTokenInQueryOrBody) {
+    if (typeof req.query?.refresh_token === 'string')
+      return req.query.refresh_token;
+  }
 
   return undefined;
 }
