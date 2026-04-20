@@ -1,4 +1,5 @@
 import { getBffBaseUrl } from "@/utils/bffOrigin";
+import { bffFetch } from "@/utils/bffFetch";
 
 export class ChatSessionInitError extends Error {
   readonly status: number;
@@ -13,7 +14,7 @@ export class ChatSessionInitError extends Error {
 }
 
 export const initChatSession = async (address: string | undefined, bffBase: string = getBffBaseUrl()) : Promise<string> => {
-  const res = await fetch(`${bffBase}/api/chat/session`, {
+  const res = await bffFetch(`${bffBase}/api/chat/session`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     credentials: "include",

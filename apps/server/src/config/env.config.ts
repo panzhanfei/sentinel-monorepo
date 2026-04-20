@@ -76,9 +76,15 @@ const envSchema = z.object({
   // CORS & Rate Limit
   /** 逗号分隔多个 Origin；须含协议与主机（无尾斜杠），如 https://app.example.com */
   CORS_ORIGIN: z.string().default('http://localhost:3000'),
+  /** 生产默认开启；开发/测试默认关闭，避免本地调试触顶或与 Redis 交互异常。显式设 true/false 可覆盖 */
   RATE_LIMIT_ENABLED: z
-    .string()
-    .default('true')
+    .preprocess((val) => {
+      if (val === '' || val === undefined) {
+        const nodeEnv = process.env.NODE_ENV || 'development';
+        return nodeEnv === 'production' ? 'true' : 'false';
+      }
+      return val;
+    }, z.string())
     .transform((v) => v !== 'false'),
   RATE_LIMIT_WINDOW_MS: z.preprocess(
     (val) => val ?? '900000',

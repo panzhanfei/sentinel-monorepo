@@ -10,7 +10,7 @@ export default defineConfig({
   preview: {
     host: "0.0.0.0",
     port: 3001,
-    allowedHosts: ["react.pzfnqbn.top"],
+    allowedHosts: true,
   },
   server: {
     port: 3001, // 设置为你想要的端口，例如 3000

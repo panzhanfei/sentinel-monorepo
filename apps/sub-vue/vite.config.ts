@@ -10,7 +10,7 @@ export default defineConfig({
   preview: {
     host: "0.0.0.0",
     port: 3002,
-    allowedHosts: ["vue.pzfnqbn.top"],
+    allowedHosts: true,
   },
   test: {
     environment: "happy-dom",

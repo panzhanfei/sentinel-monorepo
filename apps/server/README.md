@@ -55,7 +55,7 @@ pnpm --filter server test
 | `CORS_ORIGIN` | 逗号分隔的 Origin 白名单（须含协议）；配合 `credentials` |
 | `TRUST_PROXY_HOPS` | 反代层数；生产在 Caddy 后建议 `1`，用于限流取真实 IP |
 | `JSON_BODY_LIMIT` | `express.json` 单请求体上限，默认 `1mb` |
-| `RATE_LIMIT_ENABLED` / `RATE_LIMIT_*` | 全局限流；计数在 Redis，与 cluster 兼容 |
+| `RATE_LIMIT_ENABLED` / `RATE_LIMIT_*` | 全局限流；**生产默认开**，开发/测试未设置时默认关；计数在 Redis |
 | `TELEGRAM_BOT_TOKEN` | 可选，高危告警 |
 
 数据库连接字符串由 **`@sentinel/database`** / Prisma 使用，通常通过 `DATABASE_URL` 注入。

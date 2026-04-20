@@ -5,6 +5,16 @@ import { RedisStore } from 'rate-limit-redis';
 import { env } from '@/config';
 import { redis } from '@/client/redis.client';
 
+/** 与 main-next BFF 默认子应用端口对齐；含 127.0.0.1 与 localhost，避免本机混用导致跨域失败 */
+const LOCAL_DEV_CORS_ORIGINS = [
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+  'http://localhost:3001',
+  'http://127.0.0.1:3001',
+  'http://localhost:3002',
+  'http://127.0.0.1:3002',
+] as const;
+
 export const parseCorsOrigins = (raw: string): string[] => {
   return raw
     .split(',')
@@ -12,8 +22,16 @@ export const parseCorsOrigins = (raw: string): string[] => {
     .filter(Boolean);
 };
 
+const mergeAllowedOrigins = (): string[] => {
+  const fromEnv = parseCorsOrigins(env.CORS_ORIGIN);
+  if (env.NODE_ENV === 'production') {
+    return fromEnv;
+  }
+  return [...new Set([...fromEnv, ...LOCAL_DEV_CORS_ORIGINS])];
+};
+
 export const buildCorsMiddleware = () => {
-  const allowed = parseCorsOrigins(env.CORS_ORIGIN);
+  const allowed = mergeAllowedOrigins();
   return cors({
     origin(origin, callback) {
       if (!origin) {

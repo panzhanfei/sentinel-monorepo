@@ -18,7 +18,7 @@ Sentinel 主应用：基于 **Next.js App Router** 的壳层；源码在 **`src/
 | `src/proxy.ts`                        | **Next 16 约定**：请求拦截入口（原 `middleware.ts`）；实现见 **`src/proxy/runProxy.ts`**；`config.matcher` 须在本文件字面量导出 |
 | `src/proxy/middlewareAuthNavigation.ts` | 导航决策（与 `NextResponse` 解耦，便于单测） |
 | `src/proxy/authRoutes.ts`             | 受保护路由前缀（与 AuthGuard、`runProxy` 共用） |
-| `src/wujie/subAppOrigins.ts`          | 子应用入口 URL 与 BFF CORS 白名单 |
+| `src/wujie/subAppOrigins.ts`          | `resolveWujieSubAppBases(host)`（按请求 Host 选子应用源）与 BFF CORS 白名单 |
 | `src/app/actions/auth.ts`             | Server Actions（`"use server"`）：nonce、签名登录、写 Cookie、登出 |
 | `src/app/api/**`                      | Route Handlers（BFF），含本地 `auth/refresh` 续签与会话校验 |
 | `src/lib/bffProxy.ts`                 | BFF：双 Token 校验、转发头、`parseUpstreamJson`（仅服务端引用） |
@@ -42,6 +42,8 @@ Sentinel 主应用：基于 **Next.js App Router** 的壳层；源码在 **`src/
 - `NEXT_PUBLIC_WUJIE_REACT_URL`：React 子应用完整源（默认 `http://localhost:3001`）
 - `NEXT_PUBLIC_WUJIE_VUE_URL`：Vue 子应用完整源（默认 `http://localhost:3002`）
 - `NEXT_PUBLIC_WUJIE_EXTRA_ORIGINS`：额外允许的源，逗号分隔（并入 CORS 白名单）
+- `NEXT_PUBLIC_WUJIE_USE_PRODUCTION_SUBAPPS`：设为 `true` 时始终使用上述 WUJIE URL（含在 localhost 上强开生产子域调试）
+- 子应用 iframe 基址由 **Server Layout** 根据 `headers().get('host')` 调用 `resolveWujieSubAppBases`：访问 `localhost` / `127.0.0.1` 时固定本机 3001/3002，避免 `next start` 或 `NODE_ENV=production` 仍误用 `.env` 里的生产子域
 
 登录与 JWT（见 `src/app/actions/auth.ts`）：
 

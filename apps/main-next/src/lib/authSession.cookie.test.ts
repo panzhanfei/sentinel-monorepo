@@ -5,10 +5,12 @@ describe("authSession cookie helpers", () => {
 
   beforeEach(() => {
     vi.resetModules();
+    vi.unstubAllEnvs();
     process.env = { ...snapshot };
   });
 
   afterEach(() => {
+    vi.unstubAllEnvs();
     process.env = snapshot;
   });
 
@@ -18,13 +20,22 @@ describe("authSession cookie helpers", () => {
     expect(authCookieConfig.refreshMaxAge).toBe(60 * 60 * 24 * 7);
   });
 
-  it("getAuthCookieBase defaults to lax in development", async () => {
-    process.env.NODE_ENV = "development";
+  it("getAuthCookieBase uses none+secure in development for microfrontend creds", async () => {
+    (vi.stubEnv as (key: string, val: string) => void)("NODE_ENV", "development");
     delete process.env.AUTH_COOKIE_SAME_SITE;
     const { getAuthCookieBase } = await import("./authSession");
     const base = getAuthCookieBase();
     expect(base.httpOnly).toBe(true);
     expect(base.path).toBe("/");
+    expect(base.sameSite).toBe("none");
+    expect(base.secure).toBe(true);
+  });
+
+  it("getAuthCookieBase honors AUTH_COOKIE_SAME_SITE=lax in development", async () => {
+    (vi.stubEnv as (key: string, val: string) => void)("NODE_ENV", "development");
+    process.env.AUTH_COOKIE_SAME_SITE = "lax";
+    const { getAuthCookieBase } = await import("./authSession");
+    const base = getAuthCookieBase();
     expect(base.sameSite).toBe("lax");
     expect(base.secure).toBe(false);
   });

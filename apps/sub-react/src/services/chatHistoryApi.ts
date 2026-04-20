@@ -1,5 +1,6 @@
 import type { ChatRow, LogEntry } from "@/types/audit";
 import { getBffBaseUrl } from "@/utils/bffOrigin";
+import { bffFetch } from "@/utils/bffFetch";
 import { emitAuthSessionInvalidToHost } from "@/utils/wujieHost";
 
 export type ChatHistoryMessage = {
@@ -23,7 +24,7 @@ export const fetchChatMessages = async (sessionId: string, options: {
     url.searchParams.set("before", options.beforeCreatedAt);
   }
 
-  const res = await fetch(url.toString(), { credentials: "include" });
+  const res = await bffFetch(url.toString(), { credentials: "include" });
 
   if (!res.ok) {
     if (res.status === 401) {

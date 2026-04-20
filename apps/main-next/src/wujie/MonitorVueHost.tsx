@@ -10,18 +10,21 @@ import {
   hostPathToVueSubPath,
   vueSubPathToIframeHref,
 } from "./wujieMonitorBus";
-import { WUJIE_SUB_APP_URL } from "./subAppOrigins";
 import { useWujieHostPageModal } from "./useWujieHostPageModal";
 
 /**
  * Next `/monitor` 与 `/monitor/**` 驱动 Vue 子应用路由；保活 + bus，sync=false。
  */
-export const MonitorVueHost = () => {
+export const MonitorVueHost = ({
+  wujieVueBase,
+}: {
+  wujieVueBase: string;
+}) => {
   const pathname = usePathname();
   const router = useRouter();
   const subPath = hostPathToVueSubPath(pathname);
   const [wujieEntryUrl] = useState(() =>
-    vueSubPathToIframeHref(subPath, WUJIE_SUB_APP_URL.vue),
+    vueSubPathToIframeHref(subPath, wujieVueBase),
   );
 
   const pathnameRef = useRef(pathname);

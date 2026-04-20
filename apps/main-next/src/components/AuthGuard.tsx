@@ -39,13 +39,16 @@ export const AuthGuard = () => {
     };
   }, [kickOut]);
 
-  // 受保护路由 + 钱包已断开（排除连接中/重连中，避免误踢）
+  // 受保护路由 + 钱包已断开（排除连接中/重连中；防抖避免进入微前端时 wagmi 短暂 disconnected 误踢）
   useEffect(() => {
     if (!isProtectedRoute(pathname)) return;
     if (status === "connecting" || status === "reconnecting") return;
     if (status !== "disconnected") return;
 
-    void kickOut("wallet_disconnected");
+    const t = window.setTimeout(() => {
+      void kickOut("wallet_disconnected");
+    }, 1200);
+    return () => window.clearTimeout(t);
   }, [status, pathname, kickOut]);
 
   return null;

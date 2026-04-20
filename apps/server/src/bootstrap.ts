@@ -25,6 +25,8 @@ const startWorker = (mode: 'standalone' | 'cluster-worker' = 'standalone') => {
   app.use(buildCorsMiddleware());
   app.use(buildRateLimiter());
   app.use(express.json({ limit: env.JSON_BODY_LIMIT }));
+  /** authMiddleware 依赖 req.cookies（refreshToken）；安全重构时勿省略 */
+  app.use(cookieParser());
   app.use(router);
   app.use(errorHandler);
 

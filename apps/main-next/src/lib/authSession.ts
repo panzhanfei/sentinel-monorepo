@@ -260,10 +260,24 @@ export const getAuthCookieBase = () : {
   sameSite: "lax" | "none";
   path: "/";
 } => {
-  const sameSite =
-    process.env.AUTH_COOKIE_SAME_SITE?.toLowerCase() === "none"
-      ? ("none" as const)
-      : ("lax" as const);
+  const raw = process.env.AUTH_COOKIE_SAME_SITE?.toLowerCase();
+  /**
+   * 微前端：子应用（如 :3001）向宿主 BFF（:3000）发带 credentials 的跨站请求时，
+   * SameSite=Lax 通常不会附带宿主 Set-Cookie 的会话 → 401 → 子应用通知宿主踢登录。
+   * 开发环境默认改为 none+Secure（Chromium 系对 http://localhost 仍接受 Secure Cookie）。
+   * 若需沿用 Lax 调试，设 AUTH_COOKIE_SAME_SITE=lax。
+   */
+  let sameSite: "lax" | "none";
+  if (raw === "none") {
+    sameSite = "none";
+  } else if (raw === "lax") {
+    sameSite = "lax";
+  } else if (process.env.NODE_ENV === "development") {
+    sameSite = "none";
+  } else {
+    sameSite = "lax";
+  }
+
   const secure =
     process.env.NODE_ENV === "production" || sameSite === "none";
   return {
