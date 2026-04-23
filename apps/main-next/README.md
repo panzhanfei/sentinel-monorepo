@@ -69,7 +69,7 @@ Node BFF 上游地址见 `src/config/node_service.ts`（`NODE_SERVICE` 等）。
 
 - 子应用 iframe 入口使用 `WUJIE_SUB_APP_URL`（`subAppOrigins.ts`），与 CORS 白名单 `BFF_CORS_ORIGIN_SET` 同源配置，避免多处硬编码不一致。
 - **`src/proxy.ts`** 对 `/api` 请求：非白名单 Origin 的 `OPTIONS` 返回 204 且无 CORS 头；白名单来源则允许 `credentials`，便于子应用携带 Cookie 调用主域 BFF。
-- `WujieClient` 通过 props 传入 `bffOrigin`（当前页 `window.location.origin`），子应用可据此构造同源 BFF 请求；`useWeb3Sync`（`wujieHooks.tsx`）通过 Wujie `bus` 广播 `web3-data-change`，与子应用联动。
+- `WujieClient` 通过 props 传入 `bffOrigin`（当前页 `window.location.origin`），子应用可据此构造同源 BFF 请求；`useWeb3Sync`（`src/hooks/useWeb3Sync.tsx`）通过 Wujie `bus` 广播 `web3-data-change`，与子应用联动。
 
 ### 主子路由协同（Wujie 子应用 vs Next App Router）
 

@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useAccount } from "wagmi";
+
 export const useWeb3Sync = () => {
   const { address, isConnected, chain } = useAccount();
   const chainId = chain?.id;

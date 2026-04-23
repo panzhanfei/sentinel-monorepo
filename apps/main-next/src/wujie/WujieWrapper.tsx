@@ -11,7 +11,7 @@ import {
   ReactNode,
 } from "react";
 import { useAccount } from "wagmi";
-import { useWeb3Sync } from "./wujieHooks";
+import { useWeb3Sync } from "@/hooks";
 
 const EMPTY_PROPS: Record<string, unknown> = {};
 

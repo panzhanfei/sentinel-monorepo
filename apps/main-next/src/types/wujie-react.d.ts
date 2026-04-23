@@ -1,4 +1,3 @@
-// src/types/wujie-react.d.ts
 declare module "wujie-react" {
   import { FC, HTMLAttributes } from "react";
 

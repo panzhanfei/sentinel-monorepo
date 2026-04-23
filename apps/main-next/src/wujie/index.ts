@@ -6,4 +6,3 @@ export * from "./WujieWrapper";
 export * from "./AuditReactHost";
 export * from "./MonitorVueHost";
 export * from "./useWujieHostPageModal";
-export * from "./wujieHooks";

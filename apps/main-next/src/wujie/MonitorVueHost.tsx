@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { WujieClient } from "./WujieWrapper";
-import { MonitorSkeleton } from "./skeletons/monitor";
+import { MonitorSkeleton } from "@/components/skeletons";
 import {
   MONITOR_VUE_HOST_SYNC_EVENT,
   VUE_SUB_NAVIGATE_EVENT,

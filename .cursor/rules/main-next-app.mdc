@@ -39,12 +39,12 @@ alwaysApply: false
 |------|------|
 | **`src/proxy.ts`** | **Next 16 约定**：请求拦截入口（原 `middleware`）；**字面量导出 `config.matcher`**；实现委托 **`src/proxy/runProxy.ts`**。 |
 | **`src/proxy/`** | **`runProxy`**、**`authRoutes`**、**`middlewareAuthNavigation`**（与 **`NextResponse`** 解耦，便于单测）。 |
-| **`src/wujie/`** | **微前端宿主**、bus、**`subAppOrigins`**、骨架屏等；**`@/wujie/...`**。 |
+| **`src/wujie/`** | **微前端宿主**、bus、**`subAppOrigins`**、Host 组件等；**`@/wujie/...`**。**勿**在此目录下放与宿主无强绑定的内容：通用 **React hook**（含经 Wujie 通信的 hook）、**骨架屏**、**全局 `.d.ts`** 分别放 **`src/hooks`**、**`src/components/skeletons`**、**`src/types`**。 |
 | **`src/config/`** | **`node_service`**（`NODE_SERVICE`，BFF 上游）、**`wagmi`**、**`contracts`** 等；按需 **`@/config/...`** 或具体文件，避免客户端误拉不需要的模块时优先细粒度路径。 |
-| **`src/components/`** | **`"use client"`** 通用 UI。**`@/components`**。 |
-| **`src/hooks/`** | 仅浏览器运行的 hook。**`@/hooks/...`**。 |
+| **`src/components/`** | **`"use client"`** 通用 UI；**`skeletons/`** 含 **`AuditSkeleton`**、**`MonitorSkeleton`** 等与路由/业务相关的加载占位。**`@/components`**。 |
+| **`src/hooks/`** | 仅浏览器运行的 hook；例如 **`useWeb3Sync`**（向 Wujie **`bus`** 广播 **`web3-data-change`**）与其它页面级 hook 同属此目录，**不**使用 **`src/wujie/hooks/`**。**`@/hooks/...`**。 |
 | **`src/utils/`** | 浏览器工具（如 **`authFetch.ts`**）。**`@/utils/authFetch`**；勿做会间接依赖 **`@/lib`** 的宽泛 barrel。 |
-| **`src/types/`** | 补充类型、**`fetch.d.ts`**；**`typeRoots`** 含 **`./src/types`**、**`./src/wujie/types`**。 |
+| **`src/types/`** | 补充类型、**`fetch.d.ts`**、第三方模块补丁（如 **`wujie-react.d.ts`**）；**`typeRoots`** 含 **`./src/types`**。 |
 | **`src/lib/`** | **`authSession`**、**`redis`**、**`bffProxy.ts`**（仅 BFF）。**`lib/index.ts`** 只导出 **`redis` / `authSession`**，**不**导出 **`bffProxy`**。**客户端禁止** **`import … from "@/lib"`**。 |
 
 ## 协作约定
