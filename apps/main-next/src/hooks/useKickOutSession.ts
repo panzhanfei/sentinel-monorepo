@@ -6,6 +6,24 @@ import { useDisconnect } from "wagmi";
 import { logout } from "@/app/actions/auth";
 import { isProtectedRoute } from "@/proxy/authRoutes";
 
+/** 与 `MonitorVueHost` / `AuditReactHost` 中 WujieClient `name` 一致；登出时须销毁保活实例以停止子应用内轮询 */
+const WUJIE_SUB_APP_NAMES = ["vue3", "react19"] as const;
+
+const destroyWujieSubApps = async () => {
+  try {
+    const { destroyApp } = await import("wujie-react");
+    for (const name of WUJIE_SUB_APP_NAMES) {
+      try {
+        destroyApp(name);
+      } catch {
+        /* 未启动过该子应用时无界可能抛错，忽略 */
+      }
+    }
+  } catch {
+    /* 未使用微前端或未加载 wujie-react */
+  }
+};
+
 /** 与微前端子应用约定：BFF 401 时子应用向宿主发此事件 */
 export const AUTH_SESSION_INVALID_EVENT = "auth-session-invalid";
 
@@ -23,6 +41,7 @@ export const useKickOutSession = () => {
       try {
         await logout();
         disconnect();
+        await destroyWujieSubApps();
         const path =
           typeof window !== "undefined" ? window.location.pathname : "/";
         const loginUrl = new URL("/login", window.location.origin);
