@@ -15,6 +15,10 @@ export default defineConfig({
   test: {
     environment: "happy-dom",
     include: ["src/**/*.test.ts"],
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "lcov", "html"],
+    },
   },
   server: {
     port: 3002, // 设置为你想要的端口，例如 3000

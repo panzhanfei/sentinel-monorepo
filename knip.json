@@ -1,0 +1,31 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "workspaces": {
+    ".": {
+      "entry": ["ecosystem.config.cjs"],
+      "ignoreDependencies": ["@vitest/coverage-v8", "ts-morph", "tsx"]
+    },
+    "apps/main-next": {
+      "entry": ["src/proxy.ts", "src/wujie/index.ts"],
+      "ignore": [
+        "scripts/standalone-host.cjs",
+        "src/proxy/index.ts"
+      ],
+      "ignoreDependencies": ["tailwindcss"]
+    },
+    "apps/sub-react": {
+      "ignore": [
+        "src/App/interface.ts",
+        "src/components/audit/OverviewCards/useData.ts",
+        "src/components/audit/StatCard/useData.ts"
+      ],
+      "ignoreDependencies": ["tailwindcss"]
+    },
+    "apps/sub-vue": {
+      "ignore": ["src/App/interface.ts"],
+      "ignoreDependencies": ["tailwindcss"]
+    }
+  },
+  "ignore": ["**/*.d.ts"],
+  "ignoreBinaries": ["anvil", "sleep"]
+}

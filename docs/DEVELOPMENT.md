@@ -62,7 +62,21 @@ pnpm test
 
 Turbo 会并行运行各包中已声明的 `test` 脚本（如 `main-next`、`sub-react`、`sub-vue`、`server`、`@sentinel/auth` 等）。
 
-### 5.2 端到端测试（Playwright）
+**覆盖率（V8）**：根目录执行 `pnpm test:coverage`，与各包内 `vitest run --coverage` 等价（由 Turbo 聚合）。使用 **`@vitest/coverage-v8`**，与当前 **Vitest 3** 版本一致；报告格式为 **text**（终端）、**lcov**（供 CI / Sonar 等）、**html**（本地打开各包下 `coverage/index.html`）。配置在各应用的 `vitest.config.ts` 中；`sub-vue` 在 `vite.config.ts` 的 `test.coverage` 段。
+
+### 5.2 依赖与文件卫生（Knip）
+
+根目录执行：
+
+```bash
+pnpm knip
+```
+
+使用 **Knip 5**（与仓库内 `zod` 版本兼容；根目录 `package.json` 中锁定主版本）。依据 **`knip.json`** 扫描 workspace：侧重 **未引用文件**、**依赖是否多余或漏声明**、**脚本中未在 `package.json` 声明的二进制**、**无法解析的 import** 等。
+
+当前根脚本对 **未使用导出 / 类型** 等类别做了 CLI 排除，减少「故意对外导出」的误报；若需更严，可去掉 `package.json` 里 `knip` 命令中的 `--exclude …` 并逐项收紧 `knip.json`。
+
+### 5.3 端到端测试（Playwright）
 
 包路径：**`e2e/`**（workspace 成员）。默认**自动拉起** `main-next` 开发服务后跑用例。
 

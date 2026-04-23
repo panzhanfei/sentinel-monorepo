@@ -16,6 +16,13 @@
     "test": {
       "inputs": ["$TURBO_DEFAULT$", "**/vitest.config.ts"]
     },
+    "test:coverage": {
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "**/vitest.config.ts",
+        "**/vite.config.ts"
+      ]
+    },
     "e2e": {
       "cache": false,
       "inputs": ["$TURBO_DEFAULT$", "e2e/**"]

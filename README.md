@@ -56,7 +56,7 @@
 | `packages/security-sdk`                                 | 链上扫描与授权审计逻辑（`viem`）。                                                                                                          |
 | `packages/ui`                                           | 共享 UI（`@repo/ui`）。                                                                                                                     |
 | `packages/eslint-config` / `packages/typescript-config` | 共享 ESLint 与 TS 配置（`@repo/*`）。                                                                                                       |
-| `e2e` | **Playwright** 端到端测试包：默认自动启动 `main-next` 后访问首页、`/login` 等冒烟用例；详见 [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) 第 5.2 节。 |
+| `e2e` | **Playwright** 端到端测试包：默认自动启动 `main-next` 后访问首页、`/login` 等冒烟用例；详见 [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) 第 5.3 节。 |
 
 **架构拓扑、BFF 与 Express 端点索引**见 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)（含 Mermaid 示意图，可与本 README 对照阅读）。**日常开发约定、类型与 barrel 规则、E2E 命令**见 [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)。**Wujie 子应用子路由与主站 Next.js App Router（`/audit/**`、`/monitor/**`）的协同方式、bus 事件名、layout 与骨架屏注意点**见架构文档 **第 7 节**；`apps/main-next`、`sub-react`、`sub-vue` 的 README 中有对应摘要与文件索引。
 
@@ -277,6 +277,8 @@ pnpm run start:demo
 | `pnpm run check-types`                            | TypeScript 检查                   |
 | `pnpm run format`                                 | Prettier 格式化 `*.ts,*.tsx,*.md` |
 | `pnpm run test`                                   | Turbo 并行执行各包 `test`（Vitest，含 `auth`、`sub-react`、`sub-vue`、`main-next` 等） |
+| `pnpm run test:coverage`                          | 同上，并生成 **V8 覆盖率**（`text` / `lcov` / `html`；各包 `coverage/` 目录，已 gitignore） |
+| `pnpm run knip`                                   | **Knip**：检查未使用文件、依赖声明、未列出二进制等（配置见根目录 `knip.json`） |
 | `pnpm run e2e`                                    | Playwright 端到端（`e2e/`）；首次需 `pnpm --filter e2e install:browsers` 安装 Chromium |
 | `pnpm run e2e:ui`                                 | Playwright 带 UI 调试 |
 | `pnpm run infra:up` / `infra:down` / `infra:logs` | Docker 基础设施（DB、Redis、Anvil 等） |
@@ -319,7 +321,11 @@ pnpm --filter ./apps/main-next run build:release
 
 **约定与测试索引**（类型 `I` 前缀、`interface.ts`、barrel、各应用分层、`main-next` 客户端禁止聚合导入 `lib`/`utils`、Playwright 环境变量等）：见 **[docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)**。
 
-**单元测试**：根目录执行 `pnpm run test` 会通过 Turbo 跑通已声明 `test` 脚本的包；`@sentinel/auth` 与各微前端子包使用 **Vitest**，配置见各目录下的 `vitest.config.ts`。
+**单元测试**：根目录执行 `pnpm run test` 会通过 Turbo 跑通已声明 `test` 脚本的包；`@sentinel/auth` 与各微前端子包使用 **Vitest**，配置见各目录下的 `vitest.config.ts`（`sub-vue` 的测试与覆盖率在 `vite.config.ts` 的 `test` 段）。
+
+**测试覆盖率**：`pnpm run test:coverage` 使用 **`@vitest/coverage-v8`**（与 Vitest 3 对齐），在各包输出覆盖率报告；细则与本地命令见 [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) 第 5 节。
+
+**依赖与无用文件**：`pnpm run knip` 在 monorepo 层面做卫生检查（当前脚本对部分「未使用导出/类型」类规则做了排除，避免误报对外 API；见 `knip.json`）。
 
 **端到端测试**：`pnpm run e2e`（详见 `docs/DEVELOPMENT.md` 与 `e2e/playwright.config.ts`）。
 

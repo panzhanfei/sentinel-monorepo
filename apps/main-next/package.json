@@ -9,7 +9,8 @@
     "build:release": "next build && bash ./scripts/pack-standalone.sh",
     "start": "next start",
     "lint": "eslint",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@rainbow-me/rainbowkit": "^2.2.10",

@@ -9,6 +9,7 @@
     "build": "tsc && tsc-alias -p tsconfig.json && pnpm build-alias",
     "build-alias": "cp package.json dist/",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "test:watch": "vitest"
   },
   "keywords": [],
