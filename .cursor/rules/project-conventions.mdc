@@ -19,6 +19,14 @@ export const buildUser = (id: string): User | null => { ... };
 export function buildUser(id: string) { ... }
 ```
 
+## 不在自定义函数内再声明函数
+
+- 业务代码、controller、服务方法等**自写逻辑**中：不要在函数内部再 `function foo() {}` 或 `const foo = () => {}` 声明**嵌套子函数**（易拉长作用域、不利单测与复用）。
+- **例外**（可保留内层函数或回调）：
+  - **框架/库约定**的 API：如 React 的 `useState`/`useEffect`、各 UI 库传入的 `render`/`children` 工厂等。
+  - **原生高阶**用法：`array.map((x) => ...)`、`.then(...)` 等**无法外提**的一行级回调，宜保持极短；若体量大则**外提成模块级**具名函数或**工厂**（如 `createXxxPublish(args)` 放在同 feature 的独立文件）。
+- 需要「请求级闭包」时，优先**模块内工厂**（如 `createChatSsePublish`）在**子文件**返回具名能力，**不在** 200 行的 handler 里长嵌套。
+
 ## 类型拆分与 `interface.ts`
 
 - 当**组件 props**、**hook 入参/返回值**、**方法参数与返回**、**视图/表格行数据**等 TypeScript 声明**累计较多行**（大致 ≥ ~30 行或单文件可读性明显下降）时：将具名类型抽到**同 feature 目录**下的 **`interface.ts`**（与仓库中 `components/.../interface.ts` 模式一致），主文件只保留实现与必要的窄类型。

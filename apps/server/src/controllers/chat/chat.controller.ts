@@ -5,6 +5,8 @@ import {
   hasCompletedScanWithData,
   isClearlyOffTopicQuestion,
 } from '@/modules/chat/guards';
+import { createChatSseHeartbeat } from '@/modules/chat/sseHeartbeat';
+import { createChatSsePublish } from '@/modules/chat/ssePublish';
 import { ChatService } from '@/modules/chat/service';
 import { runChatAgents } from '@/modules/chat/stream';
 
@@ -35,36 +37,15 @@ export const chatStream = async (req: Request, res: Response) => {
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
 
-  let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
-  const stopHeartbeat = () => {
-    if (heartbeatTimer) clearInterval(heartbeatTimer);
-    heartbeatTimer = null;
-  };
-  heartbeatTimer = setInterval(() => {
-    if (!res.writableEnded) {
-      res.write(': sse-heartbeat\n\n');
-      res.write(
-        `data: ${JSON.stringify({ status: 'heartbeat' })}\n\n`
-      );
-    }
-  }, CHAT_SSE_HEARTBEAT_MS);
-  res.once('close', stopHeartbeat);
+  const sseHeartbeat = createChatSseHeartbeat(res, CHAT_SSE_HEARTBEAT_MS);
+  sseHeartbeat.start();
+  res.once('close', () => {
+    sseHeartbeat.stop();
+  });
 
   const userId = req.user!.sub;
 
-  const publish = async (agent: string, status: string, content: string) => {
-    const msg = JSON.stringify({ agent, status, content });
-
-    res.write(`data: ${msg}\n\n`);
-
-    await ChatService.recordAssistantStream(
-      sessionId,
-      userId,
-      agent,
-      content,
-      status
-    );
-  };
+  const publish = createChatSsePublish({ res, sessionId, userId });
 
   try {
     const userMsg = await ChatService.addMessage(
@@ -122,7 +103,7 @@ export const chatStream = async (req: Request, res: Response) => {
     );
     res.write(`data: ${JSON.stringify({ status: 'end' })}\n\n`);
   } finally {
-    stopHeartbeat();
+    sseHeartbeat.stop();
   }
 };
 
