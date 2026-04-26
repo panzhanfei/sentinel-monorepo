@@ -12,6 +12,8 @@ alwaysApply: false
 2. **`src/controllers`**：解析请求/校验入参边界、调用 `services`（或领域 `modules`）、通过 `utils/apiResponse` 等统一响应形态。
 3. **`src/services`**：业务编排、对外部系统与数据层的调用；可依赖 `client` 与 `config`。
 
+**面向页/用例的只读 DTO 聚合**（多资源合并、清洗）放在 **单一 controller 动作 + 明确命名的 service 方法** 中：优先 **一次/有限次** SQL 与 **无 N+1 循环**；可并行只读时可用受控的 `Promise.all`。**多表写入必须**在 **一个 service/模块** 内用 **Prisma 事务**（`$transaction` 等）完成，供 **一个** 路由暴露，而不是让 Next BFF 多次 HTTP 编排。
+
 复杂或强内聚的领域逻辑可放在 **`src/modules/<领域>/`**（如 chat 的 `guards`、`stream`、领域 `service`），由 controller/service 调用，避免单文件过大。
 
 ## 目录职责（与当前仓库一致）

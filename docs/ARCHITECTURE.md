@@ -43,6 +43,7 @@ flowchart LR
 ```
 
 - **唯一 BFF**：浏览器与子应用调用的受保护 HTTP API 以 **`apps/main-next/src/app/api`** 为入口，再代理到 **`apps/server`** 的 `NODE_SERVICE`（默认 `http://127.0.0.1:4000/api/v1`）。
+- **只读/页面级 DTO 聚合**（多路数据合并、去噪、统一字段名）**优先在 `apps/server` 的单一受保护端点**内完成，由 Prisma/Service 做批量查询或受控的 `Promise.all`；BFF 保持 **鉴权 + 转发**（可薄封装 `NextResponse`）。**跨多个 Express 调用的 “事务” 不能靠 BFF 串联 HTTP 实现**；需要 ACID 时，把多写合并进 **同一 service，使用 Prisma 事务**。
 - **Express**：在 `/api/v1` 下提供扫描任务、聊天流、用户设置等；**生产环境**可对 HTTP 层使用 **Node cluster**（见 `apps/server/src/bootstrap.ts`），与 **Bull Worker** 同进程启动于每个 worker。
 - **子应用**：`sub-react` 开发模式下将 `/api` 代理到主站，便于携带 Cookie；`sub-vue` 以链上只读（viem）为主，仍通过 Wujie 接收宿主注入的 Web3 状态。
 
@@ -86,7 +87,8 @@ flowchart LR
 
 | 方法 | 路径 | 用途 |
 |------|------|------|
-| GET | `/scan/latest` | 最近任务 |
+| GET | `/scan/latest` | 最近任务（无任务时 404；仍保留，供仅需 latest 的调用方） |
+| GET | `/scan/context` | 审计页**只读聚合**：`latest`（可为 `null`）+ `telegramChatId`，避免前端/BFF 多次编排 |
 | GET | `/scan/stream` | 审计日志流 |
 | GET | `/scan/:jobId` | 任务状态 |
 | POST | `/scan` | 发起扫描 |

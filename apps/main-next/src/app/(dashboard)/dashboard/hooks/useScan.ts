@@ -84,25 +84,28 @@ export const useScan = ({
     }
   }, [stopPolling, closeSSE]);
 
-  // 初始化：获取历史记录并恢复运行中的任务
+  // 初始化：通过聚合接口恢复任务（与 /scan/latest 原子接口并存，供 BFF/其他客户端直调）
   useEffect(() => {
     if (!enabled || !address) return;
 
     const init = async () => {
       try {
-        const res = await authFetch(`/api/scan/latest?address=${address}`);
+        const res = await authFetch(`/api/scan/context?address=${address}`);
         if (res.ok) {
           const envelope = (await res.json()) as {
             success?: boolean;
             data?: {
-              id?: string;
-              status?: string;
-              progress?: number;
-              result?: ScanResultData;
+              latest?: {
+                id?: string;
+                status?: string;
+                progress?: number;
+                result?: ScanResultData;
+              } | null;
             };
           };
           if (!envelope.success || !envelope.data) return;
-          const job = envelope.data;
+          const job = envelope.data.latest;
+          if (!job) return;
           if (
             job?.id &&
             (job.status === "PENDING" || job.status === "RUNNING")

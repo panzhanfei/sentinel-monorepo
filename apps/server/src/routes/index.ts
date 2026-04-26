@@ -19,7 +19,7 @@ router.get('/api/v1', (_req, res) => {
       chat: '/api/v1/chat',
       user: '/api/v1/user',
     },
-    note: 'Auth (nonce, session cookies) is implemented on the Next.js BFF under /api/auth/*; Express routes require dual JWT on /api/v1/*.',
+    note: 'Auth (nonce, session cookies) is implemented on the Next.js BFF under /api/auth/*; Express routes require dual JWT on /api/v1/*. Aggregated read-only DTOs (e.g. /scan/context) should live in this service, not in the BFF.',
   });
 });
 

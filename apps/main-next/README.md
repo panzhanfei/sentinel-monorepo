@@ -64,6 +64,7 @@ Node BFF 上游地址见 `src/config/node_service.ts`（`NODE_SERVICE` 等）。
 
 - `src/app/api/auth/refresh/route.ts` 在 BFF 内完成双 Token 校验与旋转续签，刷新两个 Cookie 的 `maxAge`（与登录策略一致）。
 - 其他 BFF 路由应复用 `parseUpstreamJson`、`proxyHeadersToNode` 等与 Node 的约定（见 `src/lib/bffProxy.ts`）。
+- **页面级只读 DTO 聚合在 Node（`apps/server`）** 用单一受保护端点实现；BFF 如 `app/api/scan/context/route.ts` 仅**鉴权并转发**至 `NODE_SERVICE`（同目录 `scan/latest` 等**原子**接口仍保留，避免破坏既有调用方）。
 
 ## 微前端与跨域
 

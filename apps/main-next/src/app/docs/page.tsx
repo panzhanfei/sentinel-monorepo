@@ -49,6 +49,10 @@ const bffRows = [
   ["POST /api/scan", "创建扫描任务，双 JWT Cookie 转发至 Node `/scan`。"],
   ["GET /api/scan/stream", "SSE：`address`、`jobId` + Cookie，转发 Node 扫描日志流。"],
   ["GET /api/scan/latest", "按 `address` 查询最近任务；鉴权策略与同目录其他 scan 路由一致。"],
+  [
+    "GET /api/scan/context",
+    "只读聚合：转发 Node `GET /scan/context`（`latest` 可为 null + `telegramChatId`），减少前端多路编排。",
+  ],
   ["GET /api/scan/[jobId]", "任务详情与进度，需双 JWT Cookie。"],
   ["POST /api/chat/session", "聊天会话，双 JWT Cookie 转发 Node。"],
   ["GET /api/chat/messages", "分页拉取会话消息（`sessionId`、`limit`、`before`），需双 JWT Cookie。"],

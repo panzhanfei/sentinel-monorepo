@@ -41,6 +41,7 @@ export function buildUser(id: string) { ... }
 
 ## 新增业务：先查复用再实现
 
+- **BFF 与 DTO（与 `main-next-app` 一致）**：**合并、重清洗、多数据源拼装** 优先在 **`apps/server`（或 `packages`）** 的**用例级 API** 完成，**`apps/main-next` 的 `app/api` 以鉴权 + 转发为主**；前端/子应用侧做**轻量映射**即可。
 - **每次新增业务**（新页面、新接口、新 hook、新组件）在落代码前：在 monorepo 内**检索是否已有**同类能力——同应用的 `utils` / `hooks` / `components` / `services`，以及 **`packages/*`**（`ui`、`auth`、`database`、安全 SDK 等）。
 - 若存在**语义接近、边界清晰、可参数化**的实现：优先**复用**；若两处已出现重复或第三处将复制：评估**抽离**——组件/hook 上浮到 **`packages/ui`** 或当前应用内更高层 `components` / `hooks`；纯函数进 `utils` 或 **`packages`** 下合适包。
 - 避免在多个 `apps/*` 各写一套「只差配置」的拷贝；跨应用共性必须符合上文 **`packages/`** 约定。

@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { JobService } from '@/services';
+import { JobService, UserService } from '@/services';
 import { auditQueue, pub } from '@/services/queue';
 import { HttpError, sendFailure, sendSuccess } from '@/utils/apiResponse';
 
@@ -66,6 +66,32 @@ export const getLatestJob = async (req: Request, res: Response) => {
     throw new HttpError(404, 'No job found for this address', 'JOB_NOT_FOUND');
   }
   sendSuccess(res, job);
+};
+
+/**
+ * 审计页只读上下文的单次聚合：并行拉取最新任务与用户告警绑定，避免 BFF/前端多跳编排。
+ * 多表写入场景应在单一 service 内用 Prisma 事务，而不是跨 HTTP 伪事务。
+ */
+export const getScanContext = async (req: Request, res: Response) => {
+  const { address } = req.query;
+  if (!address) {
+    throw new HttpError(400, 'Address required', 'ADDRESS_REQUIRED');
+  }
+
+  if (
+    !req.user ||
+    address.toString().toLowerCase() !== req.user.sub.toLowerCase()
+  ) {
+    throw new HttpError(403, 'Forbidden: address mismatch', 'ADDRESS_MISMATCH');
+  }
+
+  const addr = address.toString();
+  const [latest, telegramChatId] = await Promise.all([
+    JobService.getLatestJob(addr),
+    UserService.getTelegramChatIdByAddress(req.user.sub),
+  ]);
+
+  sendSuccess(res, { latest, telegramChatId });
 };
 
 /**

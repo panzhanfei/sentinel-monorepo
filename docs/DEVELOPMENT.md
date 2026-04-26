@@ -37,7 +37,7 @@
 - 客户端从 **`@/utils/authFetch`**、**`@/components`**、**`@/hooks/...`**、**`@/config/...`**、**`@/proxy/authRoutes`**、**`@/wujie/...`** 等**具体路径**导入。
 - **`app/api/*` Route Handler** 从 **`@/lib/bffProxy`** 使用 `dualAuthUnauthorizedJson`、`parseUpstreamJson` 等。
 
-细节见 [`main-next-app.mdc`](../.cursor/rules/main-next-app.mdc)。
+**BFF 与数据聚合**：**合并、清洗、面向页面的 DTO** 优先在 **`apps/server`** 实现（如 `GET /api/v1/scan/context` 聚合 latest + 用户告警绑定），BFF 只做双 JWT 与转发；**事务与多表写入** 放在 server 的 **单一路径/Service** 与 **Prisma 事务** 中，**不要**在 BFF 里用多次 `fetch` 假扮事务。`apps/main-next` 的客户端只需映射展示。细节见 [docs/ARCHITECTURE.md](./ARCHITECTURE.md) 与 [`main-next-app.mdc`](../.cursor/rules/main-next-app.mdc)。
 
 ---
 
