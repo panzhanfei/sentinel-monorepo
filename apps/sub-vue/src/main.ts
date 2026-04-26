@@ -7,7 +7,7 @@ Object.defineProperty(Document.prototype, "adoptedStyleSheets", {
       },
 });
 
-import { createApp } from "vue";
+import { createApp, type Plugin } from "vue";
 import { createPinia } from "pinia";
 import piniaPluginPersistedstate from "pinia-plugin-persistedstate";
 import { initWujieBusListener } from "@/utils/wujie-bus-listener";
@@ -15,9 +15,15 @@ import App from "./App";
 import router from "./router";
 import "./style.css";
 
+const wujieBusPlugin: Plugin = {
+  install: () => {
+    initWujieBusListener();
+  },
+};
+
 const app = createApp(App);
 
 app.use(createPinia().use(piniaPluginPersistedstate));
+app.use(wujieBusPlugin);
 app.use(router);
 app.mount("#app");
-initWujieBusListener();
