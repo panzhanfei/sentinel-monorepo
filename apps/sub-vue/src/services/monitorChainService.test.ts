@@ -7,8 +7,8 @@ import {
   refreshAllNativeBalances,
   scanErc20AcrossChains,
 } from "./monitorChainService";
-import { SUPPORTED_CHAINS } from "@/constants/chains";
-import type { ChainBalance } from "@/types/monitor";
+import { SUPPORTED_CHAINS } from "@/constants";
+import type { ChainBalance } from "@/types";
 
 describe("createInitialChainBalances", () => {
   it("aligns rows with supported chains", () => {

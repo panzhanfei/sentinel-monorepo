@@ -1,4 +1,4 @@
-import type { Transaction } from "@/types/audit";
+import type { Transaction } from "@/types";
 
 export interface IFootprintTableProps {
   txList?: Transaction[];

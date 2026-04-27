@@ -1,4 +1,4 @@
-import type { ChainBalance } from "@/types/monitor";
+import type { ChainBalance } from "@/types";
 
 export interface IChainBalanceGridProps {
   chains: readonly ChainBalance[];

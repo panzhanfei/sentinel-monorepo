@@ -4,8 +4,8 @@ import express from 'express';
 import cookieParser from 'cookie-parser';
 import { env } from '@/config';
 import { redis } from '@/client';
-import { prisma } from '@/client/prisma.client';
-import { startScan, stopScan } from '@/workers/scanner';
+import { prisma } from '@/client';
+import { startScan, stopScan } from '@/workers';
 import router from '@/routes';
 import {
   buildCorsMiddleware,

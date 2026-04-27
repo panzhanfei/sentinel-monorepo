@@ -9,20 +9,24 @@ vi.mock('@/services/queue', () => ({
 }));
 
 const sendSuccess = vi.hoisted(() => vi.fn());
-vi.mock('@/utils/apiResponse', () => ({
-  sendSuccess: (...args: unknown[]) => (sendSuccess as MockedFunction)(...args),
-  sendFailure: vi.fn(),
-  HttpError: class extends Error {
-    status: number;
-    code?: string;
-    constructor(s: number, m: string, c?: string) {
-      super(m);
-      this.status = s;
-      this.name = 'HttpError';
-      this.code = c;
-    }
-  },
-}));
+vi.mock('@/utils', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/utils')>();
+  return {
+    ...actual,
+    sendSuccess: (...args: unknown[]) => (sendSuccess as MockedFunction)(...args),
+    sendFailure: vi.fn(),
+    HttpError: class extends Error {
+      status: number;
+      code?: string;
+      constructor(s: number, m: string, c?: string) {
+        super(m);
+        this.status = s;
+        this.name = 'HttpError';
+        this.code = c;
+      }
+    },
+  };
+});
 
 import { getScanContext } from './scan.controller';
 import { JobService, UserService } from '@/services';

@@ -1,4 +1,4 @@
-import { useWeb3Store, type Web3Date } from "@/stores/";
+import { useWeb3Store, type Web3Date } from "@/stores";
 
 export const initWujieBusListener = () => {
   const web3Store = useWeb3Store();

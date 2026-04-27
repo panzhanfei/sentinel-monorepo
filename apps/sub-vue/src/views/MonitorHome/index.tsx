@@ -1,7 +1,7 @@
 import { defineComponent } from "vue";
 import { RouterLink } from "vue-router";
-import MonitorDashboard from "@/views/MonitorDashboard";
-import { useAppData } from "@/App/useData";
+import { MonitorDashboard } from "@/views";
+import { useAppData } from "@/hooks";
 
 export default defineComponent({
   name: "MonitorHome",

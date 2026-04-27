@@ -1,7 +1,5 @@
-import type { ChatRow, LogEntry } from "@/types/audit";
-import { getBffBaseUrl } from "@/utils/bffOrigin";
-import { bffFetch } from "@/utils/bffFetch";
-import { emitAuthSessionInvalidToHost } from "@/utils/wujieHost";
+import type { ChatRow, LogEntry } from "@/types";
+import { bffFetch, emitAuthSessionInvalidToHost, getBffBaseUrl } from "@/utils";
 
 export type ChatHistoryMessage = {
   id: string;

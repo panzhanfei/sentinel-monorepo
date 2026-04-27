@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { viemManager } from "./viemClients";
-import { SUPPORTED_CHAINS } from "@/constants/chains";
+import { SUPPORTED_CHAINS } from "@/constants";
 
 describe("viemManager", () => {
   it("exposes a client for every supported chain", () => {

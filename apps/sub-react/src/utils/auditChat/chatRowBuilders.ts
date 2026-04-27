@@ -1,4 +1,4 @@
-import type { ChatRow } from "@/types/audit";
+import type { ChatRow } from "@/types";
 
 export interface IdNowOptions {
   newId: () => string;

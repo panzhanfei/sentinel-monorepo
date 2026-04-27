@@ -1,6 +1,6 @@
 import type { PublicClient } from "viem";
 import { getAddress } from "viem";
-import type { Transaction } from "@/types/audit";
+import type { Transaction } from "@/types";
 
 /** 当前地址作为发送方、且 calldata 为常见授权 / 许可类调用（单笔交易计 1） */
 const RISK_APPROVAL_SELECTORS = new Set([

@@ -1,1 +1,1 @@
-export { useAuditController as useAuditDashboardData } from "@/hooks/useAuditController";
+export { useAuditController as useAuditDashboardData } from "@/hooks";

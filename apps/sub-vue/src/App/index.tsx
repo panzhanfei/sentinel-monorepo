@@ -1,6 +1,6 @@
 import { defineComponent, onBeforeUnmount, onMounted, Suspense } from "vue";
 import { RouterView, useRouter } from "vue-router";
-import { initWujieVuePathSync } from "@/utils/wujie-vue-path-sync";
+import { initWujieVuePathSync } from "@/utils";
 
 export default defineComponent({
   name: "App",

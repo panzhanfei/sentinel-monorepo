@@ -1,4 +1,4 @@
-import { getBffBaseUrl } from "@/utils/bffOrigin";
+import { getBffBaseUrl } from "@/utils";
 
 export const buildChatStreamUrl = (sessionId: string, message: string) : string => {
   const url = new URL("/api/chat/stream", getBffBaseUrl());

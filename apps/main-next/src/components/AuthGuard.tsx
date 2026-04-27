@@ -7,7 +7,7 @@ import {
   AUTH_SESSION_INVALID_EVENT,
   type AuthSessionInvalidPayload,
   useKickOutSession,
-} from "@/hooks/useKickOutSession";
+} from "@/hooks";
 import { isProtectedRoute } from "@/proxy/authRoutes";
 
 export const AuthGuard = () => {

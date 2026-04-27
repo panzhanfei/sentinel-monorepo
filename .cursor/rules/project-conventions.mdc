@@ -55,6 +55,8 @@ export function buildUser(id: string) { ... }
 ## 聚合导出（`index.ts` / barrel）
 
 - 新增**对外可用的**方法、配置项、路由挂载、通用组件、自定义 hook、store 模块等时：在**对应层级**维护 **`index.ts`**，把本目录（或约定好的子域）的公开 API **集中再导出**，便于统一 import 路径与代码评审。
+- **import 路径**：在应用内用 `@/…` 引用时，若该级目录已有 **barrel**（`index.ts` 聚合），业务代码从**该目录**引入，避免点到具体子文件，例如用 `@/config` 不用 `@/config/node_service`、用 `@/lib` 不用 `@/lib/bffProxy`、用 `@/utils` 不用 `@/utils/authFetch`（各应用以现有多级 `index` 为准）。**同目录**实现文件之间可优先用**相对路径**，避免经 barrel 自引用死循环。带独立 `index` 的 feature 子目录（如 `app/context`、`app/actions`、`controllers/<资源>`）可保留**两段**路径作为对外边界。
+- **例外**：**main-next** 根目录存在 `src/proxy.ts`（与 `src/proxy/` 目录同名），解析器会优先取 **文件**，`@/proxy` 不会指向 `proxy/index.ts`；与 `authRoutes` / `middlewareAuthNavigation` 相关的仍用 `@/proxy/...` 或 **`proxy/` 目录内相对路径**（如 `runProxy` 内 `./middlewareAuthNavigation`）。
 - **范围**：同一目录下多个文件且会被其他目录引用时，优先 `export { ... } from './foo'`；**仅内部使用**的实现细节可不写入 barrel。
 - **不要进 barrel**：**仅供测试**的模块（例如测试专用 helper、fixture、mock）**不要**写入业务用的 `index.ts`，避免生产/库入口误带出测试代码；从测试文件直接按路径 `import` 即可。
 - **测试文件除外**：文件名含 `.test.` / `.spec.` 的测试文件，以及 `__tests__/` 下文件，**不要求**、也**通常不应**被 `index.ts` 再导出；barrel 只面向运行时与对外 API。

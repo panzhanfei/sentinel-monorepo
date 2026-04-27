@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { ChatRow } from "@/types/audit";
+import type { ChatRow } from "@/types";
 import { mergeOlderChatIntoRows } from "./chatHistoryMerge";
 
 const row = (id: string): ChatRow => ({

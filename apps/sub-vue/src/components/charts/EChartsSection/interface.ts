@@ -1,4 +1,4 @@
-import type { DistributionSlice, TrendSeries } from "@/types/monitor";
+import type { DistributionSlice, TrendSeries } from "@/types";
 
 export interface IEChartsSectionProps {
   distributionData?: DistributionSlice[];

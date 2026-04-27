@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import {
   AUDIT_REACT_HOST_SYNC_EVENT,
   REACT_SUB_NAVIGATE_EVENT,
-} from "@/constants/wujieAuditBus";
+} from "@/constants";
 
 /** 宿主 Next `/audit/**` ↔ 子应用 react-router（保活 + sync=false 时依赖此桥） */
 export const WujieAuditPathSync = () => {

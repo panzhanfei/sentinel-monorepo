@@ -1,9 +1,8 @@
 import { ref } from "vue";
 import type { Address } from "viem";
-import { useMonitorStore } from "@/stores/useMonitorStore";
-import { useWeb3Store } from "@/stores/useWeb3Store";
-import { scanErc20AcrossChains } from "@/services/monitorChainService";
-import { viemManager } from "@/utils/viemClients";
+import { useMonitorStore, useWeb3Store } from "@/stores";
+import { scanErc20AcrossChains } from "@/services";
+import { viemManager } from "@/utils";
 
 export const useTokenManagerData = () => {
   const monitorStore = useMonitorStore();

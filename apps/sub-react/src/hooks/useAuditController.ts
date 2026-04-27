@@ -15,11 +15,7 @@ import {
   useFootprintAudit,
   useWalletTransactionCount,
 } from "@/services";
-import type { ChatRow } from "@/types/audit";
-import {
-  emitAuditAiStreamToHost,
-  emitAuthSessionInvalidToHost,
-} from "@/utils/wujieHost";
+import type { ChatRow } from "@/types";
 import {
   buildFirstStreamRow,
   buildStreamErrorRow,
@@ -27,11 +23,13 @@ import {
   buildUserChatRow,
   CHAT_PAGE_SIZE,
   CHAT_QUEUE_MAX,
+  emitAuditAiStreamToHost,
+  emitAuthSessionInvalidToHost,
   extendLastOrNewStreamRow,
   mergeOlderChatIntoRows,
   WELCOME_LEN,
   WELCOME_ROWS,
-} from "@/utils/auditChat";
+} from "@/utils";
 
 const idOpts = {
   newId: () => crypto.randomUUID(),

@@ -5,7 +5,7 @@ const { validateDualSession } = vi.hoisted(() => ({
   validateDualSession: vi.fn(),
 }));
 
-vi.mock("@/lib/authSession", () => ({
+vi.mock("./authSession", () => ({
   validateDualSession,
 }));
 

@@ -1,10 +1,10 @@
 import { defineComponent } from "vue";
-import { EChartsSection } from "@/components/charts/EChartsSection";
 import {
+  EChartsSection,
   WalletWaitingPlaceholder,
   ChainBalanceGrid,
   SentinelDeployerPanel,
-} from "@/components/monitor";
+} from "@/components";
 import { useMonitorDashboardData } from "./useData";
 
 export default defineComponent({

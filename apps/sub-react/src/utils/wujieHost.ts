@@ -1,7 +1,7 @@
 import {
   AUDIT_REACT_HOST_PAGE_MODAL_OPEN_EVENT,
   type IWujieHostPageModalOpenPayload,
-} from "@/constants/wujieAuditBus";
+} from "@/constants";
 
 export type { IWujieHostPageModalOpenPayload };
 

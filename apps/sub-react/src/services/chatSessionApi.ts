@@ -1,5 +1,4 @@
-import { getBffBaseUrl } from "@/utils/bffOrigin";
-import { bffFetch } from "@/utils/bffFetch";
+import { bffFetch, getBffBaseUrl } from "@/utils";
 
 export class ChatSessionInitError extends Error {
   readonly status: number;

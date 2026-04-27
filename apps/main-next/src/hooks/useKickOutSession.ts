@@ -3,7 +3,7 @@
 import { useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useDisconnect } from "wagmi";
-import { logout } from "@/app/actions/auth";
+import { logout } from "@/app/actions";
 import { isProtectedRoute } from "@/proxy/authRoutes";
 
 /** 与 `MonitorVueHost` / `AuditReactHost` 中 WujieClient `name` 一致；登出时须销毁保活实例以停止子应用内轮询 */

@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
-import type { ChainBalance, TokenBalance } from "@/types/monitor";
-import { createInitialChainBalances } from "@/services/monitorChainService";
+import type { ChainBalance, TokenBalance } from "@/types";
+import { createInitialChainBalances } from "@/services";
 
 /** 监控看板状态（不含副作用） */
 export const useMonitorStore = defineStore("monitor", () => {

@@ -1,4 +1,4 @@
-import { prisma } from '@/client/prisma.client';
+import { prisma } from '@/client';
 
 export class UserService {
   static async getTelegramChatIdByAddress(address: string) {

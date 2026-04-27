@@ -1,7 +1,7 @@
 import { defineComponent, ref, onMounted, onUnmounted } from "vue";
 import { RouterLink, useRoute } from "vue-router";
-import { MONITOR_VUE_HOST_PAGE_MODAL_CLOSED_EVENT } from "@/constants/wujieMonitorBus";
-import { emitMonitorHostPageModalToHost } from "@/utils/wujieHostPageModal";
+import { MONITOR_VUE_HOST_PAGE_MODAL_CLOSED_EVENT } from "@/constants";
+import { emitMonitorHostPageModalToHost } from "@/utils";
 
 export default defineComponent({
   name: "WujieSubRouteTest",

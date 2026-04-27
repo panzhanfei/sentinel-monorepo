@@ -4,7 +4,7 @@ import chatRouter from './chat';
 import userRouter from './user';
 
 import { authMiddleware } from '@/middlewares';
-import { sendSuccess } from '@/utils/apiResponse';
+import { sendSuccess } from '@/utils';
 
 const router = Router();
 

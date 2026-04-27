@@ -1,5 +1,5 @@
 import type { IAuditDashboardViewProps } from "./interface";
-import { AgentTerminal, FootprintTable, OverviewCards } from "@/components/audit";
+import { AgentTerminal, FootprintTable, OverviewCards } from "@/components";
 
 export const AuditDashboard = ({
   address,

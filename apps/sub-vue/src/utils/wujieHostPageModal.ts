@@ -1,7 +1,7 @@
 import {
   MONITOR_VUE_HOST_PAGE_MODAL_OPEN_EVENT,
   type IWujieHostPageModalOpenPayload,
-} from "@/constants/wujieMonitorBus";
+} from "@/constants";
 
 export type { IWujieHostPageModalOpenPayload };
 

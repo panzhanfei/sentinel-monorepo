@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { type Address } from "viem";
 import { useRisk } from "@/app/context";
-import { authFetch } from "@/utils/authFetch";
+import { authFetch } from "@/utils";
 import type { ScanStatus, ScanResultData, AgentMessage } from "./types";
 
 export const useScan = ({

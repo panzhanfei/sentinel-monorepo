@@ -3,7 +3,7 @@ import helmet from 'helmet';
 import { rateLimit } from 'express-rate-limit';
 import { RedisStore } from 'rate-limit-redis';
 import { env } from '@/config';
-import { redis } from '@/client/redis.client';
+import { redis } from '@/client';
 
 /** 与 main-next BFF 默认子应用端口对齐；含 127.0.0.1 与 localhost，避免本机混用导致跨域失败 */
 const LOCAL_DEV_CORS_ORIGINS = [

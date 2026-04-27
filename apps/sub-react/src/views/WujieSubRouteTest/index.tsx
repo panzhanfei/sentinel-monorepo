@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { AUDIT_REACT_HOST_PAGE_MODAL_CLOSED_EVENT } from "@/constants/wujieAuditBus";
-import { emitAuditHostPageModalToHost } from "@/utils/wujieHost";
+import { AUDIT_REACT_HOST_PAGE_MODAL_CLOSED_EVENT } from "@/constants";
+import { emitAuditHostPageModalToHost } from "@/utils";
 
 /** 用于在 Wujie 宿主下验证子应用 history 子路由是否同步、刷新是否正常 */
 const WujieSubRouteTest = () => {

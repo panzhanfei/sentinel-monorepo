@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { AUDIT_REACT_HOST_PAGE_MODAL_OPEN_EVENT } from "@/constants/wujieAuditBus";
+import { AUDIT_REACT_HOST_PAGE_MODAL_OPEN_EVENT } from "@/constants";
 import {
   AUTH_SESSION_INVALID_EVENT,
   emitAuditAiStreamToHost,

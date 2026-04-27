@@ -1,4 +1,5 @@
 export { default as MonitorDashboard } from "./MonitorDashboard";
+export { useMonitorDashboard } from "./MonitorDashboard/useData";
 export { default as MonitorHome } from "./MonitorHome";
 export { default as WujieSubRouteTest } from "./WujieSubRouteTest";
 export { default as NoSubRouteMatch } from "./NoSubRouteMatch";

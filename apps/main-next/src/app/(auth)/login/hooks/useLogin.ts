@@ -1,7 +1,7 @@
 // hooks/useLogin.ts
 import { useState } from "react";
 import { useAccount, useSignMessage, useDisconnect } from "wagmi";
-import { getLoginNonce, verifySignature } from "@/app/actions/auth";
+import { getLoginNonce, verifySignature } from "@/app/actions";
 import { useRouter } from "next/navigation";
 
 export type LoginStatus = "idle" | "loading" | "signing" | "verifying";

@@ -1,4 +1,4 @@
-import type { ChatRow } from "@/types/audit";
+import type { ChatRow } from "@/types";
 
 export const mergeOlderChatIntoRows = (prev: ChatRow[], fresh: ChatRow[], welcomeLen: number) : ChatRow[] => {
   const existing = new Set(prev.map((r) => r.id));

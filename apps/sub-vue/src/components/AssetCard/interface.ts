@@ -1,4 +1,4 @@
-import type { ChainBalance, TokenBalance } from "@/types/monitor";
+import type { ChainBalance, TokenBalance } from "@/types";
 
 export interface IAssetCardProps {
   record: ChainBalance | TokenBalance;

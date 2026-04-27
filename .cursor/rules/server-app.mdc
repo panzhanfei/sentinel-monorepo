@@ -6,10 +6,14 @@ alwaysApply: false
 
 # apps/server 结构与分层
 
+## `import` 路径（与目录 `index` 一致）
+
+若某目录已有 **`index.ts` 聚合导出**（barrel），业务代码从**该目录别名**引入，**不要**再写子文件名，例如：`@/client` 而非 `@/client/prisma.client`；`@/lib` 而非 `@/lib/dualJwt`；`@/services` 而非 `@/services/user`；`@/modules/chat` 而非 `@/modules/chat/guards`；`@/workers` 而非 `@/workers/scanner`。`@/controllers/<资源>` 指向各资源子目录的 `index`，仍属聚合出口，可保留。
+
 ## 请求链路（MVC 风格）
 
 1. **`src/routes`**：只负责挂载路径、选用中间件、绑定到 controller；不写业务逻辑。
-2. **`src/controllers`**：解析请求/校验入参边界、调用 `services`（或领域 `modules`）、通过 `utils/apiResponse` 等统一响应形态。
+2. **`src/controllers`**：解析请求/校验入参边界、调用 `services`（或领域 `modules`）、通过 `@/utils` 聚合导出的 `sendSuccess` / `HttpError` 等统一响应形态。
 3. **`src/services`**：业务编排、对外部系统与数据层的调用；可依赖 `client` 与 `config`。
 
 **面向页/用例的只读 DTO 聚合**（多资源合并、清洗）放在 **单一 controller 动作 + 明确命名的 service 方法** 中：优先 **一次/有限次** SQL 与 **无 N+1 循环**；可并行只读时可用受控的 `Promise.all`。**多表写入必须**在 **一个 service/模块** 内用 **Prisma 事务**（`$transaction` 等）完成，供 **一个** 路由暴露，而不是让 Next BFF 多次 HTTP 编排。

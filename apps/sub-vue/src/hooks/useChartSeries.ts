@@ -3,7 +3,7 @@ import type {
   ChartBalanceRow,
   DistributionSlice,
   TrendSeries,
-} from "@/types/monitor";
+} from "@/types";
 
 export const buildDistributionSlices = (chainBalances: readonly ChartBalanceRow[], customTokens: readonly ChartBalanceRow[]) : DistributionSlice[] => {
   const data: DistributionSlice[] = chainBalances.map((c) => ({

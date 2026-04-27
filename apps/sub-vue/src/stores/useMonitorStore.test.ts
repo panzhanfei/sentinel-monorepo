@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { setActivePinia, createPinia } from "pinia";
 import { useMonitorStore } from "./useMonitorStore";
-import type { TokenBalance } from "@/types/monitor";
+import type { TokenBalance } from "@/types";
 
 describe("useMonitorStore", () => {
   beforeEach(() => {

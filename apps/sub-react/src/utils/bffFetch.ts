@@ -1,4 +1,4 @@
-import { getBffBaseUrl } from "@/utils/bffOrigin";
+import { getBffBaseUrl } from "./bffOrigin";
 
 /**
  * 与 main-next `authFetch` 对齐：子应用跨域请求宿主 BFF 时，access 过期可通过 refresh 恢复；

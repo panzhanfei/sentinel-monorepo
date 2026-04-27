@@ -1,4 +1,4 @@
-import type { ChatRow } from "@/types/audit";
+import type { ChatRow } from "@/types";
 import type { IAgentTerminalProps } from "./interface";
 import { useAgentTerminalData } from "./useData";
 

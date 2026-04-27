@@ -1,6 +1,6 @@
 import { createPublicClient, http, parseAbiItem } from "viem";
 import { mainnet } from "viem/chains";
-import { SseMessage } from "@/types/alert"; // 导入新类型
+import { SseMessage } from "@/types"; // 导入新类型
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";

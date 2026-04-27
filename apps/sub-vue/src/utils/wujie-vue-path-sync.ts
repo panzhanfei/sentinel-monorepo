@@ -2,7 +2,7 @@ import type { Router } from "vue-router";
 import {
   VUE_SUB_NAVIGATE_EVENT,
   MONITOR_VUE_HOST_SYNC_EVENT,
-} from "@/constants/wujieMonitorBus";
+} from "@/constants";
 
 /**
  * 宿主 Next `/monitor/**` ↔ 子应用 vue-router；需在应用挂载后调用（保证 window.$wujie.bus 可用）。

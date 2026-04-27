@@ -11,13 +11,18 @@ const authHeadersForProxy = vi.hoisted(() =>
   vi.fn((_req: NextRequest) : HeadersInit => ({})),
 );
 
-vi.mock("@/lib/bffProxy", () => ({
-  parseUpstreamJson: (r: Response) => parseUpstreamJson(r),
-  dualAuthUnauthorizedJson: (req: NextRequest) => dualAuthUnauthorizedJson(req),
-  authHeadersForProxy: (req: NextRequest) => authHeadersForProxy(req),
-}));
+vi.mock("@/lib", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib")>();
+  return {
+    ...actual,
+    parseUpstreamJson: (r: Response) => parseUpstreamJson(r),
+    dualAuthUnauthorizedJson: (req: NextRequest) => dualAuthUnauthorizedJson(req),
+    authHeadersForProxy: (req: NextRequest) => authHeadersForProxy(req),
+  };
+});
 
-vi.mock("@/config/node_service", () => ({
+/** 仅替换 NODE_SERVICE；勿对 `@/config` 做 `importOriginal`（会拖入 wagmi/viem 全量，易与测试环境版本不兼容）。 */
+vi.mock("@/config", () => ({
   NODE_SERVICE: "http://node.test/v1",
 }));
 

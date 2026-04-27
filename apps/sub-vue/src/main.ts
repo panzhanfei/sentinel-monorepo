@@ -10,7 +10,7 @@ Object.defineProperty(Document.prototype, "adoptedStyleSheets", {
 import { createApp, type Plugin } from "vue";
 import { createPinia } from "pinia";
 import piniaPluginPersistedstate from "pinia-plugin-persistedstate";
-import { initWujieBusListener } from "@/utils/wujie-bus-listener";
+import { initWujieBusListener } from "@/utils";
 import App from "./App";
 import router from "./router";
 import "./style.css";

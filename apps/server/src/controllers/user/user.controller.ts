@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import { UserService } from '@/services/user';
-import { HttpError, sendSuccess } from '@/utils/apiResponse';
+import { UserService } from '@/services';
+import { HttpError, sendSuccess } from '@/utils';
 
 export const getTelegramChatId = async (req: Request, res: Response) => {
   if (!req.user?.sub) {

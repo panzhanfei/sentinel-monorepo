@@ -11,7 +11,7 @@ import {
   auditWithDeepSeek,
   generateFinalReport,
 } from '@/services';
-import { prisma } from '@/client/prisma.client';
+import { prisma } from '@/client';
 import type { Prisma } from '@sentinel/database';
 
 // 创建带心跳监控的AI函数

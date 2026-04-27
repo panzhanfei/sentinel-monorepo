@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
 import { DualJwtService, type DualJwtOptions, type JwtPayload } from "@sentinel/auth";
-import { redis } from "@/lib/redis";
+import { redis } from "./redis";
 
 const ACCESS_COOKIE_MAX_AGE_SEC = 15 * 60;
 const REFRESH_COOKIE_MAX_AGE_SEC = 60 * 60 * 24 * 7;

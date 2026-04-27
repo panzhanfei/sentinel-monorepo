@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { WujieClient } from "./WujieWrapper";
-import { AuditSkeleton } from "@/components/skeletons";
+import { AuditSkeleton } from "@/components";
 import {
   AUDIT_REACT_HOST_SYNC_EVENT,
   REACT_SUB_NAVIGATE_EVENT,

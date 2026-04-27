@@ -4,3 +4,4 @@ export {
   buildDistributionSlices,
   buildTrendSeries,
 } from "./useChartSeries";
+export { useAppData } from "../App/useData";

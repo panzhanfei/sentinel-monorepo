@@ -3,4 +3,4 @@
  */
 export type IMonitorDashboardViewProps = Record<string, never>;
 
-export type { ChainBalance, TokenBalance } from "@/types/monitor";
+export type { ChainBalance, TokenBalance } from "@/types";

@@ -1,4 +1,4 @@
-import { AuditDashboard } from "@/views/AuditDashboard";
+import { AuditDashboard } from "@/views";
 import { Link } from "react-router-dom";
 import { useAppData } from "./useData";
 

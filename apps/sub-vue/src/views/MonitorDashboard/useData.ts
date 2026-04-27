@@ -1,12 +1,12 @@
 import { computed, ref, watch, onMounted, onUnmounted } from "vue";
 import type { Address } from "viem";
 import { useWeb3Store, useMonitorStore } from "@/stores";
-import { viemManager } from "@/utils/viemClients";
+import { viemManager } from "@/utils";
 import {
   refreshAllNativeBalances,
   scanErc20AcrossChains,
-} from "@/services/monitorChainService";
-import { useChartSeries } from "@/hooks/useChartSeries";
+} from "@/services";
+import { useChartSeries } from "@/hooks";
 
 const useMonitorDashboardCore = () => {
   const web3Store = useWeb3Store();

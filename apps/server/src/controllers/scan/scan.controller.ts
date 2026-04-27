@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
-import { JobService, UserService } from '@/services';
-import { auditQueue, pub } from '@/services/queue';
-import { HttpError, sendFailure, sendSuccess } from '@/utils/apiResponse';
+import { JobService, UserService, auditQueue, pub } from '@/services';
+import { HttpError, sendFailure, sendSuccess } from '@/utils';
 
 /**
  * 创建扫描任务（立即返回 jobId）

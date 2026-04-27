@@ -1,9 +1,9 @@
 import { NextRequest } from "next/server";
-import { NODE_SERVICE } from "@/config/node_service";
+import { NODE_SERVICE } from "@/config";
 import {
   dualAuthUnauthorizedJson,
   proxyHeadersToNode,
-} from "@/lib/bffProxy";
+} from "@/lib";
 
 export const GET = async (request: NextRequest) => {
   const { searchParams } = new URL(request.url);

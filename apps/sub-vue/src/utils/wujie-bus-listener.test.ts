@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { setActivePinia, createPinia } from "pinia";
 import piniaPluginPersistedstate from "pinia-plugin-persistedstate";
-import { useWeb3Store } from "@/stores/useWeb3Store";
+import { useWeb3Store } from "@/stores";
 import { initWujieBusListener } from "./wujie-bus-listener";
 
 describe("initWujieBusListener", () => {

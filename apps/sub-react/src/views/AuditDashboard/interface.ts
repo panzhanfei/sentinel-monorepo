@@ -1,4 +1,4 @@
-import type { ChatRow, Transaction } from "@/types/audit";
+import type { ChatRow, Transaction } from "@/types";
 
 /** 纯展示层 props，与数据获取解耦 */
 export type { Transaction };

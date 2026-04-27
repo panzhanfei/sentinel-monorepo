@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { NODE_SERVICE } from "@/config/node_service";
+import { NODE_SERVICE } from "@/config";
 import {
   authHeadersForProxy,
   dualAuthUnauthorizedJson,
   parseUpstreamJson,
-} from "@/lib/bffProxy";
+} from "@/lib";
 
 export const POST = async (request: NextRequest) => {
   try {

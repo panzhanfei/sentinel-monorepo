@@ -1,9 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 import { env } from '@/config';
-import { sendFailure } from '@/utils/apiResponse';
+import { sendFailure } from '@/utils';
 import type { JwtPayload } from '@sentinel/auth';
 import { DualJwtService } from '@sentinel/auth';
-import { dualJwt } from '@/lib/dualJwt';
+import { dualJwt } from '@/lib';
 
 const allowTokenInQueryOrBody = env.NODE_ENV !== 'production';
 

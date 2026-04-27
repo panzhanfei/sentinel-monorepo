@@ -1,6 +1,6 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { validateDualSession } from "@/lib/authSession";
+import { validateDualSession } from "./authSession";
 
 const resolveBearerToken = (request: NextRequest) : string | undefined => {
   const auth = request.headers.get("authorization");

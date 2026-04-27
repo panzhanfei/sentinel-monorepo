@@ -1,4 +1,4 @@
-// @/constants/chains.ts
+// @/constants.ts
 import { mainnet, arbitrum, optimism, polygon, anvil } from "viem/chains";
 
 const anvilRpcUrl =

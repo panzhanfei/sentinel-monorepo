@@ -1,8 +1,7 @@
 import { formatEther, formatUnits, isAddress, type Address } from "viem";
 import type { PublicClient } from "viem";
-import { SUPPORTED_CHAINS } from "@/constants/chains";
-import { ERC20_ABI } from "@/constants/erc20Abi";
-import type { ChainBalance, TokenBalance } from "@/types/monitor";
+import { ERC20_ABI, SUPPORTED_CHAINS } from "@/constants";
+import type { ChainBalance, TokenBalance } from "@/types";
 
 export type GetClient = (chainId: number) => PublicClient | undefined;
 

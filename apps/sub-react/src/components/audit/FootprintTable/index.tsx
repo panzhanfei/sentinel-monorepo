@@ -1,4 +1,4 @@
-import { formatWeiToEth, truncateHash } from "@/utils/format";
+import { formatWeiToEth, truncateHash } from "@/utils";
 import type { IFootprintTableProps } from "./interface";
 import { useFootprintTableData } from "./useData";
 

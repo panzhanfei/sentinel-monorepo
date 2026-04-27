@@ -1,14 +1,14 @@
 import { Request, Response } from 'express';
 import { JobService } from '@/services';
-import { HttpError, sendSuccess } from '@/utils/apiResponse';
+import { HttpError, sendSuccess } from '@/utils';
 import {
+  ChatService,
+  createChatSseHeartbeat,
+  createChatSsePublish,
   hasCompletedScanWithData,
   isClearlyOffTopicQuestion,
-} from '@/modules/chat/guards';
-import { createChatSseHeartbeat } from '@/modules/chat/sseHeartbeat';
-import { createChatSsePublish } from '@/modules/chat/ssePublish';
-import { ChatService } from '@/modules/chat/service';
-import { runChatAgents } from '@/modules/chat/stream';
+  runChatAgents,
+} from '@/modules/chat';
 
 /** SSE 保活：注释行过代理；JSON 供前端忽略，不写入对话 */
 const CHAT_SSE_HEARTBEAT_MS = 20_000;

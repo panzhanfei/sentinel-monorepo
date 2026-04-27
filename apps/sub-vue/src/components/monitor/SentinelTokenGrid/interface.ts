@@ -1,4 +1,4 @@
-import type { TokenBalance } from "@/types/monitor";
+import type { TokenBalance } from "@/types";
 
 export interface ISentinelTokenGridProps {
   tokens: readonly TokenBalance[];
