@@ -15,15 +15,37 @@ export type WujieWeb3Date = {
   isConnected?: boolean;
 };
 
+/** Node/SSR：`window` 可能不存在；勿直接读 `window` 以免 ReferenceError。 */
+const readWujiePropsFromWindow = ():
+  | {
+      afterMount?: () => void;
+      web3Data?: WujieWeb3Date;
+      web3Date?: WujieWeb3Date;
+    }
+  | undefined => {
+  if (typeof window === "undefined") return undefined;
+  return (
+    window as Window & {
+      $wujie?: {
+        props?: {
+          afterMount?: () => void;
+          web3Data?: WujieWeb3Date;
+          web3Date?: WujieWeb3Date;
+        };
+      };
+    }
+  ).$wujie?.props;
+};
+
 export const useWujieStore = create<WujieState>()(
   devtools(
-    (set) => ({
-      wujieAfterMount: window.$wujie?.props?.afterMount,
-      wujieWeb3Date:
-        window.$wujie?.props?.web3Data ||
-        window.$wujie?.props?.web3Date ||
-        {},
-      updateWujieState: (newWeb3Date: WujieWeb3Date) =>
+    (set) => {
+      const wujieProps = readWujiePropsFromWindow();
+      return {
+        wujieAfterMount: wujieProps?.afterMount,
+        wujieWeb3Date:
+          wujieProps?.web3Data || wujieProps?.web3Date || {},
+        updateWujieState: (newWeb3Date: WujieWeb3Date) =>
         set(
           (state) => ({
             wujieWeb3Date: {
@@ -35,7 +57,7 @@ export const useWujieStore = create<WujieState>()(
           "wujie/updateWujieState",
         ),
 
-      reset: () =>
+        reset: () =>
         set(
           {
             wujieWeb3Date: {
@@ -47,7 +69,8 @@ export const useWujieStore = create<WujieState>()(
           false,
           "wujie/reset",
         ),
-    }),
+      };
+    },
     { name: "WuJie Store" },
   ),
 );
